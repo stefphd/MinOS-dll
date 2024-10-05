@@ -169,6 +169,7 @@ private:
     /* Pointer to OCP & NLP libraries */
     void* ocp_lib = NULL;
     void* nlp_lib = NULL;
+
     /* Pointers to OCP & NLP functions */
     EvalFunc    ocp_dyn = NULL, ocp_path = NULL, ocp_bcs = NULL, ocp_int = NULL, ocp_runcost = NULL, ocp_bcscost = NULL;
     EvalFunc    ocp_dyn_jac = NULL, ocp_path_jac = NULL, ocp_bcs_jac = NULL, ocp_int_jac = NULL, ocp_runcost_grad = NULL, ocp_bcscost_grad = NULL;
@@ -192,6 +193,7 @@ private:
     WorkFunc    ocp_dyn_jac_work = NULL, ocp_path_jac_work = NULL, ocp_bcs_jac_work = NULL, ocp_int_jac_work = NULL, ocp_runcost_grad_work = NULL, ocp_bcscost_grad_work = NULL;
     WorkFunc    ocp_hessb_work = NULL, ocp_hessi_work = NULL;
     SolveFunc   callSolve = NULL;
+    
 public:
 
     /** 
