@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.25)
 # Set the project name etc
 project(MinOS
         LANGUAGES C CXX
-        VERSION 3.0.0
+        VERSION 1.0.0
         DESCRIPTION "MINimal Optimal-control Solver"
         )
 
