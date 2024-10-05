@@ -1,0 +1,53 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# User-defined
+*.log
+*.mex*
+include/*/**
+**/examples/**/*.cpp
+**/examples/**/*.txt
+**/examples/**/*.pyi
+!examples/**/main.*
+!**/CMakeLists.txt
+*.asv
+.bkp
+**/build
+/examples/matlab/tmp
+/install
+/releases
+*.zip
+/.vscode
+*.pyd
+__pycache__
+/interfaces/matlab/examples/.old

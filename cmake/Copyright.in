@@ -1,0 +1,38 @@
+@CMAKE_PROJECT_NAME@ (@CMAKE_PROJECT_DESCRIPTION@) - Version @CMAKE_PROJECT_VERSION@
+Copyright (c) @COPYRIGHT_YEAR@ @COPYRIGHT_NAME@
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3. Neither the name of @COPYRIGHT_NAME@ nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Dependencies:
+* MinOS employs IPOPT, which is distributed under the Eclipse Public License. For details, please refer to the IPOPT license terms included in the IPOPT distribution.
+* MinOS interfaces with Python, which is available under the Python Software Foundation License.
+* MinOS also interfaces with MATLAB, which is a commercial software product provided by MathWorks, Inc.
+* MinOS also interfaces with KNITRO, which is a commercial software product provided by Artelys 
+* MinOS also interfaces with WORHP, which is a commercial software product
+* MinOS also interfaces with SNOPT, which is a commercial software product
+
+For more information, please contact @COPYRIGHT_NAME@.
+
+IPOPT License:
+The full text of the IPOPT license can be found at https://coin-or.github.io/Ipopt/LICENSE.html.
+
+Python License:
+The full text of the Python license can be found at https://docs.python.org/3/license.html.
+
+MATLAB:
+Please note that MATLAB is a commercial software product provided by MathWorks, Inc. Users must comply with the licensing terms provided by MathWorks, Inc.
+
+KNITRO:
+Please note that KNITRO is a commercial software product provided by Artelys, Inc. Users must comply with the licensing terms provided by Artelys
+
+
+@COPYRIGHT_NAME@
+@COPYRIGHT_CONTACT@

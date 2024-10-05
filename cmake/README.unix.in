@@ -1,0 +1,700 @@
+# @CMAKE_PROJECT_NAME@
+
+@CMAKE_PROJECT_NAME@ (<b>Min</b>imal <b>O</b>ptimal-control <b>S</b>olver) is a C++  solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and @NLP_SOLVER@ to solve the subsequent large-scale nonlinear programming problem (NLP).
+
+Interfaces to MATLAB and Python are available, which generate a dynamic library for the OCP functions; a MEX function or a Python module are employed to load the generate library into the OCP solver. For expert user, the solver may be also used directly from C++.
+
+Built and tested with Linux (Debian 12) with gcc/g++.
+
+Version @CMAKE_PROJECT_VERSION@
+
+## Requirements
+
+* [MATLAB](https://www.mathworks.com/products/matlab.html) for the MEX interface (>=2022b)
+* [Python3](https://www.python.org/) for the Python interface (>=3.7.0)
+* [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++)
+* [gcc-g++](https://gcc.gnu.org/) compiler 
+* [CMake](https://cmake.org/) build system to build the C++ and Python examples
+
+## Installation
+
+For MATLAB usage, you need to add `<path/to/installation>/bin` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/bin/minosMex.mexa64` and `<path/to/installation>/bin/buildOCP.m`.
+
+For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the library `<path/to/installation>/bin/minosPy.so`.
+
+Examples can be found in `<path/to/installation>/examples`.
+
+\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`.
+
+## Getting started
+
+Getting started is shown for MATLAB usage. For Python, a similar (yet a bit different) workflow is employed.
+
+First, be sure that MEX functionality is available in MATLAB.
+
+```matlab
+mex -setup c   % Setup C compiler to the preferred one
+mex -setup cpp % Setup C++ compiler to preferred one
+```
+
+CasADi should be employed to setup the OCP. In the follow, the brachistochrone problem is used as a banchmark example. First, add the software directory to the MATLAB path and import CasADi.
+
+```matlab
+clc, clear
+addpath('<path/to/installation>/bin'); % add MinOS binary to MATLAB path (replace <path/to/installation> with your path)
+import casadi.* % import casadi
+```
+
+Typically, solving options, model parameters, boundary conditions and problem bounds are then defined.
+
+```matlab
+% Solving options
+name = 'brachistochrone'; % name of the problem (and generated dynamic library)
+skip_hessian = false; % use approximated hessian
+scheme = 'trapz'; %integration scheme: trapz, rk4, euler
+N = 500; % number of mesh points
+ti = 0; % initial time
+tf = 1; % final time
+
+% Model data
+g = 10;
+
+% Boundary conditions
+xi = [0; 0; 0]; % initial x,y,v
+xf = [2; 2]; % final x, y
+
+% Bounds
+lbx = [0; 0; -50]; % lower bound for state
+ubx = [10; 10; 50]; % upper bound for state
+lbu = -pi/2; % lower bound for control
+ubu = pi/2; % upper bound for control
+lbp = 0; % lower bound for parameter
+ubp = 2; % upper bound for parameter
+lbc = []; % lower bound for path constraint
+ubc = []; % upper bound for path constraint
+lbb = [xi; xf]; % lower bound for boundary conditions
+ubb = [xi; xf]; % upper bound for boundary conditions
+lbq = []; % lower bound for integral constraints
+ubq = []; % upper bound for integral constraints
+```
+
+The next step is to use CasADi to create the OCP variables.
+
+```matlab
+nx = 3; nu = 1; np = 1; % state, control, and parameter dimensions
+t = SX.sym('t'); % independent variable
+x = SX.sym('x', nx); % state
+u = SX.sym('u', nu); % control
+p = SX.sym('p', np); % parameter
+x0 = SX.sym('x0', nx); % initial state
+u0 = SX.sym('u0', nu); % initial control
+xn = SX.sym('xn', nx); % final state
+un = SX.sym('un', nu); % final control
+```
+
+These variables are used to define the OCP functions.
+
+```matlab
+% Model equations ( using time scaled by Tf=p(1) )
+xdot = p(1)*[x(3)*sin(u(1));
+             x(3)*cos(u(1));
+             g*cos(u(1))]; % state derivative
+c = []; % path constraint
+q = []; % integral constraint
+l = 0; % running (Lagrange) cost - min p(1)=Tf
+m = p(1); % boundary (Mayer) cost
+% equivalently, we could also use:
+% l = p(1);
+% m = 0;
+b = [x0;
+     xn(1:2)]; % boundary conditions
+```
+
+The integration over one mesh interval is done by the user, allowing to freely select the preferred integration scheme for the dynamic constraint and the running cost integral (e.g. Euler, trapezoidal rule, Runge-Kutta integrator, etc.). For example, the trapezoidal rule can be employed.
+
+```matlab
+h = SX.sym('h'); % time step
+f = Function('f', {t, x, u, p}, {xdot, l, q}); % ocp dynamics [xdot,l,q] = f(t,x,u,p)
+x1 = SX.sym('x1', nx); % initial state of interval 
+x2 = SX.sym('x2', nx); % final state of interval 
+[f1, dl1, dq1] = f(t,   x1, u, p); 
+[f2, dl2, dq2] = f(t+h, x2, u, p); 
+xnext = x1 + 1/2 * h * (f1+f2); % trapezoidal rule for dynamics
+dx = xnext - x2; % must be 0 to ensure continuity
+dl = 1/2 * h * (dl1+dl2); % trapezoidal rule for lagragian cost
+dq = 1/2 * h * (dq1+dq2); % trapezoidal rule for integral constraint
+```
+
+The user should then generate CasADi functions with certain signatures and name. It is worth noting that the name of the CasADi functions is NOT arbitrary.
+
+```matlab
+% OCP functions
+% OCP runnig cost function dl = ocp_runcost(t, x1, u, x2, p, h)
+% t: time at step k
+% x1: state at step k
+% x2: state at step k+1
+% u: control over the interval [k,k+1]
+% p: scalar parameter
+% h: time step
+% dl: integral (i.e. Lagrange) cost over the interval [k,k+1]
+ocp_runcost = Function('ocp_runcost', {t, x1, u, x2, p, h}, {dl});
+% OCP boundary cost function m = ocp_bcscost(x0, u0, xn, un, p)
+% x0: initial state
+% u0: initial control
+% xn: final state
+% un: final control
+% p: scalar parameter
+% m: boundary (i.e. Mayer) cost
+ocp_bcscost = Function('ocp_bcscost', {x0, u0, xn, un, p}, {m});
+% OCP dynamic function dx = ocp_dyn(t, x1, u, x2, p, h)
+% t: time at step k
+% x1: state at step k
+% x2: state at step k+1
+% u: control over the interval [k,k+1]
+% p: scalar parameter
+% h: time step
+% dx: rhs of integrator over the interval [k,k+1] (which must be dx=0 for
+% continuity)
+ocp_dyn = Function('ocp_dyn', {t, x1, u, x2, p, h}, {dx});
+% OCP path function c = ocp_path(t, x, u, p)
+% t: time at step k
+% x: state at step k
+% u: control over the interval [k,k+1]
+% p: scalar parameter
+% c: path constraint at step k
+ocp_path = Function('ocp_path', {t, x, u, p}, {c});
+% OCP boundary condition function b = ocp_bcs(x0, u0, xn, un, p)
+% x0: initial state
+% u0: initial control
+% xn: final state
+% un: final control
+% p: scalar parameter
+% b: boundary condtions
+ocp_bcs = Function('ocp_bcs', {x0, u0, xn, un, p}, {b});
+% OCP integral constraint function dq = ocp_int(t, x1, u, x2, p, h)
+% t: time at step k
+% x1: state at step k
+% x2: state at step k+1
+% u: control over the interval [k,k+1]
+% p: scalar parameter
+% h: time step
+% dq: integral constraint over the interval [k,k+1]
+ocp_int = Function('ocp_int', {t, x1, u, x2, p, h}, {dq});
+```
+
+To build the OCP problem embedding the solver, the function `buildOCP` is used.
+
+```matlab
+% Build OCP
+buildOCP(name, ...
+        ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int, ...
+        skip_hessian);
+```
+
+Shortly, `buildOCP` performs the following operations:
+
+* use CasADi to automatically generate the required gradients, Jacobians and Hessians (if `skip_hessian = false`); by default it is `skip_hessian = false`.
+* use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.cpp`;
+* call the MATLAB command `mex` to build a dynamic library containing the OCP functions.
+
+The next steps consist in creating the guess and the problem structure to be provided to the MEX function.
+
+```matlab
+% Create guess
+x0 = [linspace(xi(1),xf(1),N)
+      linspace(xi(2),xf(2),N)
+      linspace(0,0,N)];
+u0 = linspace(0,1,N);
+p0 = 1;
+
+% Create problem structure
+problem.name = name;
+problem.N = N;
+problem.ti = ti;
+problem.tf = tf;
+problem.guess.x = x0;
+problem.guess.u = u0;
+problem.guess.p = p0;
+problem.bounds.lbx = lbx; problem.bounds.ubx = ubx;
+problem.bounds.lbp = lbp; problem.bounds.ubp = ubp;
+problem.bounds.lbu = lbu; problem.bounds.ubu = ubu;
+problem.bounds.lbc = lbc; problem.bounds.ubc = ubc;
+problem.bounds.lbb = lbb; problem.bounds.ubb = ubb;
+problem.bounds.lbq = lbq; problem.bounds.ubq = ubq;
+% problem.nlpsolver = 'ipopt'; % NLP solver to use - OPTIONAL
+% problem.mesh = 1/(N-1) * ones(1,N-1); % mesh fractions - OPTIONAL
+% problem.options.flag_hessian = false; % use approx Hessian - OPTIONAL
+% problem.options.max_iter = 1000; % max number of iterations - OPTIONAL
+% problem.options.mu_init = 1; % initial barrier parameter for interior-point NLP solvers (e.g. IPOPT) - OPTIONAL
+% problem.options.outfile = 'output.txt'; % output filename - OPTIONAL
+% problem.options.logfile = 'nlp.log'; % NLP log filename - OPTIONAL
+% problem.options.print_itersol = 10; % iteration interval to print output file - OPTIONAL
+```
+
+A number of optional settings are available:
+
+* `nlpsolver`: NLP solver to use (default `ipopt`);
+* `mesh`: mesh fractions, specify by as a row or column matrix of `N-1` elements that sum to unity. If not specified, an equally-spaced mesh grid is employed, i.e. default is `1/(N-1)*ones(1,N-1)`. This option is usefull when mesh refinements is required;
+* `options.flag_hessian` (default `false`): set to `true` to use approximated Hessian; note that this option has no effect if `skip_hessian = false`, i.e. approximated Hessian is always used in such case;
+* `options.max_iter` (default 3000): maximum number of iterations;
+* `options.mu_init`: initial barrier parameter for the NLP solver (interior-point only, e.g. IPOPT);
+* `options.outfile`: name of output file, if any;
+* `options.logfile`: name of NLP solver log file. Use '' for default name (which is <problem.name>.log) and `none` for no log file;
+* `options.print_itersol`: integer number for the iteration interval to print a intermediate output file. Output file for final iteration is also printed.
+
+Finally, the OCP is solved calling the MEX function.
+
+```matlab
+% Call OCP solver
+solution = minosMex(problem); 
+clear minosMex % clear MEX function to realase everything
+```
+
+The `solution` structure contains the following fields
+
+```matlab
+solution.objval % objective value (1-by-1 matrix)
+solution.t % time (1-by-N matrix)
+solution.x % state (nx-by-N matrix)
+solution.u % control (nu-by-N matrix)
+solution.p % parameter (np-by-1 matrix)
+solution.lam_x % state multiplier (nx-by-N matrix)
+solution.lam_u % control multiplier (nu-by-N matrix)
+solution.lam_p % parameter multiplier (np-by-1 matrix)
+solution.lam_f % dynamic multiplier (nx-by-N-1 matrix)
+solution.lam_c % path multiplier (nc-by-N matrix)
+solution.lam_b % boundary multiplier (nb-by-1 matrix)
+solution.lam_q % integral constraint multiplier (nq-by-1 matrix)
+solution.f % dynamic constraint (nx-by-N-1 matrix)
+solution.c % path constraint (nc-by-N matrix)
+solution.b % boundary condition (nb-by-1 matrix)
+solution.q % integral constraint (nq-by-1 matrix)
+solution.l % running (Lagrange) cost (1-by-N matrix)
+solution.m % boundary (Mayer) cost (1-by-1 matrix)
+solution.stats % solution statistics (CPU times, etc...)
+solution.next_problem % problem structure for next simulation
+```
+
+The struct `next_problem` has the same structure of `problem`, but with values suitable for a subsequent simulation using the previous solution as initial guess. E.g. one can perform a initialization using approximated Hessian with
+
+```matlab
+% [...]
+% Set problem for initialization
+problem.options.max_iter = 50; % few iterations for initialization
+problem.options.flag_hessian = true; % use approx Hessian for initialization
+
+% Run initialization with approx Hessian
+init_solution = minosMex(problem);
+
+% Set new problem for finalize
+problem = init_solution.next_problem;
+problem.options.max_iter = 3000; % more iterations for finalize
+problem.options.flag_hessian = false; % use exact Hessian for finalize
+
+% Run finalize with exact Hessian starting from previous solution
+solution = minosMex(problem);
+% [...]
+```
+
+More examples for MATLAB can be found in `./examples/matlab`.
+
+### Auxdata
+
+The above workflow requires re-building every time the model parameters change. To avoid this, one may set a CasADi vector `auxdata`, which contains the model paramaters, as a last input arguments of the OCP functions. See `./examples/matlab/brachistochrone_auxdata.m` for example usage of this functionality.
+
+## Python interface
+
+An object-oriented Python interface is also available. The workflow is similar to that of MATLAB, except for the building and usage.
+After generating the OCP functions (as in MATLAB), the `minosPy.Builder` class is employed to build the dynamic library containing the OCP functions.
+
+```python
+import minosPy
+
+# Create OCP functions 
+# [...]
+
+# Build OCP
+builder = minosPy.Builder(name) # Name of the generated module
+minosPy.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
+minosPy.build() # Build the dynamic library containing the OCP function
+```
+
+The `minosPy.OCP` class can be then employed (in the same file or in another) to import the dynamic library and solve the problem.
+Here, numpy array should be employed to define the bounds and guess for the OCP.
+
+```python
+from minosPy import OCP
+import numpy as npy
+
+# Solve OCP
+ocp = OCPInterface(name, N, ti, tf) # create the object
+dims = ocp.get_dims() # dims is a dictionary containing nx, nu, np, ...
+
+# set bounds
+lbx = npy.array([0.0, 0.0, -50.0])
+ubx = npy.array([10.0, 10.0, 50.0])
+lbu = npy.array([-3.14/2])
+ubu = npy.array([+3.14/2])
+lbp = npy.array([0.0])
+ubp = npy.array([5.0])
+lbc = None
+ubc = None
+lbb = npy.array([0.0, 0.0, 0.0, 2.0, 2.0])
+ubb = npy.array([0.0, 0.0, 0.0, 2.0, 2.0])
+lbq = None
+ubq = None
+ocp.set_bounds(lbx, ubx, lbu, ubu, lbp, ubp, lbc, ubc, lbb, ubb, lbq, ubq)
+
+# set guess
+x0 = npy.vstack((npy.linspace(0, 2, N), 
+                 npy.linspace(0, 2, N), 
+                 npy.linspace(0, 0, N)))
+u0 = npy.linspace(0, 1, N)
+p0 = npy.array([1.0])
+ocp.set_guess(x0,u0,p0)
+
+# set mesh
+# mesh = 1.0 / (N-1) * npy.ones(N-1)
+# ocp.set_mesh(mesh)
+# set option
+# ocp.set_option(max_iter=30,display=False,nlpsolver="ipopt")
+
+# solve
+ocp.solve()
+
+# get solution dictionary
+sol = ocp.get_sol()
+
+# get CPU times
+tcpu_tot, tcpu_alg, tcpu_eval = ocp.get_cpu_time()
+
+# get convergence history
+num_iter = ocp.get_num_iter()
+obj, infpr, infdu = ocp.get_history()
+
+# current barrier parameter - only for interior-point NPL such as IPOPT
+# mu_curr = ocp.get_mu_curr()
+# get mesh
+# mesh = ocp.get_mesh()
+
+# Print to file
+with open(name + ".txt", "w") as file:
+    file.write(str(ocp))
+```
+
+Note that after calling `ocp.solve()` the OCP guesses are updated with the solution found, if successfull. This allows to re-run `ocp.solve()` starting from the previously-found solution.
+
+## C++ interface (expert users)
+
+Expert users may also employ MinOS in C++. Jacobians and possibly Hessians must be generated (again using CasADi):
+
+* `ocp_runcost_grad(t, x1, u, x2, p, h)`
+  The function returns the gradient of `ocp_runcost`. A single returned value is expected, which corresponds to the gradient with respect to `[x1, u, x2, p]` (order is NOT to arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_bcscost_grad(xi, ui, xf, uf, p)` The function returns the gradient of `ocp_bcscost`. A single returned values is expected, which corresponds to the gradient with respect to `[xi, ui, xf, uf, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_dyn_jac(t, x1, u, x2, p, h)`
+  The function returns the Jacobian matrix of `ocp_dyn`. A single returned value is expected, which corresponds to the Jacobian matrix with respect to `[x1, u, x2, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_path_jac(t, x, u, p)`
+  The function returns the Jacobian matrix of `ocp_path`. A single returned value is expected, which corresponds to the Jacobian matrix with respect to `[x, u, p]` (order is NOT to arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_bcs_jac(xi, ui, xf, uf, p)`
+  The function returns the Jacobian matrix of`ocp_bcs`. A single returned value is expected, which corresponds to the Jacobian matrices with respect to `[xi, ui, xf, uf, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_int_jac(t, x1, u, x2, p, h)`
+  The function returns the Jacobian matrix of `ocp_int`. A single returned value is expected, which corresponds to the Jacobian matrix with respect to `[x1, u, x2, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_hessb(t, xi, ui, xf, uf, p, sigma, lamc, lamb)` (OPTIONAL)
+  The function returns the lower-traingular part of the Hessian matrix of the boundary Lagragian. A single returned value is expected, which corresponds to the Hessian matrix with respect to `[xi, ui, xf, uf, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+* `ocp_hessi(t, x1, u, x2, p, h, sigma, lamc, lamf, lamq)` (OPTIONAL)
+  The function returns the lower-triangular part of the Hessian matrix of the internal Lagragian. A single returned value is expected, which corresponds to the Hessian matrix with respect to `[x1, u, x2, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
+
+Again, the name of the CasADi functions is NOT arbitrary. The functions may have an additional input arguments `auxdata` in the case that auxdata need to be defined. Refer to the Optimal-control-problem section for the details on the OCP functions.
+
+The C code for these functions must be generated in a unique `.cpp` file (say `ocp.cpp`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int ="int"`. This option is needed to ensure consistency between the data type of CasADi and IPOPT. Note that the whole procedure can be done in Python using `minosPy.Builder.generate`, without the need to specify Jacobians or Hessians. The C code should be finally compiled as a dynamic library.
+
+The OCPInterface class is employed to load the generated library and solve the OCP. The C++ API documentation can be found in this documentation or in the header `./include/minos.h`.
+
+Building can be performed using the [CMake](https://cmake.org/) build system. Refer to `examples/cpp/CMakeLists.txt` and the C++ examples in `examples/cpp`.
+
+## Optimal-control problem
+
+The optimal control problem consisting in finding the state \f$\mathbf x(t)\in\mathbb R^{n_x}\f$, control \f$\mathbf u(t)\in\mathbb R^{n_u}\f$, and static parameter \f$\mathbf p \in\mathbb R^{n_p}\f$ minimizing the cost functional
+
+\f[
+\mathcal J [\mathbf x, \mathbf u, \mathbf p] = m\big(\mathbf x(t_i), \mathbf u(t_i), \mathbf x(t_f), \mathbf u(t_f),\mathbf p\big) +
+\int_{t_i}^{t_f} \ell \big(t, \mathbf x(t), \mathbf u(t), \mathbf p\big)dt,
+\f]
+
+subject to
+
+\f[
+\mathbf f\big(t, \mathbf x(t), \mathbf u(t), \mathbf p, \dot{\mathbf x}(t)\big) = 0,
+\f]
+
+\f[
+\mathbf c_l \leq \mathbf c(t,\mathbf x(t), \mathbf u(t), \mathbf p) \leq \mathbf c_u,
+\f]
+
+\f[
+\mathbf b_l \leq \mathbf b\big(\mathbf x(t_i), \mathbf u(t_i), \mathbf x(t_f), \mathbf u(t_f),\mathbf p\big)\leq \mathbf b_u ,
+\f]
+
+\f[
+\mathbf q_l \leq \int_{t_i}^{t_f} \mathbf q(t,\mathbf x(t), \mathbf u(t), \mathbf p) dt \leq \mathbf q_u,
+\f]
+
+\f[
+\mathbf x_l \leq \mathbf x (t) \leq \mathbf x_u,
+\f]
+
+\f[
+\mathbf u_l \leq \mathbf u (t) \leq \mathbf u_u, \\
+\f]
+
+\f[
+\mathbf p_l \leq \mathbf p \leq \mathbf p_u,
+\f]
+
+where \f$\dot{\mathbf x}=\frac{d\mathbf x}{dt}\f$, \f$t\in[t_i,t_f]\f$ is the OCP independent variable (e.g. the time), with both \f$t_i\f$ and \f$t_f\f$ fixed, and:
+
+* \f$m\f$ is the boundary (i.e. Mayer) cost:
+
+\f[
+m:\mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_x} \times \mathbb R^{n_u} \times \mathbb R^{n_p}\to \mathbb R,
+\f]
+
+* \f$\ell\f$ is the running (i.e. Lagrange) cost:
+
+\f[
+\ell: \mathbb R\times \mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_p} \to \mathbb R,
+\f]
+
+* \f$\mathbf f\f$ are the dynamic constraints
+
+\f[
+\mathbf f: \mathbb R\times \mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_p} \times \mathbb R^{n_x}\to \mathbb R^{n_x},
+\f]
+
+* \f$\mathbf c\f$ are the path constraints with lower bounds \f$\mathbf c_l\in\mathbb R^{n_c}\f$ and upper bounds \f$\mathbf c_u\in\mathbb R^{n_c}\f$
+
+\f[
+\mathbf c: \mathbb R\times \mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_p} \to \mathbb R^{n_c},
+\f]
+
+* \f$\mathbf b\f$ are the boundary conditions with lower bounds \f$\mathbf b_l\in\mathbb R^{n_b}\f$ and upper bounds \f$\mathbf b_u\in\mathbb R^{n_b}\f$
+
+\f[
+\mathbf b: \mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_x} \times \mathbb R^{n_u} \times \mathbb R^{n_p}\to\mathbb R^{n_b},
+\f]
+
+* \f$\mathbf q\f$ are the integral constraints with lower bounds \f$\mathbf q_l\in\mathbb R^{n_q}\f$ and upper bounds \f$\mathbf q_u\in\mathbb R^{n_q}\f$
+
+\f[
+\mathbf q: \mathbb R\times \mathbb R^{n_x}\times \mathbb R^{n_u}\times \mathbb R^{n_p} \to \mathbb R^{n_q},
+\f]
+
+The OCP dimensions are:
+
+* \f$n_x\f$ is the state dimension
+* \f$n_u\f$ is the control dimension
+* \f$n_p\f$ is the parameter dimension
+* \f$n_c\f$ is the path constraint dimension
+* \f$n_b\f$ is the boundary condition dimension
+* \f$n_q\f$ is the integral constraint dimension
+
+### Remarks
+
+#### Free final time problems
+
+The OCP formulation adopted here has fixed initial \f$t_i\f$ and final \f$t_f\f$ times. However, the possibility to optimize static parameter \f$\mathbf p\f$ allows to deal with free final time problems (such as minimum time problems). In such case it is sufficient to convert the *real* domain \f$\tau\in[\tau_i,\tau_f]\f$ (with e.g. \f$\tau_i\f$ fixed and \f$\tau_f\f$ free) into the OCP domain \f$t\in[0,1]\f$ (i.e. with \f$t_i=0,t_f=1\f$), and add \f$\tau_f\f$ to the static parameters to be optimized. The link between the two domains is
+
+\f[
+\tau = \tau_i + (\tau_f-\tau_i)t,
+\f]
+
+which allows to convert the state derivative, running cost and integral constraints as follows
+
+\f[
+\dot{\mathbf x}=\frac{d\mathbf x}{d\tau}\cdot\frac{d\tau}{dt}=(\tau_f-\tau_i)\frac{d\mathbf x}{d\tau},
+\f]
+
+\f[
+\int_{\tau_i}^{\tau_f}\ell d\tau=\int_{t_i}^{t_f} \ell \frac{d\tau}{dt} dt = \int_{t_i}^{t_f} (\tau_f-\tau_i) \ell dt,
+\f]
+
+\f[
+\int_{\tau_i}^{\tau_f}\mathbf q d\tau=\int_{t_i}^{t_f} \mathbf q \frac{d\tau}{dt} dt = \int_{t_i}^{t_f} (\tau_f-\tau_i) \mathbf q dt.
+\f]
+
+#### Direct method transcription
+
+The OCP is transcribed into a large-scale, sparse NLP, which can be solved numerically using a NLP solver. The domain \f$[t_i, t_f]\f$ is divided into \f$N\f$ mesh points. The mesh grid can be either equally-spaced, i.e. consisting of \f$N-1\f$ mesh intervals of length \f$(t_f-t_i)/(N-1)\f$ (default), or user-defined. The NLP variables \f$\mathbf z \in \mathbb R^{n_z}\f$ are obtained collecting \f$\mathbf x, \mathbf u\f$ at each mesh point and \f$\mathbf p\f$. The dimension of \f$\mathbf z\f$ is thus \f$n_z = N\cdot(n_x+n_u) + n_p\f$, with \f$\mathbf z\f$ given by
+
+\f[
+\mathbf z = [\mathbf x_0, \mathbf u_0, \mathbf x_1, \mathbf u_1, \dots, \mathbf x_k, \mathbf u_k, \dots, \mathbf x_{N-1}, \mathbf u_{N-1}, \mathbf p]
+\f]
+
+where the subscript \f$k\f$ denotes the mesh point (\f$k=0,\dots, N-1\f$) and \f$\mathbf x_0 = \mathbf x(t_i), \mathbf u_0 = \mathbf u(t_i), \mathbf x_{N-1} = \mathbf x(t_f), \mathbf u_{N-1} = \mathbf u(t_f)\f$. The OCP dynamic constraint, running cost, and integral constraint are integrated over one mesh interval using an integration scheme, to give
+
+\f[
+\mathbf F(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p) = 0,
+\f]
+
+\f[
+\int_{t_k}^{t_{k+1}} \ell dt =  L(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p),
+\f]
+
+\f[
+\int_{t_k}^{t_{k+1}} \mathbf q dt = \mathbf Q(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p).
+\f]
+
+The integration over one mesh interval is performed by the user, allowing to freely select the preferred integration scheme (e.g. trapezoidal rule, etc...).
+
+The path constraint is evaluated at each mesh point, \f$\mathbf c(t_k, \mathbf x_k, \mathbf u_k, \mathbf p)\f$, while the boundary cost and boundary conditions are evaluated with the initial and final mesh points, \f$m(\mathbf x_0, \mathbf u_0, \mathbf x_{N-1}, \mathbf u_{N-1}, \mathbf p)\f$ and \f$\mathbf b(\mathbf x_0, \mathbf u_0, \mathbf x_{N-1}, \mathbf u_{N-1}, \mathbf p)\f$. The subsequent NLP consists in finding \f$\mathbf z\f$ that minimizes
+
+\f[
+J = m(\mathbf x_0, \mathbf u_0, \mathbf x_{N-1}, \mathbf u_{N-1}, \mathbf p) +
+\sum_{k=0}^{N-2} L(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p),
+\f]
+
+subject to
+
+\f[
+\mathbf g_l \leq \mathbf g(\mathbf z) \leq \mathbf g_u,
+\f]
+
+where \f$\mathbf g:\mathbb R^{n_z}\to \mathbb R^{n_g}\f$ are the NLP constraints (with bounds \f$\mathbf g_l, \mathbf g_u\f$) and collect \f$\mathbf F(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)\f$ for \f$k=0,\dots,N-2\f$, \f$\mathbf c(t_k, \mathbf x_k, \mathbf u_k, \mathbf p)\f$ for \f$k=0,\dots,N-1\f$, \f$\mathbf b(\mathbf x_0, \mathbf u_0, \mathbf x_{N-1}, \mathbf u_{N-1}, \mathbf p)\f$, and \f$\sum_{k=0}^{N-2} \mathbf Q(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)\f$. The dimension of \f$\mathbf g\f$ is thus \f$n_g=(N-1)\cdot (n_x+n_c) + n_c + n_b + n_q\f$.
+
+#### NLP Derivatives
+
+For the solution of the OCP, derivatives of the functions need to be calculated. For the MATLAB and Python interfaces, the calculation is performed by the build function; for the C++ interface, this operation should be carefully performed by the user using CasADi. Required derivatives consist of:
+
+* The gradients of the running and boundary costs, defined as
+
+\f[
+\nabla m = \frac{\partial m}{\partial (\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p)},
+\f]
+
+\f[
+\nabla L=\frac{\partial L}{\partial (\mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)}.
+\f]
+
+* The Jacobian matrices of the dynamic constraint, path constraint, boundary conditions, and integral constraint, defined as
+
+\f[
+\mathbf J_F = \frac{\partial \mathbf F}{\partial (\mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)},
+\f]
+
+\f[
+\mathbf J_c = \frac{\partial \mathbf c}{\partial(\mathbf x, \mathbf u, \mathbf p)},
+\f]
+
+\f[
+\mathbf J_b = \frac{\partial \mathbf b}{\partial (\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p)}.
+\f]
+
+\f[
+\mathbf J_Q = \frac{\partial \mathbf Q}{\partial (\mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)},
+\f]
+
+* Optionally, the Hessian matrix of the Lagragian. The Lagragian is defined as
+
+\f[
+\mathcal L = \mathcal L_b + \sum_{k=0}^{N-2} \mathcal L_i,
+\f]
+
+  where:
+
+* \f$\mathcal L_b\f$ is the *boundary* lagragian defined as
+
+\f{eqnarray*}{
+\mathcal L_b (t_f,\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p, \sigma, \lambda_c, \lambda_b)&=&\sigma\cdot m (\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p) + \mathbf \lambda_b^T \mathbf b (\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p) + \\
+& & + \mathbf \lambda_c^T \mathbf c(t_f,\mathbf x_f, \mathbf u_f, \mathbf p),
+\f}
+
+* \f$\mathcal L_i\f$ is the *internal* lagragian defined as
+
+\f{eqnarray*}{
+\mathcal L_i(t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p, \sigma, \lambda_c,\lambda_f,\lambda_q) &=& \sigma\cdot L (t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p) + \mathbf \lambda_f ^T \mathbf F (t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p) + \\
+ & & +\mathbf \lambda_c^T \mathbf c (t_k, \mathbf x_k,\mathbf u_k, \mathbf p) + \mathbf \lambda_q ^T \mathbf Q (t_k, \mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p) .
+\f}
+
+Here, \f$\sigma\in\mathbb R ,\lambda_c\in\mathbb R^{n_c},\lambda_f\in\mathbb R^{n_x},\lambda_b\in\mathbb R^{n_b},\lambda_q\in\mathbb R^{n_q}\f$ are the multipliers associated with cost, path constraint, dynamic constraint, boundary condition, and integral constraint. The two Hessian matrices that need to be calculated and associated with the Lagragians \f$\mathcal L_b, \mathcal  L_i\f$ are defined as
+
+\f[
+\mathbf H_b=\frac{\partial^2\mathcal L_b}{\partial (\mathbf x_i,\mathbf u_i,\mathbf x_f, \mathbf u_f,\mathbf p)^2},
+\f]
+
+\f[
+\mathbf H_i= \frac{\partial^2\mathcal L_i}{\partial (\mathbf x_k, \mathbf u_k, \mathbf x_{k+1}, \mathbf p)^2}.
+\f]
+
+#### Final control
+
+It is worth noting that the NLP variables include also the final control \f$\mathbf u(t_f)\f$. Also, the boundary conditions and the boundary cost do not depend only on the initial \f$\mathbf x(t_i)\f$ and final \f$\mathbf x(t_f)\f$ state (as typically is), but also on the initial \f$\mathbf u(t_i)\f$ and final \f$\mathbf u(t_f)\f$ control. If no final conditions are provided for the final control, or if the boundary cost does not depend on the final control, this remains undetermined: typically, the solution found is identical to the provided guess. However sometimes the solver may not converge due to the undetermined final control: in such case one needs to provide final conditions for the final contro (e.g. \f$\mathbf u(t_f)=0\f$). The choice to include the final control into the NLP variables is to have the same number of time samples for \f$\mathbf x\f$ and \f$\mathbf u\f$.
+
+## NLP solver settings
+
+### IPOPT
+
+For IPOPT solver, the following settings are employed by default:
+
+```
+### IPOPT default options ###
+linear_solver           mumps
+output_file             <name>.log
+print_level             0 # minimal print of interation info is performed by the solver every 10 iterations
+file_print_level        5 # full interation info are printed into the output file
+print_timing_statistics yes
+hessian_approximation   exact # ONLY if Hessian is provided, limited-memory otherwise
+warm_start_init_point   yes # ONLY if guess for multipliers are provided, no otherwise
+```
+
+You can change any IPOPT option by creating a `ipopt.opt` file in the directory you are executing the program. See [IPOPT Options](https://coin-or.github.io/Ipopt/OPTIONS.html) for a full list of options. For instance, you may employ a different linear solver (if available in your IPOPT version) using the option `linear_solver`.
+
+### KNITRO
+
+For KNITRO solver, the following settings are employed by default:
+
+```
+### KNITRO default options ###
+algorithm         1 # interior-point
+outname           <name>.log
+outmod            1 # output sent to a file, minimal print of interation info every 10 iterations
+outlev            3 # full interation info are printed into the output file
+strat_warm_start  1 # ONLY if guess for multipliers are provided, 0 otherwise
+hessopt           1 # ONLY if Hessian is provided, 6 otherwise (LBFGS)
+```
+
+You can change any KNITRO option by creating a `knitro.opt` file in the directory you are executing the program. See [KNITRO Options](https://www.artelys.com/app/docs/knitro/3_referenceManual/userOptions.html) for a full list of options.
+
+### WORHP
+
+For WORHP solver, the following settings are employed by default:
+
+```xml
+<!-- WORHP default options -->
+<?xml version="1.0" encoding="UTF-8"?>
+<WorhpData revision="1780">
+  <Params>
+    <INT    name="Algorithm"    >1</INT>      <!-- sequential-quadratic programming             -->
+    <BOOL   name="UserHM"       >True</BOOL>  <!-- ONLY if Hessian is provided, False otherwise -->
+    <INT    name="BFGSmethod"   >2</INT>      <!-- used ONLY if Hessian is not provided         -->
+  </Params>
+</WorhpData>
+```
+
+WORHP output messages are redirected to a log file named `<name>.log`.
+
+You can change any WORHP option by creating a `worhp.xml` file in the directory you are executing the program. See the WORHP manual at [WORHP manual](https://worhp.de/latest/download/user_manual.pdf) for a full list of options.
+
+### SNOPT
+
+For SNOPT solver, the following settings are employed by default:
+
+```
+*** SNOPT defailt options ***
+Begin options
+  Solution  No *Do not print solution in print file
+End options
+```
+
+SNOPT output messages are redirected to a log file named `<name>.log`.
+
+You can change any SNOPT option by creating a `snopt.opt` file in the directory you are executing the program. See the SNOPT manual at [SNOPT manual](https://ccom.ucsd.edu/~optimizers/static/pdfs/snopt7-7.pdf) for a full list of options.

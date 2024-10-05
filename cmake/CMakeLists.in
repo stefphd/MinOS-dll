@@ -1,0 +1,74 @@
+# Build the Python and C++ examples
+
+cmake_minimum_required(VERSION 3.25)
+
+# Set the project name etc
+project(@CMAKE_PROJECT_NAME@-cpp-examples
+    LANGUAGES C CXX
+    VERSION @CMAKE_PROJECT_VERSION@
+    DESCRIPTION "C++ and Python examples for @CMAKE_PROJECT_NAME@"
+)
+
+# Options
+option(SKIP_HESSIAN "Skip Hessian calculation" @SKIP_HESSIAN@)
+set(NLPSOLVER_EXAMPLE @NLPSOLVER_EXAMPLE@ CACHE STRING "NLP solver for C++ examples (ipopt, knitro, worhp, snopt)")
+
+# CPP_EXAMPLES_NLPSOL choices
+set_property(CACHE NLPSOLVER_EXAMPLE PROPERTY STRINGS
+             "ipopt" "knitro" "worhp" "snopt")
+
+# Set paths
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
+set(MINOS_DIR ${CMAKE_SOURCE_DIR}/../../)
+set(BINARY_DIR ${CMAKE_SOURCE_DIR}/../../bin)
+
+# Set the C++ standard to C++ 11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Set module path
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+
+# Find MinOS
+find_package(MINOS REQUIRED)
+
+# Create an interface library for minos-base library
+add_library(minoslib INTERFACE)
+target_include_directories(minoslib
+                           INTERFACE ${MINOS_INCLUDE_DIR})
+target_link_libraries(minoslib
+                      INTERFACE ${MINOS_LIBRARY})
+
+# Check Hessian
+if (SKIP_HESSIAN)
+    set(MINOS_LIB ${MINOS_LIB}-nh)
+    # Add --skip_hessian flag if SKIP_HESSIAN
+    set(SKIP_HESSIAN_FLAG --skip_hessian)
+endif()
+
+# Build C++ examples
+# Enable testing functionality
+enable_testing()
+
+# Find python interpreter
+find_package(Python3 
+            COMPONENTS Interpreter REQUIRED)
+
+# Check CasADi
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c "import casadi"
+    RESULT_VARIABLE CASADI_RESULT)
+
+if (NOT CASADI_RESULT EQUAL 0)
+    message(FATAL_ERROR "CasADi not found.")
+endif()
+message(STATUS "CasADi found.")   
+
+# Add example subdirectories
+add_subdirectory(brachistochrone)
+add_subdirectory(brachistochrone_auxdata)
+add_subdirectory(brysonDenham)
+add_subdirectory(hyperSensitive)
+add_subdirectory(goddardRocket)
+add_subdirectory(directCollocation)
