@@ -245,13 +245,10 @@ int SNOPTSolver::callSolve(
 }
 
 /** A wrapper around SNOPTSolver::callSolve to load the static function from the dynamic library in runtime */
-#ifndef MINOS_DECLSPEC
-#define MINOS_DECLSPEC __declspec(dllexport)
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
-MINOS_DECLSPEC int callSolve(
+MINOS_EXPORT_API int callSolve(
     OCPInterface* ocpInterface
 ) {
     return SNOPTSolver::callSolve(ocpInterface);

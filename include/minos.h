@@ -18,12 +18,22 @@
 #include <cstdio> // for standard printf
 #include <atomic> // for std:atomic_bool
 
-#ifndef MINOS_DECLSPEC
-#ifdef MAKE_MINOS
-#  define MINOS_DECLSPEC __declspec(dllexport)
-#else
-#  define MINOS_DECLSPEC __declspec(dllimport)
-#endif
+#ifndef MINOS_EXPORT_API
+    #ifdef _WIN32  // For Windows
+        #ifdef MAKE_MINOS
+            #define MINOS_EXPORT_API __declspec(dllexport)
+        #else
+            #define MINOS_EXPORT_API __declspec(dllimport)
+        #endif
+    #elif defined(__linux__) || defined(__APPLE__)  // For Linux and macOS
+        #ifdef MAKE_MINOS
+            #define MINOS_EXPORT_API __attribute__((visibility("default")))
+        #else
+            #define MINOS_EXPORT_API
+        #endif
+    #else
+        #define MINOS_EXPORT_API // Fallback for other platforms
+    #endif
 #endif
 
 /** 
@@ -32,7 +42,7 @@
  * This class provides an interfaces to the user for an easy setting and solving 
  * of the optimal-control problem.
  */
-class MINOS_DECLSPEC OCPInterface {
+class MINOS_EXPORT_API OCPInterface {
 
 private:
 
@@ -48,8 +58,6 @@ private:
 
     /* Friend class for SNOPT interface */
     friend class SNOPTSolver;
-
-    /* Friend class for import library */
 
     /* Typedefs for OCP & NLP functions */
     typedef int         (*EvalFunc)     (const double**, double**, int*, double*, int);
@@ -398,7 +406,7 @@ public:
      * 
      * \return Output stream.
      */
-    friend MINOS_DECLSPEC std::ostream& operator<<(
+    friend MINOS_EXPORT_API std::ostream& operator<<(
         std::ostream& os, 
         OCPInterface& ocpInterface
     );
