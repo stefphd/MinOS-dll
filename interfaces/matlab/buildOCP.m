@@ -168,8 +168,8 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
 
     % Generate code
     fprintf("Generating C code...\n")
-    cppfilename = [name '.cpp'];
-    cg = CodeGenerator(cppfilename, ...
+    cfilename = [name '.c'];
+    cg = CodeGenerator(cfilename, ...
                        struct('casadi_int', 'int', ... % use casadi_int = int for consistency with IPOPT Index type
                        'mex', true)); % hack. add fake mexFunction to compile using mex
     % Append ocp functions to cg
@@ -180,20 +180,21 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     pause(0) % just to print out all fprintf
 
     % Compile library
-    clear(name) % avoid linker error
     tic;
-    mex(cppfilename, '-outdir', outdir, '-output', name); % compile has a mex file
-    mexTime = toc;
-
-    % Chane extension to .dll or .so
-    dllext = 'so';
-    if ispc
-        dllext = 'dll';
+    if ispc % pc: use mex functiion to compile library
+        clear(name) % avoid linker error
+        mex([outdir cfilename], '-outdir', outdir, '-output', name); % compile has a mex file
+        movefile([outdir filesep name '.' mexext], [outdir filesep name '.dll']); % change extension to .dll
+    else % linux: call gcc to compile library  
+        command = ['gcc -shared -fPIC ' outdir cfilename ' -o ' outdir name '.so'];
+        exit = system(command);
+        if (exit ~= 0)
+            error('buildMex:buildFailed','Unable to build shared library from file %s', cfilename);
+        end
     end
-    movefile([outdir filesep name '.' mexext], [outdir filesep name '.' dllext]);
-
+    mexTime = toc;
     % Clean
-    delete([outdir cppfilename])
+    delete([outdir cfilename])
 
     % For windows add <basedir>
     if ispc

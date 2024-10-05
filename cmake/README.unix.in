@@ -90,18 +90,17 @@ export LD_LIBRARY_PATH=$IPOPT_DIR/lib:$LD_LIBRARY_PATH
 
 Getting started is shown for MATLAB usage. For Python, a similar (yet a bit different) workflow is employed.
 
-First, be sure that MEX functionality is available in MATLAB.
+First, be sure that GCC is located by MATLAB.
 
 ```matlab
-mex -setup c   % Setup C compiler to the preferred one
-mex -setup cpp % Setup C++ compiler to preferred one
+!gcc --version
 ```
 
 CasADi should be employed to setup the OCP. In the follow, the brachistochrone problem is used as a banchmark example. First, add the software directory to the MATLAB path and import CasADi.
 
 ```matlab
 clc, clear
-addpath('<path/to/installation>/bin'); % add MinOS binary to MATLAB path (replace <path/to/installation> with your path)
+addpath('<path/to/installation>/lib'); % add MinOS library to MATLAB path (replace <path/to/installation> with your path)
 import casadi.* % import casadi
 ```
 

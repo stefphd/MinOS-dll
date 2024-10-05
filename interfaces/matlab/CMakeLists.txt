@@ -5,14 +5,18 @@ find_library(MXLIBUT NAMES libut ut
 matlab_add_mex(NAME minosMex
                 SRC ${CMAKE_SOURCE_DIR}/interfaces/matlab/minosMex.cpp
                 LINK_TO ${MXLIBUT} minoslib)
+set(MINOSMEX_DESTDIR lib)
+if (WIN32)
+        set(MINOSMEX_DESTDIR bin)
+endif()
 install(TARGETS minosMex
         RUNTIME 
-        DESTINATION bin
+        DESTINATION ${MINOSMEX_DESTDIR}
 	COMPONENT matlab)
 # Install files
 install(FILES buildOCP.m
         COMPONENT matlab
-        DESTINATION bin)
+        DESTINATION ${MINOSMEX_DESTDIR})
 install(DIRECTORY ./examples/
         COMPONENT matlab
         DESTINATION ./examples/matlab

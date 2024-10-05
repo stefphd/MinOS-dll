@@ -12,6 +12,7 @@ import glob
 import numpy as npy
 import io
 import glob
+import subprocess
 
 # Builder class
 class Builder:
@@ -136,36 +137,37 @@ class Builder:
         cg.generate(self.outdir)
 
     def build(self) -> None:
-        # Fake pyx file
-        if not os.path.exists(self.builddir):
-            os.makedirs(self.builddir)
-        pyxsource = self.builddir + "/" + self.name + "-tmp.pyx"
-        with open(pyxsource, "w") as file:
-            file.write("#cython: language_level=3")
-        # Build settings
-        sources = [self.outdir + self.cfilename, pyxsource]
+        print("Generating C code...")
+        if sys.platform == "win32": # pc: use Cython with fake pyx file to build the dll module
+            # Fake pyx file
+            if not os.path.exists(self.builddir):
+                os.makedirs(self.builddir)
+            pyxsource = self.builddir + "/" + self.name + "-tmp.pyx"
+            with open(pyxsource, "w") as file:
+                file.write("#cython: language_level=3")
+            # Build settings
+            sources = [self.outdir + self.cfilename, pyxsource]
+            # Call to build
+            extensions = [Extension(name=self.name, 
+                                    sources=sources,
+                                    language="c++")]
+            setup(name=self.name,
+                ext_modules=cythonize(extensions, build_dir=self.builddir),
+                script_args=["build_ext"],
+                options={"build_ext":{"build_lib": self.outdir, 
+                            "build_temp": self.builddir}})
+            # Find the generated file and rename changing ext
+            modulefile = glob.glob(self.outdir + self.name + "*.pyd")
+            if len(modulefile) is not 0:
+                ValueError("Unable to rename Python module")
+            os.replace(modulefile[0], self.outdir + self.name + ".dll")
+        else: # linux: call gcc to compile library  
+            command = ['gcc', '-shared', '-fPIC', self.outdir + self.cfilename, '-o', self.outdir + f'{self.name}.so']
+            try:
+                subprocess.run(command, check=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"Unable to build shared library from file {self.cfilename}") from e
         
-        # Call to build
-        extensions = [Extension(name=self.name, 
-                                sources=sources,
-                                language="c++")]
-        setup(name=self.name,
-            ext_modules=cythonize(extensions, build_dir=self.builddir),
-            script_args=["build_ext"],
-            options={"build_ext":{"build_lib": self.outdir, 
-                     "build_temp": self.builddir}})
-
-        # Find the generated file and rename changing ext
-        modext = "so"
-        dllext = "so"
-        if sys.platform == "win32":
-            modext = "pyd"
-            dllext = "dll"
-        modulefile = glob.glob(self.outdir + self.name + "*." + modext)
-        if len(modulefile) is not 0:
-            ValueError("Unable to rename Python module")
-        os.replace(modulefile[0], self.outdir + self.name + "." + dllext)
-
         # Clean
         os.remove(self.outdir + self.cfilename)
 

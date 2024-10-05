@@ -8,10 +8,13 @@ cython_transpile(${CMAKE_SOURCE_DIR}/interfaces/python/minosPy.pyx
                 OUTPUT_VARIABLE MINOSPYIPOPT)
 python_add_library(minosPy MODULE "${MINOSPYIPOPT}")
 target_link_libraries(minosPy PRIVATE minoslib)
+set(MINOSPY_DESTDIR lib)
+if (WIN32)
+        set(MINOSPY_DESTDIR bin)
+endif()
 install(TARGETS minosPy
-        DESTINATION bin
+        DESTINATION ${MINOSPY_DESTDIR}
 	COMPONENT python)
-
 # Install rules
 install(FILES requirements.txt
         COMPONENT python

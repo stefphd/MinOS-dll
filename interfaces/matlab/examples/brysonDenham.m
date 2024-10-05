@@ -6,7 +6,11 @@
 
 clc, clear
 
-addpath('./../../bin');
+if ispc
+    addpath('./../../bin');
+else
+    addpath('./../../lib');
+end
 
 % import casadi
 import casadi.*

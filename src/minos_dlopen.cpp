@@ -53,6 +53,10 @@
     #endif
     #define LOADLIBRARY(name, libhandle) name += LIBEXT;                     \
         void* libhandle = dlopen(name.c_str(), RTLD_LAZY);                   \
+        if (!libhandle) { /* try with name "lib<name>" */                    \
+            std::string libname = "lib" + name;                              \
+            libhandle = dlopen(libname.c_str(), RTLD_LAZY);                  \
+        }                                                                    \
         if (!libhandle) {                                                    \
             throw std::runtime_error("Failed to load shared library: " + name + " - " + dlerror()); \
             return false;                                                    \
@@ -101,7 +105,7 @@ bool OCPInterface::load_ocplib(
     // Save the library handle
     ocp_lib = (void*) libhandle;
     // Check hessian
-    if (!GetProcAddress(libhandle, "ocp_hessb") || !GetProcAddress(libhandle, "ocp_hessi")) {
+    if (!ocp_hessb || !ocp_hessi) {
         ocp_hessb = NULL;
         ocp_hessi = NULL;
     }
