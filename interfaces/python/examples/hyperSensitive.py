@@ -2,7 +2,10 @@
 
 # Hyper-Sensitive problem
 import sys
-sys.path.append("./../../bin")
+if sys.platform == "win32":
+    sys.path.append("./../../bin")
+else:
+    sys.path.append("./../../lib")
 
 import casadi as ca # import CASADI
 import minosPy # import MINOS
