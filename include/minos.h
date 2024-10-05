@@ -497,7 +497,8 @@ public:
      */
     int get_num_iter();
 
-    /** Gets the convergence history.
+    /** 
+     * \brief Gets the convergence history.
      * 
      * Gets the convergence history of the objective, infinite norm of constraint violation, and infinite norm of optimality.
      * Allocation of the required memory should be performed by the user according to the length of the arrays.
