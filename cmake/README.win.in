@@ -15,6 +15,9 @@ Version @CMAKE_PROJECT_VERSION@
 * [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances to MATLAB, Python, and C++)
 * [MSVC](https://learn.microsoft.com/en-us/cpp)(version >=2019) compiler (provided with Visual Studio) or [MinGW64-w64](https://www.mingw-w64.org/). Intel compilers may be also employed
 * [CMake](https://cmake.org/) build system to build the C++ examples
+* (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver. License is freely available for academics. Make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is set.
+* (optional) [WORHP](https://worhp.de/) solver. License is freely available for academics. One should set a `WORHPDIR` environment variable pointing to the WORHP installation path.
+* (optional) [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) solver,  which is a commercial software. Free trial license is freely available for academics. Make sure that a `SNOPTDIR` environment variable pointing to the KNITRO installation path is set.
 
 ## Installation
 
@@ -25,6 +28,8 @@ For Python usage, you need to install the requirements in `<path/to/installation
 Examples can be found in `<path/to/installation>/examples`.
 
 \warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `PATH`.
+
+\note IPOPT binaries with linear solver MUMPS are distributed with the package. Current employed version is 3.14. You may also employ a your version of IPOPT by setting an environment variable `IPOPT_DIR` pointing to the IPOPT installation path containing `bin` and `lib` folders. In such case, make sure that the IPOPT binaries are found by the system, i.e. the folder is in the system PATH. For instance, you may also employ an alternative linear solver instead of MUMPS, such as HSL routines, by specifying your installation of IPOPT using the environment variable `IPOPT_DIR`. In such case, you need to employ the ipopt.opt file to specify the alternative linear solver.
 
 ## Getting started
 

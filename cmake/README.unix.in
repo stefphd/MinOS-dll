@@ -15,6 +15,10 @@ Version @CMAKE_PROJECT_VERSION@
 * [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++)
 * [gcc-g++](https://gcc.gnu.org/) compiler 
 * [CMake](https://cmake.org/) build system to build the C++ and Python examples
+* [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://mumps-solver.org/index.php) solver (together with their dependencies), which is freely available; alternative linear solvers, such as HSL routines, might be used
+* (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver, which is a commercial software. Free trial license is freely available for academics. Make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is set.
+* (optional) [WORHP](https://worhp.de/) solver. License is freely available for academics. If not installed in system directories, one should set a `WORHPDIR` environment variable pointing to the WORHP installation path.
+* (optional) [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) solver,  which is a commercial software. Free trial license is freely available for academics. Make sure that a `SNOPTDIR` environment variable pointing to the KNITRO installation path is set.
 
 ## Installation
 
@@ -25,6 +29,62 @@ For Python usage, you need to install the requirements in `<path/to/installation
 Examples can be found in `<path/to/installation>/examples`.
 
 \warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`.
+
+### Installing IPOPT
+
+IPOPT should be built and installed separately. IPOPT version 3.14 is currently supported and preferred.
+For Debian-based distribution you can follow the steps in [Installing IPOPT](https://coin-or.github.io/Ipopt/INSTALL.html). 
+For other distro, just replace the commands with you package manager and the corresponding packages.
+In other distributions pre-built IPOPT packages may be employed, as they meet the supported version (e.g. [IPOPT-aur](https://aur.archlinux.org/packages/coin-or-ipopt) for ArchLinux).
+Basically, to build and install IPOPT with linear solver MUMPS you need to:
+
+1. Install necessary tools. For Debian-based distro
+
+  ```command
+  sudo apt-get install gcc g++ gfortran git patch wget pkg-config liblapack-dev libmetis-dev
+  ```
+
+  Use your package manager with the corresponding package for other distros.
+
+2. Build and install MUMPS linear solver
+
+  ```command
+  git clone https://github.com/coin-or-tools/ThirdParty-Mumps.git
+  cd ThirdParty-Mumps
+  ./get.Mumps
+  ./configure
+  make
+  sudo make install
+  cd ..
+  ```
+
+3. Build and install IPOPT
+
+  ```command
+  git clone https://github.com/coin-or/Ipopt.git
+  cd Ipopt
+  mkdir build
+  cd build
+  ./../configure
+  make
+  make test
+  sudo make install
+  ```
+
+Be sure that IPOPT and MUMPS (libipopt.so and libcoinmumps.so) are installed in one of the following paths:
+
+* `/usr/lib`
+* `/usr/local/lib`
+
+Alternativelly, you could set an environment variable `$IPOPT_DIR` pointing to the IPOPT installation path containing lib folder. Such folder should also be added to the `$LD_LIBRARY_PATH` environment variable, e.g. using
+
+```command
+export LD_LIBRARY_PATH=$IPOPT_DIR/lib:$LD_LIBRARY_PATH
+```
+
+\note You may also employ an alternative linear solver instead of MUMPS, such as HSL routines. In such case, you need to employ the ipopt.opt file to specify the alternative linear solver.
+
+\warning MATLAB supports only 64-bit integer version of IPOPT (together with its dependencies), since LAPACK library used by MATLAB employs 64-bit integers; see [Building for 64-bit integers](https://coin-or.github.io/Ipopt/INSTALL.html#INT64_BUILD) for details on building IPOPT with 64-bit integers. Basically, you need to obtain liblapack64-dev and build METIS with 64-bit integers; MUMPS and IPOPT can be built with 64-bit integers using the configure flag `--with-intsize=64`. Note that using a 64-bit integer version of IPOPT has a number of limitations, such such limited linear solvers that can be used.
 
 ## Getting started
 
