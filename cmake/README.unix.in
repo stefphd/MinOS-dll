@@ -24,11 +24,11 @@ Version @CMAKE_PROJECT_VERSION@
 
 For MATLAB usage, you need to add `<path/to/installation>/bin` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/bin/minosMex.mexa64` and `<path/to/installation>/bin/buildOCP.m`.
 
-For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the library `<path/to/installation>/bin/minosPy.so`.
+For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/bin/minosPy.so`.
 
 Examples can be found in `<path/to/installation>/examples`.
 
-\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`.
+\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`. For usage in Python, it may also be convenient to add the binary directory into `PYTHONPATH`.
 
 ### Installing IPOPT
 
