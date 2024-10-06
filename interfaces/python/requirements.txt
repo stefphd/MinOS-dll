@@ -1,5 +1,4 @@
 casadi >= 3.6.3
-Cython >= 3.0.10
-setuptools >= 68.0.0
+setuptools >= 70.0.0
 matplotlib >= 3.5.3
 numpy >= 1.21.6

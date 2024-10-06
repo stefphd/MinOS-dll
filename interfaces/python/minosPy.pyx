@@ -3,16 +3,11 @@
 from minosPy cimport OCPInterface as CObj
 from cython import cast
 from libcpp.string cimport string
-from setuptools import setup, Extension
-from Cython.Build import cythonize
+from distutils import ccompiler
 import casadi as ca
+import numpy as npy
 import os
 import sys
-import glob
-import numpy as npy
-import io
-import glob
-import subprocess
 
 # Builder class
 class Builder:
@@ -25,8 +20,7 @@ class Builder:
             outdir += "/"
         self.name = name
         self.outdir = outdir
-        self.cfilename = self.name + ".cpp"
-        self.builddir = self.outdir + "build"
+        self.cfilename = self.name + ".c"
 
     def __add2path__(self, path) -> None:
         PATH = os.getenv('PATH') if 'PATH' in os.environ else ""
@@ -137,40 +131,19 @@ class Builder:
         cg.generate(self.outdir)
 
     def build(self) -> None:
-        print("Generating C code...")
-        if sys.platform == "win32": # pc: use Cython with fake pyx file to build the dll module
-            # Fake pyx file
-            if not os.path.exists(self.builddir):
-                os.makedirs(self.builddir)
-            pyxsource = self.builddir + "/" + self.name + "-tmp.pyx"
-            with open(pyxsource, "w") as file:
-                file.write("#cython: language_level=3")
-            # Build settings
-            sources = [self.outdir + self.cfilename, pyxsource]
-            # Call to build
-            extensions = [Extension(name=self.name, 
-                                    sources=sources,
-                                    language="c++")]
-            setup(name=self.name,
-                ext_modules=cythonize(extensions, build_dir=self.builddir),
-                script_args=["build_ext"],
-                options={"build_ext":{"build_lib": self.outdir, 
-                            "build_temp": self.builddir}})
-            # Find the generated file and rename changing ext
-            modulefile = glob.glob(self.outdir + self.name + "*.pyd")
-            if len(modulefile) is not 0:
-                ValueError("Unable to rename Python module")
-            os.replace(modulefile[0], self.outdir + self.name + ".dll")
-        else: # linux: call gcc to compile library  
-            command = ['gcc', '-shared', '-fPIC', self.outdir + self.cfilename, '-o', self.outdir + f'{self.name}.so']
-            try:
-                subprocess.run(command, check=True)
-            except subprocess.CalledProcessError as e:
-                raise RuntimeError(f"Unable to build shared library from file {self.cfilename}") from e
-        
+        # Create a new compiler instance
+        compiler = ccompiler.new_compiler()
+        # Compile the source file to an object file
+        obj_files = compiler.compile([self.outdir + self.cfilename])
+        # Extra args
+        args=[]
+        if sys.platform == "win32":
+            args.append("/DLL")
+        # Link the object file to create the shared library
+        compiler.link_shared_lib(obj_files, self.outdir + self.name, extra_preargs=args)
         # Clean
         os.remove(self.outdir + self.cfilename)
-
+        [os.remove(obj_file) for obj_file in obj_files]
         # For Win add <__basedir__> to PATH if not present
         if sys.platform == "win32":
             self.__add2path__(self.__basedir__)
