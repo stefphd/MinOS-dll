@@ -138,7 +138,9 @@ class Builder:
         # Extra args
         args=[]
         if cc.compiler_type is "msvc":
-            args.append("/DLL /IMPLIB:NUL") # Create DLL with no export LIB
+            args.append("/DLL") # Create DLL 
+            args.append("/NOIMPLIB") # No create LIB
+            args.append("/NOEXP") # No create EXP
         # Link the object file to create the shared library
         cc.link_shared_lib(obj_files, self.outdir + self.name, extra_preargs=args)
         # Clean
