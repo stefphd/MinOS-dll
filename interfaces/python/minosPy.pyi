@@ -1,4 +1,4 @@
-# Stub file for OCPInterface
+# Stub file for MinosPy
 import numpy
 from typing import Tuple
 import casadi 
