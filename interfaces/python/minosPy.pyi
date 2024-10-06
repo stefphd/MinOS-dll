@@ -7,21 +7,21 @@ class Builder:
     """
     A class to generate and build the OCP Python module embedding the solver.
     Usage is 
-        - b = minos.Builder(name: str, outdir: str = "./")
+        - b = minosPy.Builder(name: str, outdir: str = "./")
         - b.generate(ocp_runcost: casadi.Function, ocp_bcscost: casadi.Function, ocp_dyn: casadi.Function, ocp_path: casadi.Function, ocp_bcs: casadi.Function, skip_hessian: bool = False)
-        - b.build(nlpsolver: str = "ipopt")
+        - b.build(compiler: str = None)
     
     Args:
-        name (str): name for the OCP Python module to build.
-        outdir (str): output directory. Should ends with "/".
+        name (str): name for the OCP library to build.
+        outdir (str): output directory. Should end with "/".
     """
     def __init__(self, name: str, outdir: str = "./") -> None:
         """
         Initialize the builder object.
 
         Args:
-            name (str): name for the OCP Python module to build.
-            outdir (str): output directory. Should ends with "/".
+            name (str): name for the OCP library to build.
+            outdir (str): output directory. Should end with "/".
         """
 
     def generate(self, ocp_runcost: casadi.Function, ocp_bcscost: casadi.Function, ocp_dyn: casadi.Function, ocp_path: casadi.Function, ocp_bcs: casadi.Function, ocp_int: casadi.Function, skip_hessian: bool = False) -> None:
@@ -41,18 +41,18 @@ class Builder:
             None
         """
     
-    def build(self, nlpsol: str = "ipopt") -> None:
+    def build(self, compiler: str = None) -> None:
         """
-        Build the Python module.
+        Build the problem into a library.
 
         Args:
-            nlpsol (str): NLP solver (either "ipopt" or "knitro").
+            compiler (str): compiler to use (None for default). Defaults are "unix" for Unix and "msvc" for Windows.
         
         Returns:
             None
         """
 
-class OCPInterface:
+class OCP:
     """
     Class to solve the set and solve the OCP using the built Python module.
     Class methods "set_bounds" and "set_guess" are employed to set the problem bounds and initial guess.
@@ -232,12 +232,13 @@ class OCPInterface:
         
         Args:
             **kwargs: keyword-value pair arguments. Possible keys are:
+                - nlpsolver: NLP solver to use.
                 - max_iter: maximum number of iterations.
                 - mu_init: initial barrier parameter.  This applies only when using interior-point and may be usefull for solving a new problem starting from a previous solution.
                 - flag_hessian: set to True to employ approximated Hessian (skip exact Hessian evaluation).
                 - display: set to False to turn off printing in standard output.
                 - print_itersol: print solution file every "print_itersol". 0 to disable.
-                - logfile: name of NLP log file. Use "" for default (<NLPSolverName>.log) and "none" for no log file.
+                - logfile: name of NLP log file. Use "" for default (<name>.log) and "none" for no log file.
 
         Returns:
             None

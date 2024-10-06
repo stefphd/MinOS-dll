@@ -23,11 +23,11 @@ Version @CMAKE_PROJECT_VERSION@
 
 For MATLAB usage, you need to add `<path/to/installation>/bin` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/bin/minosMex.mexw64` and `<path/to/installation>/bin/buildOCP.m`.
 
-For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/bin/minosPy.pyd`.
+For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/bin/minosPy.pyd`. It may be convenient to add the directory into `PYTHONPATH`.
 
 Examples can be found in `<path/to/installation>/examples`.
 
-\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `PATH`. For usage in Python, it may also be convenient to add the binary directory into `PYTHONPATH`.
+\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `PATH`.
 
 \note IPOPT binaries with linear solver MUMPS are distributed with the package. Current employed version is 3.14. You may also employ a your version of IPOPT by setting an environment variable `IPOPT_DIR` pointing to the IPOPT installation path containing `bin` and `lib` folders. In such case, make sure that the IPOPT binaries are found by the system, i.e. the folder is in the system PATH. For instance, you may also employ an alternative linear solver instead of MUMPS, such as HSL routines, by specifying your installation of IPOPT using the environment variable `IPOPT_DIR`. In such case, you need to employ the ipopt.opt file to specify the alternative linear solver.
 
@@ -313,16 +313,18 @@ An object-oriented Python interface is also available. The workflow is similar t
 After generating the OCP functions (as in MATLAB), the `minosPy.Builder` class is employed to build the dynamic library containing the OCP functions.
 
 ```python
-import minosPy
+from minosPy import Builder
 
 # Create OCP functions 
 # [...]
 
 # Build OCP
-builder = minosPy.Builder(name) # Name of the generated module
-minosPy.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
-minosPy.build() # Build the dynamic library containing the OCP function
+builder = Builder(name) # Name of the generated dynamic library
+builder.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
+builder.build() # Build the dynamic library containing the OCP function
 ```
+
+The default compiler used is MSVC. You may select an alternative compiler using `builder.build(compiler_name)` (use None for default).
 
 The `minosPy.OCP` class can be then employed (in the same file or in another) to import the dynamic library and solve the problem.
 Here, numpy array should be employed to define the bounds and guess for the OCP.
@@ -332,7 +334,7 @@ from minosPy import OCP
 import numpy as npy
 
 # Solve OCP
-ocp = OCPInterface(name, N, ti, tf) # create the object
+ocp = OCP(name, N, ti, tf) # create the object
 dims = ocp.get_dims() # dims is a dictionary containing nx, nu, np, ...
 
 # set bounds
@@ -388,6 +390,8 @@ with open(name + ".txt", "w") as file:
 ```
 
 Note that after calling `ocp.solve()` the OCP guesses are updated with the solution found, if successfull. This allows to re-run `ocp.solve()` starting from the previously-found solution.
+
+Refer to `<path/to/installation>/bin/minosPy.pyi` for detailed documentation on the usage.
 
 ## C++ interface (expert users)
 

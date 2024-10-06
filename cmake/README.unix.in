@@ -2,7 +2,7 @@
 
 @CMAKE_PROJECT_NAME@ (<b>Min</b>imal <b>O</b>ptimal-control <b>S</b>olver) is a C++  solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and @NLP_SOLVER@ to solve the subsequent large-scale nonlinear programming problem (NLP).
 
-Interfaces to MATLAB and Python are available, which generate a dynamic library for the OCP functions; a MEX function or a Python module are employed to load the generate library into the OCP solver. For expert user, the solver may be also used directly from C++.
+Interfaces to MATLAB and Python are available, which generate a shared library for the OCP functions; a MEX function or a Python module are employed to load the generate library into the OCP solver. For expert user, the solver may be also used directly from C++.
 
 Built and tested with Linux (Debian 12) with gcc/g++.
 
@@ -22,13 +22,13 @@ Version @CMAKE_PROJECT_VERSION@
 
 ## Installation
 
-For MATLAB usage, you need to add `<path/to/installation>/bin` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/bin/minosMex.mexa64` and `<path/to/installation>/bin/buildOCP.m`.
+For MATLAB usage, you need to add `<path/to/installation>/lib` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/lib/minosMex.mexa64` and `<path/to/installation>/lib/buildOCP.m`.
 
-For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/bin/minosPy.so`.
+For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/lib/minosPy.so`. It may be convenient to add the directory into `PYTHONPATH`.
 
 Examples can be found in `<path/to/installation>/examples`.
 
-\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`. For usage in Python, it may also be convenient to add the binary directory into `PYTHONPATH`.
+\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`.
 
 ### Installing IPOPT
 
@@ -108,7 +108,7 @@ Typically, solving options, model parameters, boundary conditions and problem bo
 
 ```matlab
 % Solving options
-name = 'brachistochrone'; % name of the problem (and generated dynamic library)
+name = 'brachistochrone'; % name of the problem (and generated shared library)
 skip_hessian = false; % use approximated hessian
 scheme = 'trapz'; %integration scheme: trapz, rk4, euler
 N = 500; % number of mesh points
@@ -254,7 +254,7 @@ Shortly, `buildOCP` performs the following operations:
 
 * use CasADi to automatically generate the required gradients, Jacobians and Hessians (if `skip_hessian = false`); by default it is `skip_hessian = false`.
 * use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.cpp`;
-* call the MATLAB command `mex` to build a dynamic library containing the OCP functions.
+* call the compiler `gcc` to build a shared library containing the OCP functions.
 
 The next steps consist in creating the guess and the problem structure to be provided to the MEX function.
 
@@ -364,21 +364,23 @@ The above workflow requires re-building every time the model parameters change. 
 ## Python interface
 
 An object-oriented Python interface is also available. The workflow is similar to that of MATLAB, except for the building and usage.
-After generating the OCP functions (as in MATLAB), the `minosPy.Builder` class is employed to build the dynamic library containing the OCP functions.
+After generating the OCP functions (as in MATLAB), the `minosPy.Builder` class is employed to build the shared library containing the OCP functions.
 
 ```python
-import minosPy
+from minosPy import Builder
 
 # Create OCP functions 
 # [...]
 
 # Build OCP
-builder = minosPy.Builder(name) # Name of the generated module
-minosPy.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
-minosPy.build() # Build the dynamic library containing the OCP function
+builder = Builder(name) # Name of the generated shared library
+builder.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
+builder.build() # Build the shared library containing the OCP function
 ```
 
-The `minosPy.OCP` class can be then employed (in the same file or in another) to import the dynamic library and solve the problem.
+The default compiler used is GCC. You may select an alternative compiler using `builder.build(compiler_name)` (use None for default).
+
+The `minosPy.OCP` class can be then employed (in the same file or in another) to import the shared library and solve the problem.
 Here, numpy array should be employed to define the bounds and guess for the OCP.
 
 ```python
@@ -386,7 +388,7 @@ from minosPy import OCP
 import numpy as npy
 
 # Solve OCP
-ocp = OCPInterface(name, N, ti, tf) # create the object
+ocp = OCP(name, N, ti, tf) # create the object
 dims = ocp.get_dims() # dims is a dictionary containing nx, nu, np, ...
 
 # set bounds
@@ -443,6 +445,8 @@ with open(name + ".txt", "w") as file:
 
 Note that after calling `ocp.solve()` the OCP guesses are updated with the solution found, if successfull. This allows to re-run `ocp.solve()` starting from the previously-found solution.
 
+Refer to `<path/to/installation>/lib/minosPy.pyi` for detailed documentation on the usage.
+
 ## C++ interface (expert users)
 
 Expert users may also employ MinOS in C++. Jacobians and possibly Hessians must be generated (again using CasADi):
@@ -465,7 +469,7 @@ Expert users may also employ MinOS in C++. Jacobians and possibly Hessians must 
 
 Again, the name of the CasADi functions is NOT arbitrary. The functions may have an additional input arguments `auxdata` in the case that auxdata need to be defined. Refer to the Optimal-control-problem section for the details on the OCP functions.
 
-The C code for these functions must be generated in a unique `.cpp` file (say `ocp.cpp`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int ="int"`. This option is needed to ensure consistency between the data type of CasADi and IPOPT. Note that the whole procedure can be done in Python using `minosPy.Builder.generate`, without the need to specify Jacobians or Hessians. The C code should be finally compiled as a dynamic library.
+The C code for these functions must be generated in a unique `.cpp` file (say `ocp.cpp`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int ="int"`. This option is needed to ensure consistency between the data type of CasADi and IPOPT. Note that the whole procedure can be done in Python using `minosPy.Builder.generate`, without the need to specify Jacobians or Hessians. The C code should be finally compiled as a shared library.
 
 The OCPInterface class is employed to load the generated library and solve the OCP. The C++ API documentation can be found in this documentation or in the header `./include/minos.h`.
 
