@@ -130,17 +130,17 @@ class Builder:
             cg.add(item)
         cg.generate(self.outdir)
 
-    def build(self) -> None:
+    def build(self, compiler: str = None) -> None:
         # Create a new compiler instance
-        compiler = ccompiler.new_compiler()
+        cc = ccompiler.new_compiler(compiler=compiler)
         # Compile the source file to an object file
-        obj_files = compiler.compile([self.outdir + self.cfilename])
+        obj_files = cc.compile([self.outdir + self.cfilename])
         # Extra args
         args=[]
-        if sys.platform == "win32":
+        if cc.compiler_type is "msvc":
             args.append("/DLL")
         # Link the object file to create the shared library
-        compiler.link_shared_lib(obj_files, self.outdir + self.name, extra_preargs=args)
+        cc.link_shared_lib(obj_files, self.outdir + self.name, extra_preargs=args)
         # Clean
         os.remove(self.outdir + self.cfilename)
         [os.remove(obj_file) for obj_file in obj_files]
