@@ -19,18 +19,24 @@ int OCPInterface::solve(
     OCPInterface::is_interrupt_requested = false;
 
     /* Load NLP solver library */
+    void* nlp_lib = NULL;
+    SolveFunc nlp_solve = NULL;
     try {
-        load_nlplib("minos-" + nlpsolver);
+        nlp_lib = load_nlplib("minos-" + nlpsolver);
+        nlp_solve = reinterpret_cast<SolveFunc>(import_nlpsolve(nlp_lib));
     } catch (const std::exception& e) {
         (*print_funptr)("%s\n", e.what());
         return -1;
     }
-
+    
     /* Lof filename */
     if (logfile.empty()) this->logfile = name + ".log"; // default logfile name is <name>.log
 
     /* Call to solve */
-    int status = (*callSolve)(this);
+    int status = (*nlp_solve)(this);
+
+    /* Free NLP library */
+    free_library(nlp_lib);
 
     /* Return status */
     return status;

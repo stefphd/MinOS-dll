@@ -12,6 +12,7 @@
 #include <Windows.h>
 #else
 #include <dlfcn.h> //dlopen
+#include <link.h>
 #endif
 
 // Macro to load library and function
@@ -32,7 +33,7 @@
                 NULL);                                                             \
             throw std::runtime_error("Failed to load DLL " + name + ": " +         \
                                     std::string(errorMessage));                    \
-            return false;                                                          \
+            return NULL;                                                          \
         }                                           
     #define LOADFUNCTION(libhandle, FuncType, functionName, doCheck)         \
         reinterpret_cast<FuncType>(GetProcAddress(libhandle, functionName)); \
@@ -41,7 +42,7 @@
             GetModuleFileNameA(libhandle, dllname, sizeof(dllname));         \
             FreeLibrary(libhandle);                                          \
             throw std::runtime_error("Failed to find function " + std::string(functionName) + " in DLL " + std::string(dllname)); \
-            return false;                                                    \
+            return NULL;                                                    \
         }
     #define FREELIBRARY(libhandle) FreeLibrary((HMODULE) libhandle);
 #else // Linux and MacOS
@@ -59,15 +60,17 @@
         }                                                                    \
         if (!libhandle) {                                                    \
             throw std::runtime_error("Failed to load shared library: " + name + " - " + dlerror()); \
-            return false;                                                    \
+            return NULL;                                                     \
         }
     #define LOADFUNCTION(libhandle, FuncType, functionName, doCheck)         \
         reinterpret_cast<FuncType>(dlsym(libhandle, functionName));          \
         if (doCheck && !dlsym(libhandle, functionName)) {                    \
-            char* err = dlerror();                                           \
+            struct link_map *map;                                            \
+            dlinfo(libhandle, RTLD_DI_LINKMAP, &map);                        \
+            std::string libname = std::string(map->l_name);                  \
             dlclose(libhandle);                                              \
-            throw std::runtime_error("Failed to find function " + std::string(functionName) + " in library - " + (err ? err : "")); \
-            return false;                                                    \
+            throw std::runtime_error("Failed to find function " + std::string(functionName) + " in library " + libname); \
+            return NULL;                                                    \
         }
     #define FREELIBRARY(libhandle) dlclose((void*) libhandle);
 #endif
@@ -88,8 +91,8 @@
                                         ocp_hessb ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_hessb" #suffix, false); \
                                         ocp_hessi ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_hessi" #suffix, false);
 
-/** Load library - implementation depends on the machine */
-bool OCPInterface::load_ocplib(
+/** Load the OCP library and import the related functions */
+void* OCPInterface::load_ocplib(
     std::string name
 ) {
     // Load library
@@ -102,33 +105,42 @@ bool OCPInterface::load_ocplib(
     LOADOCPFUNCS(_sparsity_in, SpInFunc);
     LOADOCPFUNCS(_sparsity_out, SpOutFunc);
     LOADOCPFUNCS(_work, WorkFunc);
-    // Save the library handle
-    ocp_lib = (void*) libhandle;
     // Check hessian
     if (!ocp_hessb || !ocp_hessi) {
         ocp_hessb = NULL;
         ocp_hessi = NULL;
     }
     // Ok, return true
-    return true;
+    return (void*) libhandle;
 }
 
-bool OCPInterface::load_nlplib(
+/** Import the NLP library */
+void* OCPInterface::load_nlplib(
     std::string name
 ) {
     // Load library
     LOADLIBRARY(name, libhandle);
-    // Load function
-    callSolve = LOADFUNCTION(libhandle, SolveFunc, "callSolve", true);
-    // Save the library handle
-    nlp_lib = (void*) libhandle;
     // Ok, return true
-    return true;
+    return (void*) libhandle;
 }
 
-void OCPInterface::free_library() {
-    if (ocp_lib) FREELIBRARY(ocp_lib);
-    if (nlp_lib) FREELIBRARY(nlp_lib);
-    ocp_lib = NULL;
-    nlp_lib = NULL;
+/** Import the NLP solver function */
+void* OCPInterface::import_nlpsolve(
+    void* libhandle
+) {
+    // Check if arg is NULL
+    if (!libhandle) { return NULL; }
+    // Load function
+    void* callSolve_ptr = LOADFUNCTION(libhandle, void*, "callSolve", true);
+    // Return
+    return callSolve_ptr;
+}
+
+/** Free the specified library */
+void OCPInterface::free_library(
+    void* libhandle
+) {
+    if (libhandle) {
+        FREELIBRARY(libhandle);
+    }
 }

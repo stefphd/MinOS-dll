@@ -42,7 +42,8 @@ OCPInterface::OCPInterface(
         this->mesh[i] = 1.0/( (double) N - 1.0);
 
     // Load dynamic library <name> with OCP functions
-    if (!load_ocplib(name)) { return; }
+    ocp_lib = load_ocplib(name);
+    if (!ocp_lib) { return; }
 
     // Get dimensions of OCP
     get_sizes(SPIN(ocp_path),  1, &nx, NULL, NULL); // num of states
@@ -145,8 +146,8 @@ OCPInterface::~OCPInterface() {
         dealloc_casadi_mem(DEALLOC(ocp_hessb), memhb, arghb, reshb, iwhb, whb);
         dealloc_casadi_mem(DEALLOC(ocp_hessi), memhi, arghi, reshi, iwhi, whi);
     }
-    // free library
-    free_library();
+    // free OCP library
+    free_library(ocp_lib);
 }
 
 

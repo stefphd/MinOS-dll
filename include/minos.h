@@ -59,7 +59,7 @@ private:
     /* Friend class for SNOPT interface */
     friend class SNOPTSolver;
 
-    /* Typedefs for OCP & NLP functions */
+    /* Typedefs for OCP functions */
     typedef int         (*EvalFunc)     (const double**, double**, int*, double*, int);
     typedef int         (*AllocFunc)    (void);
     typedef void        (*FreeFunc)     (int);
@@ -67,6 +67,8 @@ private:
     typedef const int*  (*SpInFunc)     (int);
     typedef const int*  (*SpOutFunc)    (int);
     typedef int         (*WorkFunc)     (int*, int*, int*, int*);
+
+    /* Typedef for NLP solve function */
     typedef int         (*SolveFunc)    (OCPInterface*);
 
     /* Friend function for handling CTRL+C */
@@ -166,11 +168,10 @@ private:
     /* Pointer to interrupt handling function */
     bool (*int_funptr)() = &OCPInterface::check_interrupt; // use internal check_interrupt by default
 
-    /* Pointer to OCP & NLP libraries */
+    /* Pointer to OCP libraries */
     void* ocp_lib = NULL;
-    void* nlp_lib = NULL;
 
-    /* Pointers to OCP & NLP functions */
+    /* Pointers to OCP functions */
     EvalFunc    ocp_dyn = NULL, ocp_path = NULL, ocp_bcs = NULL, ocp_int = NULL, ocp_runcost = NULL, ocp_bcscost = NULL;
     EvalFunc    ocp_dyn_jac = NULL, ocp_path_jac = NULL, ocp_bcs_jac = NULL, ocp_int_jac = NULL, ocp_runcost_grad = NULL, ocp_bcscost_grad = NULL;
     EvalFunc    ocp_hessb = NULL, ocp_hessi = NULL;
@@ -192,8 +193,7 @@ private:
     WorkFunc    ocp_dyn_work = NULL, ocp_path_work = NULL, ocp_bcs_work = NULL, ocp_int_work = NULL, ocp_runcost_work = NULL, ocp_bcscost_work = NULL;
     WorkFunc    ocp_dyn_jac_work = NULL, ocp_path_jac_work = NULL, ocp_bcs_jac_work = NULL, ocp_int_jac_work = NULL, ocp_runcost_grad_work = NULL, ocp_bcscost_grad_work = NULL;
     WorkFunc    ocp_hessb_work = NULL, ocp_hessi_work = NULL;
-    SolveFunc   callSolve = NULL;
-    
+
 public:
 
     /** 
@@ -750,17 +750,23 @@ private:
     void print_ver();
 
     /** Load OCP library */
-    bool load_ocplib(
+    void* load_ocplib(
         std::string name
     );
 
     /** Load NLP library */
-    bool load_nlplib(
+    void* load_nlplib(
         std::string name
     );
 
-    /** free library */
+    /** Import NLP solve function */
+    void* import_nlpsolve(
+        void* libhandle
+    );
+
+    /** Free the specified library */
     void free_library(
+        void* libhandle
     );
 
     /**@name Static methods for utilities */
