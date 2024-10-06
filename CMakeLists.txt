@@ -250,8 +250,6 @@ endif()
 
 # MATLAB interface
 if (WITH_MEX_INTERFACE)
-	# Find the MATLAB package
-	find_package(Matlab REQUIRED COMPONENTS MEX_COMPILER)
 	add_subdirectory(interfaces/matlab)
 endif()
 
