@@ -33,16 +33,16 @@
                 NULL);                                                             \
             throw std::runtime_error("Failed to load DLL " + name + ": " +         \
                                     std::string(errorMessage));                    \
-            return NULL;                                                          \
+            return NULL;                                                           \
         }                                           
-    #define LOADFUNCTION(libhandle, FuncType, functionName, doCheck)         \
-        reinterpret_cast<FuncType>(GetProcAddress(libhandle, functionName)); \
-        if (doCheck && !GetProcAddress(libhandle, functionName)) {           \
-            CHAR dllname[MAX_PATH] = { 0 };                                  \
-            GetModuleFileNameA(libhandle, dllname, sizeof(dllname));         \
-            FreeLibrary(libhandle);                                          \
+    #define LOADFUNCTION(libhandle, FuncType, functionName, doCheck)                   \
+        reinterpret_cast<FuncType>(GetProcAddress((HMODULE) libhandle, functionName)); \
+        if (doCheck && !GetProcAddress((HMODULE) libhandle, functionName)) {           \
+            CHAR dllname[MAX_PATH] = { 0 };                                            \
+            GetModuleFileNameA((HMODULE) libhandle, dllname, sizeof(dllname));         \
+            FreeLibrary((HMODULE) libhandle);                                          \
             throw std::runtime_error("Failed to find function " + std::string(functionName) + " in DLL " + std::string(dllname)); \
-            return NULL;                                                    \
+            return NULL;                                                               \
         }
     #define FREELIBRARY(libhandle) FreeLibrary((HMODULE) libhandle);
 #else // Linux and MacOS
