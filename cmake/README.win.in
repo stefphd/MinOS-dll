@@ -202,6 +202,8 @@ Shortly, `buildOCP` performs the following operations:
 * use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.cpp`;
 * call the MATLAB command `mex` to build a dynamic library containing the OCP functions.
 
+Type `help buildOCP` for a full documentation.
+
 The next steps consist in creating the guess and the problem structure to be provided to the MEX function.
 
 ```matlab
@@ -391,7 +393,7 @@ with open(name + ".txt", "w") as file:
 
 Note that after calling `ocp.solve()` the OCP guesses are updated with the solution found, if successfull. This allows to re-run `ocp.solve()` starting from the previously-found solution.
 
-Refer to `<path/to/installation>/bin/minosPy.pyi` for detailed documentation on the usage.
+See `<path/to/installation>/lib/minosPy.pyi` for a full documentation.
 
 ## C++ interface (expert users)
 
