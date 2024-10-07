@@ -95,7 +95,8 @@ set(MINOS_SOURCES ${CMAKE_SOURCE_DIR}/src/minos_base.cpp
                   ${CMAKE_SOURCE_DIR}/src/minos_nlp.cpp
                   ${CMAKE_SOURCE_DIR}/src/minos_print.cpp
                   ${CMAKE_SOURCE_DIR}/src/minos_utils.cpp
-                  ${CMAKE_SOURCE_DIR}/src/minos_dlopen.cpp)
+                  ${CMAKE_SOURCE_DIR}/src/minos_dlopen.cpp
+                  ${CMAKE_SOURCE_DIR}/src/minos_cinterface.cpp)
 
 # Main MinOS base library 
 add_library(minoslib SHARED
@@ -110,7 +111,7 @@ set_target_properties(minoslib PROPERTIES
 					OUTPUT_NAME minos)
 set_target_properties(minoslib 
 					PROPERTIES 
-					PUBLIC_HEADER include/minos.h)
+					PUBLIC_HEADER "include/minos.h;include/minosc.h")
 install(TARGETS minoslib
 		COMPONENT libraries
 		PUBLIC_HEADER

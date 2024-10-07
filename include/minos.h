@@ -346,7 +346,7 @@ public:
      * 
      * Solves the optimal-control problem.
      * 
-     * \return 0 if success.
+     * \return Exit code of the employed NLP solver.
      * 
      */
     int solve();
@@ -553,7 +553,7 @@ public:
      * \param optkey Keyword for the option to set, see also OCPInterface::Opt.
      * \param val Value of the option.
      * 
-     * \return True for success
+     * \return True for success.
      */
     bool set_option(
         int optkey,
@@ -564,10 +564,10 @@ public:
      * 
      * Sets a string option for the solver. See OCPInterface::Opt for a list of the available options.
      * 
-     * \param optkey Keyword for the option to set, see also OCPInterface::Opt.
+     * \param optkey Keyword for the option to set.
      * \param str String of the option.
      * 
-     * \return True for success
+     * \return True for success.
      */
     bool set_option(
         int optkey,
