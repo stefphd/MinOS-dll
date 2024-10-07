@@ -25,6 +25,7 @@ message(STATUS "CasADi found.")
 # Add example subdirectories
 add_subdirectory(brachistochrone)
 add_subdirectory(brachistochrone_auxdata)
+add_subdirectory(brachistochrone_c)
 add_subdirectory(brysonDenham)
 add_subdirectory(hyperSensitive)
 add_subdirectory(goddardRocket)
