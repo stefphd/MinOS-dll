@@ -9,6 +9,7 @@ import os
 import sys
 import subprocess
 import time
+import shutil
 
 # Builder class
 class Builder:
@@ -136,18 +137,27 @@ class Builder:
         # Check if C file exists
         if not os.path.exists(os.path.join(self.outdir, self.cfilename)):
             raise FileNotFoundError(f"Unable to find source C file '{self.cfilename}'.")
-        # For Win add <__basedir__> to PATH if not present
-        if sys.platform == "win32":
-            self.__add2path__(self.__basedir__)
         # Select the C compiler
-        if sys.platform == "win32":  # use local GCC on Windows
-            cc = os.path.join(self.__basedir__, "gcc/bin/gcc")
-        else:  # use GCC otherwise
-            cc = 'gcc'
+        cc = 'gcc'
+        # Windows: check if <cc> is in PATH
+        if sys.platform == "win32":
+            try: # Test gcc
+                subprocess.run([cc, '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError:
+                self.__add2path__(os.path.join(self.__basedir__, "gcc/bin")) # local GCC distribution
         # Test the C compiler
-        try:
-            subprocess.run([cc, '-v'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
+        oldpath = os.getenv('PATH') if 'PATH' in os.environ else "" # current PATH
+        result = subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        exit = result.returncode
+        if sys.platform == "win32":
+            if exit == 0: # Global GCC found: give info message
+                print(f"Using user C compiler at '{shutil.which(cc)}'.")
+            else: # Global GCC not found, try local GCC distribution
+                self.__add2path__(os.path.join(self.__basedir__, "gcc/bin"))
+                # Test GCC again
+                result = subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                exit = result.returncode
+        if exit != 0:
             raise RuntimeError(f"Unable to find C compiler '{cc}'.")
         # Determine the library extension
         if sys.platform == "win32":  # DLL for Windows
@@ -170,6 +180,10 @@ class Builder:
         print(f"Library {libname} built in {compile_time:.2f} seconds.")
         # Clean
         os.remove(os.path.join(self.outdir, self.cfilename))
+        # For Win add <__basedir__> to PATH if not present
+        if sys.platform == "win32":
+            os.environ['PATH'] = oldpath # reset default PATH
+            self.__add2path__(self.__basedir__)
 
 ## C++ class
 cdef class OCP:

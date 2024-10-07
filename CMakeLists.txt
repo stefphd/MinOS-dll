@@ -16,6 +16,7 @@ option(WITH_KNITRO "Compile KNITRO interface" ON)
 option(WITH_SNOPT "Compile SNOPT interface" ON)
 option(WITH_MEX_INTERFACE "Compile MEX interface for MATLAB" ON)
 option(WITH_PYTHON_INTERFACE "Compile Python interface" ON)
+option(WITH_GCC "Install GCC distribution (for Windows only)" ON)
 option(WITH_DOCS "Generate docs using Doxygen (require Doxygen and latex)" ON)
 option(WITH_CPACK "Generate CPack target" ON)
 option(WITH_CPP_EXAMPLES "Compile with C++ examples" ON)
@@ -195,15 +196,15 @@ if (WITH_SNOPT)
 endif()
 
 # Install GCC-like compiler for Windows
-if (WIN32)
+if (WIN32 AND WITH_GCC)
 	find_package(GCC REQUIRED)
 	# Install GCC
-	install(DIRECTORY ${GCC_DIR}
+	install(DIRECTORY ${GCC_DIR}/
 			COMPONENT libraries
-			DESTINATION bin
+			DESTINATION bin/gcc
 			PATTERN doc EXCLUDE
 			PATTERN examples EXCLUDE)
-endif(WIN32)
+endif()
 
 # Other installed files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Copyright.in

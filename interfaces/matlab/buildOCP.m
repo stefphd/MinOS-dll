@@ -134,20 +134,24 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     cg.generate(outdir); % generate c and h file in out dir
     pause(0) % just to print out all fprintf
 
-    % For windows add <basedir> to PATH
-    if ispc
-        add2path(basedir)
-    end
-
     % Compile library
     % Select the C compiler
-    if ispc % use local GCC in Windows
-        cc = ['"' basedir 'gcc/bin/gcc' '"'];
-    else % GCC otherwise
-        cc = 'gcc';
-    end
+    cc = 'gcc';
     % Test the C compiler
-    [exit, ~] = system([cc ' -v']); % ~ is to suppress output messages
+    oldpath = getenv('PATH'); % current PATH
+    [exit, ~] = system([cc ' --version']); % ~ is to suppress output messages
+    if ispc % check if global or local gcc found
+        if exit == 0 % global GCC found: give info message
+            % find <cc> dir
+            [~, ccpath] = system(['where ' cc]);
+            ccpath = strsplit(ccpath, '\n');
+            fprintf('Using user C compiler at ''%s''\n', ccpath{1});
+        else % global GCC not found, try local GCC distribution
+            add2path([basedir 'gcc/bin']); % local GCC distribution
+            % test GCC again
+            [exit, ~] = system([cc ' --version']); 
+        end
+    end
     if exit ~= 0
         error('minosMex:buildFailed','Unable to find C compiler ''%s''.', cc);
     end
@@ -172,6 +176,11 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     fprintf("Library %s built in %.2fs\n", libname, compileTime);
     % Clean
     delete([outdir cfilename])
+    % For windows add <basedir> to PATH
+    if ispc
+        setenv('PATH', oldpath); % reset default PATH
+        add2path(basedir)
+    end
     % Done
     pause(0) % just to print out all fprintf
 

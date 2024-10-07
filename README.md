@@ -1,6 +1,6 @@
 # MinOS
 
-MinOS (**Min**imal **O**ptimal-control **S**olver) is a C++  solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and a NLP solver (such as IPOPT) to solve the subsequent large-scale nonlinear programming problem (NLP). Interfaces are available for MATLAB, Python, and C++.
+MinOS (**Min**imal **O**ptimal-control **S**olver) is a C++ solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and a NLP solver (such as IPOPT) to solve the subsequent large-scale nonlinear programming problem (NLP). Interfaces are available for MATLAB, Python, and C or C++.
 
 This README is developer-oriented. User-oriented README is provided with the release in the documentation.
 
@@ -13,7 +13,7 @@ Build and tested with:
 
 * [CMake](https://cmake.org/) build system to build the software.
 * A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/) (not tested). Intel compilers may be also employed.
-* [TDM-GCC](https://jmeubank.github.io/tdm-gcc/) for Windows only. Make sure that the GCC root directory is in the `PATH` environment variable.
+* A Windows distribution of [GCC](https://gcc.gnu.org/). Make sure that the GCC root directory (i.e. where `bin/gcc.exe` is) is in the `PATH` environment variable. This is needed in *Windows* to compile the problem library in the MATLAB and Python interfaces.
 * A NLP solver to solve the large-scale NLP. Possibilities are:
   * [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://github.com/coin-or-tools/ThirdParty-Mumps), which are freely available. For *Windows*, dynamic and static libraries should be placed in `./bin` and `./lib`. Alternativelly, one could set a `IPOPT_DIR` environment variable pointing to the IPOPT installation path, which should contain the folders `bin`, `lib`, and `include`. IPOPT headers provided with this repository in `./include/coin-or` may be also employed (current IPOPT version is 3.14). For *Linux*, one should install IPOPT in `/usr/lib` and `/usr/include` (or `/usr/local/lib` and `/usr/local/include`). Again, alternativelly one could use a local installation of IPOPT with and set `$IPOPT_DIR` pointing to the IPOPT installation path that contains `lib` and `include` folders.
   * [KNITRO](https://www.artelys.com/solvers/knitro/), which is a commercial software. Free trial license is freely available for academics. A `KNITRODIR` environment variable pointing to the KNITRO installation path should be automatically set when installing KNITRO. If not, one needs to set `KNITRODIR` pointing to the KNITRO installation path. KNITRO is compatible only with MSVC for *Windows*.
@@ -58,6 +58,7 @@ The `CMakeLists.txt` file contains a number of options to change the building se
 * `WITH_SNOPT`: compile SNOPT interface
 * `WITH_MEX_INTERFACE`: compile MEX interface for MATLAB
 * `WITH_PYTHON_INTERFACE`: compile Python interface
+* `WITH_GCC`: install GCC distribution (for Windows only)
 * `WITH_DOCS`: generate docs using Doxygen (require Doxygen and latex installed)
 * `WITH_CPACK`: generate CPack target
 * `WITH_CPP_EXAMPLES`: compile C++ examples
