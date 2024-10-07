@@ -155,6 +155,7 @@ private:
     /* Constant strings */
     static constexpr char print_headerFormat[] = "%-6s\t%-15s\t%-15s\t%-15s\n"; // using printf
     static constexpr char print_dataFormat[] = "%-6d\t%-+12.5e\t%-+12.5e\t%-+12.5e\n"; // using printf
+    static constexpr char print_strFormat[] = "%-25s %s"; // using printf
     static constexpr char print_intFormat[] = "%-25s %d"; // using printf
     static constexpr char print_doubleFormat[] = "%-25s %-+12.5e"; // using printf
     static constexpr char print_indexFormat[] = "%3d"; // using printf

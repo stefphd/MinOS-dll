@@ -12,6 +12,7 @@
 /* Forward declarations */
 constexpr char OCPInterface::print_headerFormat[];
 constexpr char OCPInterface::print_dataFormat[];
+constexpr char OCPInterface::print_strFormat[];
 constexpr char OCPInterface::print_intFormat[];
 constexpr char OCPInterface::print_doubleFormat[];
 constexpr char OCPInterface::print_indexFormat[];
@@ -52,8 +53,12 @@ std::ostream& operator<<(
     os << OCPInterface::get_header() << "\n";
     os << "\n";
 
-    os << "# Problem name\n";
-    os << "\t" << ocpInterface.name << "\n";
+    os << "# Problem settings\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_strFormat, "name:", ocpInterface.name.c_str()) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "ti:", ocpInterface.ti) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "tf:", ocpInterface.tf) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "N:", N) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_strFormat, "solver:", ocpInterface.nlpsolver.c_str()) << "\n";
     os << "\n";
 
     os << "# Problem dimensions\n";
@@ -63,7 +68,6 @@ std::ostream& operator<<(
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "nc:", nc) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "nb:", nb) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "nq:", nq) << "\n";
-    os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "N:", N) << "\n";
     os << "\n";
 
     os << "# Problem bounds\n";
@@ -104,12 +108,11 @@ std::ostream& operator<<(
     }
 
     os << "# Statistics\n";
-    os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "Number of iters:", num_iter) << "\n";
-    //os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "Barrier parameter:", (mu_curr >= 0) ? mu_curr : NAN) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "NLP nz:", nz) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "NLP ng:", ng) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "NLP jacobian nnz:", nnzj) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "NLP hessian nnz:", nnzh) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "Number of iters:", num_iter) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "Final inf pr:", inf_pr)  << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "Final inf du:", inf_du) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "CPU total time (s):", ttot) << "\n";
