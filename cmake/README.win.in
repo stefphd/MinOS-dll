@@ -385,9 +385,9 @@ Note that after calling `ocp.solve()` the OCP guesses are updated with the solut
 
 See `<path/to/installation>/lib/minosPy.pyi` for a full documentation.
 
-## C++ interface (expert users)
+## C/C++ interface (expert users)
 
-Expert users may also employ MinOS in C++. Jacobians and possibly Hessians must be generated (again using CasADi):
+Expert users may also employ MinOS in C or C++. Jacobians and possibly Hessians must be generated (again using CasADi):
 
 * `ocp_runcost_grad(t, x1, u, x2, p, h)`
   The function returns the gradient of `ocp_runcost`. A single returned value is expected, which corresponds to the gradient with respect to `[x1, u, x2, p]` (order is NOT to arbitrary). Order of the input arguments is not arbitrary.
@@ -410,6 +410,8 @@ Again, the name of the CasADi functions is NOT arbitrary. The functions may have
 The C code for these functions must be generated in a unique `.cpp` file (say `ocp.cpp`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int ="int"`. This option is needed to ensure consistency between the data type of CasADi and IPOPT. Note that the whole procedure can be done in Python using `minosPy.Builder.generate`, without the need to specify Jacobians or Hessians. The C code should be finally compiled as a dynamic library.
 
 The OCPInterface class is employed to load the generated library and solve the OCP. The C++ API documentation can be found in this documentation or in the header `./include/minos.h`.
+
+Alternatively, a pure C interface is available in the header `./include/minosc.h`. See also the C example in `examples/cpp/brachistochrone_c`.
 
 Building can be performed using the [CMake](https://cmake.org/) build system. Refer to `examples/cpp/CMakeLists.txt` and the C++ examples in `examples/cpp`.
 
