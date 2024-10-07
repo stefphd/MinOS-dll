@@ -193,6 +193,17 @@ if (WITH_SNOPT)
 			COMPONENT libraries)
 endif()
 
+# Install TCC for Win
+if (WIN32)
+	find_package(TCC REQUIRED)
+	# Install TCC
+	install(DIRECTORY ${TCC_DIR}/
+			COMPONENT libraries
+			DESTINATION bin
+			PATTERN doc EXCLUDE
+			PATTERN examples EXCLUDE)
+endif(WIN32)
+
 # Other installed files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Copyright.in
 			   ${CMAKE_CURRENT_BINARY_DIR}/Copyright.txt

@@ -41,12 +41,9 @@ class Builder:
             None
         """
     
-    def build(self, compiler: str = None) -> None:
+    def build(self) -> None:
         """
-        Build the problem into a library.
-
-        Args:
-            compiler (str): compiler to use (None for default). Defaults are "unix" for Unix and "msvc" for Windows.
+        Build the problem into a library. Compiler is TCC for Windows and GCC for Unix-like systems.
         
         Returns:
             None

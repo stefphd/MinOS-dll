@@ -126,9 +126,6 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     fprintf("Generating C code...\n")
     cfilename = [name '.c'];
     codegen_options.casadi_int = 'int'; % use casadi_int = int for consistency
-    if ispc
-        codegen_options.mex = true; % hack for pc: add fake mexFunction to compile using mex
-    end
     cg = CodeGenerator(cfilename, codegen_options); 
     % Append ocp functions to cg
     for k = 1 : numel(ocp_funcs)
@@ -137,31 +134,44 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     cg.generate(outdir); % generate c and h file in out dir
     pause(0) % just to print out all fprintf
 
-    % Compile library
-    tic;
-    if ispc % pc: use mex functiion to compile library into mex file, then change ext to .dll
-        clear(name) % avoid linker error
-        mex([outdir cfilename], '-outdir', outdir, '-output', name); % compile has a mex file
-        movefile([outdir filesep name '.' mexext], [outdir filesep name '.dll']); % change extension to .dll
-    else % linux: call standard gcc to compile library  
-        command = ['gcc -shared -fPIC ' outdir cfilename ' -o ' outdir name '.so'];
-        exit = system(command);
-        if (exit ~= 0)
-            error('buildMex:buildFailed','Unable to build shared library from file %s', cfilename);
-        end
-    end
-    compileTime = toc;
-    % Clean
-    delete([outdir cfilename])
-
-    % For windows add <basedir>
+    % For windows add <basedir> to PATH
     if ispc
         add2path(basedir)
     end
 
-    % Print mex time
-    fprintf("Compile time is %.3fs\n", compileTime);
-
+    % Compile library
+    % Select the C compiler
+    if ispc % use TCC in windows
+        cc = ['"' basedir 'tcc' '"'];
+    else % GCC otherwise
+        cc = 'gcc';
+    end
+    % Test the C compiler
+    [exit, ~] = system([cc ' -v']); % ~ is to suppress output messages
+    if exit ~= 0
+        error('minosMex:buildFailed','Unable to find C compiler ''%s''.', cc);
+    end
+    % Define library output name
+    if ispc % dll for windows
+        libext = 'dll'; 
+    else % so otherwise
+        libext = 'so';
+    end
+    libname = [name '.' libext];
+    % Build command
+    cc_args = ['-shared -fPIC ' outdir cfilename ' -o ' outdir libname];
+    cc_cmd = [cc ' ' cc_args];
+    % Run the build process
+    tic;
+    exit = system(cc_cmd);
+    compileTime = toc;
+    if (exit ~= 0)
+        error('minosMex:buildFailed','Unable to build library ''%s'' from file ''%s''', libname, cfilename);
+    end
+    % Print end message
+    fprintf("Library %s built in %.2fs\n", libname, compileTime);
+    % Clean
+    delete([outdir cfilename])
     % Done
     pause(0) % just to print out all fprintf
 

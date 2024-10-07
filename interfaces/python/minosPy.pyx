@@ -1,5 +1,4 @@
-#cython: c_string_type=str, c_string_encoding=ascii
-#cython: language_level=3
+#cython: c_string_type=str, c_string_encoding=ascii, language_level=3
 from minosPy cimport OCPInterface as CObj
 from cython import cast
 from libcpp.string cimport string
@@ -8,6 +7,8 @@ import casadi as ca
 import numpy as npy
 import os
 import sys
+import subprocess
+import time
 
 # Builder class
 class Builder:
@@ -130,25 +131,44 @@ class Builder:
             cg.add(item)
         cg.generate(self.outdir)
 
-    def build(self, compiler: str = None) -> None:
-        # Create a new compiler instance
-        cc = ccompiler.new_compiler(compiler=compiler)
-        # Compile the source file to an object file
-        obj_files = cc.compile([self.outdir + self.cfilename])
-        # Extra args
-        args=[]
-        if cc.compiler_type is "msvc":
-            args.append("/DLL") # Create DLL 
-            args.append("/NOIMPLIB") # No create LIB
-            args.append("/NOEXP") # No create EXP
-        # Link the object file to create the shared library
-        cc.link_shared_lib(obj_files, self.outdir + self.name, extra_preargs=args)
-        # Clean
-        os.remove(self.outdir + self.cfilename)
-        [os.remove(obj_file) for obj_file in obj_files]
+    def build(self) -> None:
+        # Check if C file exists
+        if not os.path.exists(os.path.join(self.outdir, self.cfilename)):
+            raise FileNotFoundError(f"Unable to find source C file '{self.cfilename}'.")
         # For Win add <__basedir__> to PATH if not present
         if sys.platform == "win32":
             self.__add2path__(self.__basedir__)
+        # Select the C compiler
+        if sys.platform == "win32":  # use TCC on Windows
+            cc = 'tcc'
+        else:  # use GCC otherwise
+            cc = 'gcc'
+        # Test the C compiler
+        try:
+            subprocess.run([cc, '-v'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"Unable to find C compiler '{cc}'.")
+        # Determine the library extension
+        if sys.platform == "win32":  # DLL for Windows
+            libext = 'dll'
+        else:  # SO for other platforms (Linux, macOS, etc.)
+            libext = 'so'
+        # Define the output library name
+        libname = f"{self.name}.{libext}"
+        # Build command
+        cc_args = f"-shared -fPIC {os.path.join(self.outdir, self.cfilename)} -o {os.path.join(self.outdir, libname)}"
+        cc_cmd = cc + " " + cc_args
+        # Run the build process
+        start_time = time.time()
+        try:
+            subprocess.run(cc_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Unable to build library '{libname}' from file '{self.cfilename}'\n{e.stderr}")
+        # Print end message
+        compile_time = time.time() - start_time
+        print(f"Library {libname} built in {compile_time:.2f} seconds.")
+        # Clean
+        os.remove(os.path.join(self.outdir, self.cfilename))
 
 ## C++ class
 cdef class OCP:

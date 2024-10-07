@@ -10,12 +10,12 @@ Version @CMAKE_PROJECT_VERSION@
 
 ## Requirements
 
-* [MATLAB](https://www.mathworks.com/products/matlab.html) for the MEX interface (>=2022b)
-* [Python3](https://www.python.org/) for the Python interface (>=3.7.0)
-* [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++)
-* [gcc-g++](https://gcc.gnu.org/) compiler 
-* [CMake](https://cmake.org/) build system to build the C++ and Python examples
-* [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://mumps-solver.org/index.php) solver (together with their dependencies), which is freely available; alternative linear solvers, such as HSL routines, might be used
+* [MATLAB](https://www.mathworks.com/products/matlab.html) for the MEX interface (>=2022b).
+* [Python3](https://www.python.org/) for the Python interface (>=3.7.0).
+* [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++).
+* [GCC](https://gcc.gnu.org/) compiler.
+* [CMake](https://cmake.org/) build system to build the C++.
+* [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://mumps-solver.org/index.php) solver (together with their dependencies), which is freely available; alternative linear solvers, such as HSL routines, might be used.
 * (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver, which is a commercial software. Free trial license is freely available for academics. Make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is set.
 * (optional) [WORHP](https://worhp.de/) solver. License is freely available for academics. If not installed in system directories, one should set a `WORHPDIR` environment variable pointing to the WORHP installation path.
 * (optional) [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) solver,  which is a commercial software. Free trial license is freely available for academics. Make sure that a `SNOPTDIR` environment variable pointing to the KNITRO installation path is set.
@@ -253,8 +253,8 @@ buildOCP(name, ...
 Shortly, `buildOCP` performs the following operations:
 
 * use CasADi to automatically generate the required gradients, Jacobians and Hessians (if `skip_hessian = false`); by default it is `skip_hessian = false`.
-* use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.cpp`;
-* call the compiler `gcc` to build a shared library containing the OCP functions.
+* use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.c`;
+* call the compiler `gcc` to build a shared library `<name>.so` containing the OCP functions.
 
 Type `help buildOCP` for a full documentation.
 
@@ -379,8 +379,6 @@ builder = Builder(name) # Name of the generated shared library
 builder.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int) # Generate the C code for the OCP
 builder.build() # Build the shared library containing the OCP function
 ```
-
-The default compiler used is GCC. You may select an alternative compiler using `builder.build(compiler_name)` (use None for default).
 
 The `minosPy.OCP` class can be then employed (in the same file or in another) to import the shared library and solve the problem.
 Here, numpy array should be employed to define the bounds and guess for the OCP.
