@@ -1,7 +1,8 @@
 # Find IPOPT
-# Try to locate the IPOPT library using the IPOPT_DIR environment variable
-# If IPOPT_DIR not exist, just try to find IPOPT in the ${CMAKE_SOURCE_DIR} directory
-# IPOPT is found by searching for the static library and header files.
+# Try to locate the IPOPT library using the IPOPT_DIR environment variable.
+# If IPOPT_DIR not exist, just try to find IPOPT in the ${CMAKE_SOURCE_DIR} directory.
+# If not found, search is extended to default system paths.
+# IPOPT is found by searching for the library and header files.
 #
 # Create the following variables:
 #
