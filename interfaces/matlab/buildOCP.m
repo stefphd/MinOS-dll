@@ -14,7 +14,7 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
 
     % Codegen directories
     if ~endsWith(outdir, '/')
-        outdir = strcat(outdir, '/');
+        outdir = [outdir '/'];
     end
     basedir = fileparts(mfilename('fullpath')); % folder of this file
     basedir = [cd(cd(basedir)) '/']; % resolve basedir path
@@ -57,7 +57,6 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
         args_bcs{end+1} = auxdata;
         args_int{end+1} = auxdata;
     end
-
     % gradients
     ocp_runcost_grad = casadi.Function('ocp_runcost_grad', args_runcost, ...
                                     {gradient(ocp_runcost(args_runcost{:}), [x1; u; x2; p])});
@@ -72,11 +71,9 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
                                     {jacobian(ocp_bcs(args_bcs{:}), [xi; ui; xf; uf; p])});
     ocp_int_jac = casadi.Function('ocp_int_jac', args_int, ...
                                     {jacobian(ocp_int(args_int{:}), [x1; u; x2; p])});
-
     % collect all function
     ocp_funcs = {ocp_dyn, ocp_path, ocp_bcs, ocp_int, ocp_runcost, ocp_bcscost, ...
                  ocp_dyn_jac, ocp_path_jac, ocp_bcs_jac, ocp_int_jac, ocp_runcost_grad, ocp_bcscost_grad}; 
-
     % hessians if not skip_hessian
     if ~skip_hessian
         % num of path and bcs
@@ -122,6 +119,11 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
         ocp_funcs{end+1} = ocp_hessi;
     end
 
+    % Create outdir if not exists
+    if ~isfolder(outdir)
+        mkdir(outdir);
+    end
+
     % Generate code
     fprintf("Generating C code...\n")
     cfilename = [name '.c'];
@@ -134,11 +136,28 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     cg.generate(outdir); % generate c and h file in out dir
     pause(0) % just to print out all fprintf
 
-    % Compile library
-    % Select the C compiler
-    cc = 'gcc';
+    % Build library
+    build('gcc', [outdir cfilename], [outdir name], basedir);
+    % Clean
+    delete([outdir cfilename])
+    % For windows add <basedir> to PATH
+    if ispc
+        add2path(basedir)
+    end
+
+    % Done
+    pause(0) % just to print out all fprintf
+
+end
+
+function build(cc, csource, libname, basedir)
+    % Check if C file exists
+    if isfile(csource) == 0
+        error('minosMex:buildFailed','Unable to find source C file ''%s''.', csource); 
+    end
+    % Get current PATH
+    oldpath = getenv('PATH');
     % Test the C compiler
-    oldpath = getenv('PATH'); % current PATH
     [exit, ~] = system([cc ' --version']); % ~ is to suppress output messages
     if ispc % check if global or local gcc found
         if exit == 0 % global GCC found: give info message
@@ -153,6 +172,11 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
         end
     end
     if exit ~= 0
+        % Reset default PATH
+        if ~isempty(oldpath)
+            setenv('PATH', oldpath);
+        end
+        % Throw error
         error('minosMex:buildFailed','Unable to find C compiler ''%s''.', cc);
     end
     % Define library output name
@@ -161,29 +185,29 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     else % so otherwise
         libext = 'so';
     end
-    libname = [name '.' libext];
+    libname = [libname '.' libext];
     % Build command
-    cc_args = ['-shared -O1 -fPIC ' outdir cfilename ' -o ' outdir libname];
+    cc_args = ['-shared -O1 -fPIC "' csource '" -o "' libname '"'];
     cc_cmd = [cc ' ' cc_args];
     % Run the build process
     tic;
-    exit = system(cc_cmd);
+    [exit, msg] = system(cc_cmd);
     compileTime = toc;
+    % Check exit status
     if (exit ~= 0)
-        error('minosMex:buildFailed','Unable to build library ''%s'' from file ''%s''', libname, cfilename);
+        % Reset default PATH
+        if ~isempty(oldpath)
+            setenv('PATH', oldpath);
+        end
+        % Throw error
+        error('minosMex:buildFailed','Unable to build library ''%s'' from file ''%s''\n%s', libname, csource, msg);
     end
     % Print end message
     fprintf("Library %s built in %.2fs\n", libname, compileTime);
-    % Clean
-    delete([outdir cfilename])
-    % For windows add <basedir> to PATH
-    if ispc
-        setenv('PATH', oldpath); % reset default PATH
-        add2path(basedir)
+    % Reset default PATH
+    if ~isempty(oldpath)
+        setenv('PATH', oldpath);
     end
-    % Done
-    pause(0) % just to print out all fprintf
-
 end
 
 function add2path(path)

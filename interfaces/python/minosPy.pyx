@@ -34,6 +34,7 @@ class Builder:
     
     def generate(self, ocp_runcost: ca.Function, ocp_bcscost: ca.Function, ocp_dyn: ca.Function, ocp_path: ca.Function, ocp_bcs: ca.Function, ocp_int: ca.Function, skip_hessian: bool = False) -> None:
         self.__skip_hessian__ = skip_hessian
+
         # Generate ocp functions
         nx = ocp_runcost.size1_in(1)
         nu = ocp_runcost.size1_in(2)
@@ -69,7 +70,6 @@ class Builder:
             args_path.append(auxdata)
             args_bcs.append(auxdata)
             args_int.append(auxdata)
-
         # Create gradients
         ocp_runcost_grad = ca.Function('ocp_runcost_grad', args_runcost, 
                                     [ca.gradient(ocp_runcost(*args_runcost), ca.vertcat(x1, u, x2, p))])
@@ -125,6 +125,11 @@ class Builder:
             # append to ocp_funcs
             ocp_funcs.append(ocp_hessb)
             ocp_funcs.append(ocp_hessi)
+
+        # Create outdir if not exists
+        if not os.path.isdir(self.outdir):
+            os.makedirs(self.outdir)
+        
         # Generate code
         cg = ca.CodeGenerator(self.cfilename, 
                              {'casadi_int': 'int'})
@@ -135,54 +140,71 @@ class Builder:
 
     def build(self) -> None:
         # Check if C file exists
-        if not os.path.exists(os.path.join(self.outdir, self.cfilename)):
-            raise FileNotFoundError(f"Unable to find source C file '{self.cfilename}'.")
+        csource = os.path.join(self.outdir, self.cfilename)
+        if not os.path.exists(csource):
+            raise FileNotFoundError(f"Unable to find source C file '{csource}'.")
+        # Get current PATH
+        oldpath = os.getenv('PATH') if 'PATH' in os.environ else ""
         # Select the C compiler
         cc = 'gcc'
-        # Windows: check if <cc> is in PATH
-        if sys.platform == "win32":
-            try: # Test gcc
-                subprocess.run([cc, '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except subprocess.CalledProcessError:
-                self.__add2path__(os.path.join(self.__basedir__, "gcc/bin")) # local GCC distribution
         # Test the C compiler
-        oldpath = os.getenv('PATH') if 'PATH' in os.environ else "" # current PATH
-        result = subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-        exit = result.returncode
+        ccpath = shutil.which(cc)
         if sys.platform == "win32":
-            if exit == 0: # Global GCC found: give info message
-                print(f"Using user C compiler at '{shutil.which(cc)}'.")
+            if ccpath: # Global GCC found: give info message
+                try:
+                    subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                except subprocess.CalledProcessError as e:
+                    # Throw error
+                    raise RuntimeError(f"Unable to find C compiler '{cc}'.\n{e.stderr}")
+                print(f"Using user C compiler at '{ccpath}'.")
             else: # Global GCC not found, try local GCC distribution
                 self.__add2path__(os.path.join(self.__basedir__, "gcc/bin"))
                 # Test GCC again
-                result = subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-                exit = result.returncode
-        if exit != 0:
-            raise RuntimeError(f"Unable to find C compiler '{cc}'.")
+                ccpath = shutil.which(cc)
+        if ccpath is None:
+            # Reset default PATH
+            if oldpath:
+                os.environ['PATH'] = oldpath
+            # Throw error
+            raise RuntimeError(f"Unable to find C compiler '{cc}'.")       
+        try:
+            subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        except subprocess.CalledProcessError as e:
+             # Reset default PATH
+            if oldpath:
+                os.environ['PATH'] = oldpath
+            # Throw error
+            raise RuntimeError(f"Unable to find C compiler '{cc}'.\n{e.stderr}")
         # Determine the library extension
         if sys.platform == "win32":  # DLL for Windows
             libext = 'dll'
         else:  # SO for other platforms (Linux, macOS, etc.)
             libext = 'so'
         # Define the output library name
-        libname = f"{self.name}.{libext}"
+        libname = os.path.join(self.outdir, f"{self.name}.{libext}")
         # Build command
-        cc_args = f"-shared -O1 -fPIC {os.path.join(self.outdir, self.cfilename)} -o {os.path.join(self.outdir, libname)}"
+        cc_args = f"-shared -O1 -fPIC {csource} -o {libname}"
         cc_cmd = cc + " " + cc_args
         # Run the build process
         start_time = time.time()
         try:
             subprocess.run(cc_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Unable to build library '{libname}' from file '{self.cfilename}'\n{e.stderr}")
+            # Reset default PATH
+            if oldpath:
+                os.environ['PATH'] = oldpath
+            # Throw error
+            raise RuntimeError(f"Unable to build library '{libname}' from file '{csource}'.\n{e.stderr}")
         # Print end message
         compile_time = time.time() - start_time
         print(f"Library {libname} built in {compile_time:.2f} seconds.")
+        # Reset default PATH
+        if oldpath:
+            os.environ['PATH'] = oldpath
         # Clean
-        os.remove(os.path.join(self.outdir, self.cfilename))
+        os.remove(csource)
         # For Win add <__basedir__> to PATH if not present
         if sys.platform == "win32":
-            os.environ['PATH'] = oldpath # reset default PATH
             self.__add2path__(self.__basedir__)
 
 ## C++ class
