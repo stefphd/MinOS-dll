@@ -141,12 +141,14 @@ void MINOSC_PREFIX(get_sol)(
                                     irh, jch, hess);
 }
 
-void MINOSC_PREFIX(print_sol)(
-    const OCP_t ocp,
-    FILE* stream
+const char* MINOSC_PREFIX(print_sol)(
+    const OCP_t ocp
 ) {
     std::string str = CASTOCPINTERFACE(ocp)->toString();
-    fprintf(stream, "%s", str.c_str());
+    int len = str.length();
+    char* cstr = (char*) malloc((len+1)*sizeof(char));
+    std::strcpy(cstr, str.c_str());
+    return cstr;    
 }
 
 void MINOSC_PREFIX(set_mesh)(

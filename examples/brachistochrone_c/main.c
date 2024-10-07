@@ -88,7 +88,8 @@ int main(int argc, char* argv[]) {
     /* Print solution to file */
     FILE *filePtr;
     filePtr = fopen("brachistochrone_c.txt", "w");
-    minos_print_sol(ocp, filePtr);
+    const char* str = minos_print_sol(ocp);
+    fprintf(filePtr, "%s", str);
     fclose(filePtr);
 
     /* Free mem */

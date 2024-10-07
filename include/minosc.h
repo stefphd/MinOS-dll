@@ -3,7 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#include <stdio.h> // for FILE
 #include <stdbool.h> // for bool
 
 #define MINOSC_PREFIX(x) minos_ ## x
@@ -325,16 +324,17 @@ MINOS_EXPORT_API void MINOSC_PREFIX(get_sol)(
 );
 
 /**
- * \brief Prints the solution to a stream.
+ * \brief Outputs the solution.
  * 
- * Prints the optimal solution of the optimal-control problem to a stream.
+ * Outputs the solution to a C string. Allocation is performed internally.
+ * You can use this function to print the C string to a stream.
  * 
  * \param ocp OCP instance.
- * \param stream Output stream.
+ * 
+ * \return A C string.
  */
-MINOS_EXPORT_API void MINOSC_PREFIX(print_sol)(
-    const OCP_t ocp,
-    FILE* stream
+MINOS_EXPORT_API const char* MINOSC_PREFIX(print_sol)(
+    const OCP_t ocp
 );
 
 /**
