@@ -129,6 +129,7 @@ class Builder:
                              {'casadi_int': 'int'})
         for item in ocp_funcs:
             cg.add(item)
+        print("Generating C code...")
         cg.generate(self.outdir)
 
     def build(self) -> None:
@@ -139,8 +140,8 @@ class Builder:
         if sys.platform == "win32":
             self.__add2path__(self.__basedir__)
         # Select the C compiler
-        if sys.platform == "win32":  # use TCC on Windows
-            cc = 'tcc'
+        if sys.platform == "win32":  # use local GCC on Windows
+            cc = os.path.join(self.__basedir__, "gcc/bin/gcc")
         else:  # use GCC otherwise
             cc = 'gcc'
         # Test the C compiler
@@ -156,7 +157,7 @@ class Builder:
         # Define the output library name
         libname = f"{self.name}.{libext}"
         # Build command
-        cc_args = f"-shared -fPIC {os.path.join(self.outdir, self.cfilename)} -o {os.path.join(self.outdir, libname)}"
+        cc_args = f"-shared -O1 -fPIC {os.path.join(self.outdir, self.cfilename)} -o {os.path.join(self.outdir, libname)}"
         cc_cmd = cc + " " + cc_args
         # Run the build process
         start_time = time.time()

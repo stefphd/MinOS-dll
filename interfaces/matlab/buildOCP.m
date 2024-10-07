@@ -141,8 +141,8 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
 
     % Compile library
     % Select the C compiler
-    if ispc % use TCC in windows
-        cc = ['"' basedir 'tcc' '"'];
+    if ispc % use local GCC in Windows
+        cc = ['"' basedir 'gcc/bin/gcc' '"'];
     else % GCC otherwise
         cc = 'gcc';
     end
@@ -159,7 +159,7 @@ function buildOCP(name, ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, oc
     end
     libname = [name '.' libext];
     % Build command
-    cc_args = ['-shared -fPIC ' outdir cfilename ' -o ' outdir libname];
+    cc_args = ['-shared -O1 -fPIC ' outdir cfilename ' -o ' outdir libname];
     cc_cmd = [cc ' ' cc_args];
     % Run the build process
     tic;

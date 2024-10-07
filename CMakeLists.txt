@@ -194,11 +194,11 @@ if (WITH_SNOPT)
 			COMPONENT libraries)
 endif()
 
-# Install TCC for Win
+# Install GCC-like compiler for Windows
 if (WIN32)
-	find_package(TCC REQUIRED)
-	# Install TCC
-	install(DIRECTORY ${TCC_DIR}/
+	find_package(GCC REQUIRED)
+	# Install GCC
+	install(DIRECTORY ${GCC_DIR}
 			COMPONENT libraries
 			DESTINATION bin
 			PATTERN doc EXCLUDE
