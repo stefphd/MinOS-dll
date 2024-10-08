@@ -14,7 +14,7 @@ Version @CMAKE_PROJECT_VERSION@
 * [Python3](https://www.python.org/) for the Python interface (>=3.7.0).
 * [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++).
 * [GCC](https://gcc.gnu.org/) compiler.
-* [CMake](https://cmake.org/) build system to build the C++.
+* [CMake](https://cmake.org/) build system to build the C++ examples.
 * [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://mumps-solver.org/index.php) solver (together with their dependencies), which is freely available; alternative linear solvers, such as HSL routines, might be used.
 * (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver, which is a commercial software. Free trial license is freely available for academics. Make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is set.
 * (optional) [WORHP](https://worhp.de/) solver. License is freely available for academics. If not installed in system directories, one should set a `WORHPDIR` environment variable pointing to the WORHP installation path.
