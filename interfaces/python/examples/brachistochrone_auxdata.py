@@ -9,7 +9,7 @@ else:
 
 import casadi as ca # import CASADI
 import minosPy # import MINOS
-import matplotlib.pyplot as plt
+import numpy as npy
 
 # Solver options
 name = "brachistochroneAuxdata"
@@ -80,7 +80,6 @@ builder.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int, 
 builder.build()
 
 # Solve OCP
-import numpy as npy
 # create ocp object
 ocp = minosPy.OCP(name, N, ti, tf) 
 # get dims

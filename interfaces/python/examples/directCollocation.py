@@ -9,7 +9,7 @@ else:
 
 import casadi as ca # import CASADI
 import minosPy # import MINOS
-import matplotlib.pyplot as plt
+import numpy as npy
 
 # Solver options
 name = "directCollocation"
@@ -126,7 +126,6 @@ builder.generate(ocp_runcost, ocp_bcscost, ocp_dyn, ocp_path, ocp_bcs, ocp_int, 
 builder.build()
 
 # Solve OCP
-import numpy as npy
 # create ocp object
 ocp = minosPy.OCP(name, N, ti, tf) 
 # get dims
@@ -170,34 +169,3 @@ iters = [i for i in range(num_iter+1)]
 # Print to file
 with open(name + ".txt", "w") as file:
     file.write(str(ocp))
-
-# Plot
-plt.figure(1)
-plt.plot(sol["t"], sol["x"][0,:], label='x1')
-plt.plot(sol["t"], sol["x"][1,:], label='x2')
-plt.xlabel("Time")
-plt.ylabel("States")
-plt.legend()
-# plt.savefig("state.png", dpi=300)
-
-plt.figure(2)
-plt.plot(sol["t"], sol["u"][0,:], label='u')
-plt.xlabel("Time")
-plt.ylabel("Control")
-plt.legend()
-# plt.savefig("control.png", dpi=300)
-
-plt.figure(3)
-plt.subplot(2, 1, 1)
-plt.plot(iters, obj, label='objective')
-plt.xlabel("Iteration")
-plt.ylabel("Objective")
-plt.subplot(2, 1, 2)
-plt.semilogy(iters, infpr, label='Feasiblity')
-plt.semilogy(iters, infdu, label='Optimality')
-plt.xlabel("Iteration")
-plt.ylabel("Max norm")
-plt.legend()
-# plt.savefig("history.png", dpi=300)
-
-plt.show()
