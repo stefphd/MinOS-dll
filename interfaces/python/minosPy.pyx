@@ -143,69 +143,52 @@ class Builder:
         csource = os.path.join(self.outdir, self.cfilename)
         if not os.path.exists(csource):
             raise FileNotFoundError(f"Unable to find source C file '{csource}'.")
-        # Get current PATH
-        oldpath = os.getenv('PATH') if 'PATH' in os.environ else ""
-        # Select the C compiler
+        # Save the original PATH
+        oldpath = os.getenv('PATH')
+        # Select the C compiler and check its availability
         cc = 'gcc'
-        # Test the C compiler
         ccpath = shutil.which(cc)
-        if sys.platform == "win32":
-            if ccpath: # Global GCC found: give info message
-                try:
-                    subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                except subprocess.CalledProcessError as e:
-                    # Throw error
-                    raise RuntimeError(f"Unable to find C compiler '{cc}'.\n{e.stderr}")
-                print(f"Using user C compiler at '{ccpath}'.")
-            else: # Global GCC not found, try local GCC distribution
-                self.__add2path__(os.path.join(self.__basedir__, "gcc/bin"))
-                # Test GCC again
-                ccpath = shutil.which(cc)
-        if ccpath is None:
-            # Reset default PATH
-            if oldpath:
-                os.environ['PATH'] = oldpath
-            # Throw error
-            raise RuntimeError(f"Unable to find C compiler '{cc}'.")       
+        if sys.platform == "win32" and ccpath:
+            # Global GCC distribution on Windows found
+            print(f"Using user C compiler at {ccpath}")
+        if sys.platform == "win32" and not ccpath:
+            # Try local GCC distribution on Windows if not found globally
+            self.__add2path__(os.path.join(self.__basedir__, "gcc/bin"))
+            ccpath = shutil.which(cc)
+        # If GCC is still not found, raise an error
+        if not ccpath:
+            if oldpath: os.environ['PATH'] = oldpath
+            raise RuntimeError(f"Unable to find C compiler '{cc}'.")
+        # Validate GCC compiler
         try:
             subprocess.run([cc, '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
         except subprocess.CalledProcessError as e:
-             # Reset default PATH
-            if oldpath:
-                os.environ['PATH'] = oldpath
-            # Throw error
+            if oldpath: os.environ['PATH'] = oldpath
             raise RuntimeError(f"Unable to find C compiler '{cc}'.\n{e.stderr}")
-        # Determine the library extension
-        if sys.platform == "win32":  # DLL for Windows
-            libext = 'dll'
-        else:  # SO for other platforms (Linux, macOS, etc.)
-            libext = 'so'
+        # Set the appropriate library extension based on the platform
+        libext = 'dll' if sys.platform == "win32" else 'so'
         # Define the output library name
         libname = os.path.join(self.outdir, f"{self.name}.{libext}")
-        # Build command
-        cc_args = f"-shared -O1 -fPIC {csource} -o {libname}"
-        cc_cmd = cc + " " + cc_args
-        # Run the build process
+        # Build the command to compile the library
+        cc_cmd = [cc, '-shared', '-O1', '-fPIC', csource, '-o', libname]
+        # Start the build process and track the time
         start_time = time.time()
         try:
             subprocess.run(cc_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         except subprocess.CalledProcessError as e:
-            # Reset default PATH
-            if oldpath:
-                os.environ['PATH'] = oldpath
-            # Throw error
+            os.environ['PATH'] = oldpath
             raise RuntimeError(f"Unable to build library '{libname}' from file '{csource}'.\n{e.stderr}")
-        # Print end message
+        # Output the compilation time
         compile_time = time.time() - start_time
         print(f"Library {libname} built in {compile_time:.2f} seconds.")
-        # Reset default PATH
-        if oldpath:
-            os.environ['PATH'] = oldpath
-        # Clean
+        # Reset the PATH and clean up the source file
+        if oldpath: os.environ['PATH'] = oldpath
         os.remove(csource)
-        # For Win add <__basedir__> to PATH if not present
+        # Add <__basedir__> to PATH for Windows if not present
         if sys.platform == "win32":
             self.__add2path__(self.__basedir__)
+        # Done, flush output buffer
+        sys.stdout.flush()
 
 ## C++ class
 cdef class OCP:
@@ -367,7 +350,7 @@ cdef class OCP:
         #Call to set_mesh
         self.cobj.set_mesh(meshp)
 
-    def solve(self) -> None:
+    def solve(self) -> int:
         return self.cobj.solve()
 
     def get_sol(self) -> dict:
@@ -497,6 +480,9 @@ cdef class OCP:
                 raise ValueError(f"Unsupported option key: {key}")
 
     def __repr__(self):
+        return f"<object OCPInterface at {hex(cast(size_t, self.cobj))}>"
+
+    def __str__(self):
         return self.cobj.toString()
         
     @staticmethod

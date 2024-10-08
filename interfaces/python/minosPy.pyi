@@ -151,12 +151,12 @@ class OCP:
             None
         """
 
-    def solve(self) -> None:
+    def solve(self) -> int:
         """
         Solve the OCP.
 
         Returns:
-            None
+            int: exit code of the employed NLP solver.
         """
 
     def get_sol(self) -> dict:
@@ -241,6 +241,14 @@ class OCP:
             None
         """
 
+    def __repr__(self) -> str:
+        """
+        Return a string rapresentation containing the memory address of the OCPInterface object.
+
+        Returns:
+            str: string representation.
+        """
+
     def __str__(self) -> str:
         """
         Return the OCP solution as a string. This may be usefull to print the solution to a file, e.g. with
@@ -248,7 +256,7 @@ class OCP:
                 file.write(str(ocp))
 
         Returns:
-            str: string representation.
+            str: OCP solution.
         """
 
     @staticmethod

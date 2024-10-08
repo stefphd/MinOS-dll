@@ -152,59 +152,52 @@ end
 
 function build(cc, csource, libname, basedir)
     % Check if C file exists
-    if isfile(csource) == 0
-        error('minosMex:buildFailed','Unable to find source C file ''%s''.', csource); 
+    if ~isfile(csource)
+        error('minosMex:buildFailed', 'Unable to find source C file ''%s''.', csource); 
     end
     % Get current PATH
     oldpath = getenv('PATH');
     % Test the C compiler
-    [exit, ~] = system([cc ' --version']); % ~ is to suppress output messages
-    if ispc % check if global or local gcc found
-        if exit == 0 % global GCC found: give info message
-            % find <cc> dir
-            [~, ccpath] = system(['where ' cc]);
-            ccpath = strsplit(ccpath, '\n');
-            fprintf('Using user C compiler at ''%s''\n', ccpath{1});
-        else % global GCC not found, try local GCC distribution
-            add2path([basedir 'gcc/bin']); % local GCC distribution
-            % test GCC again
-            [exit, ~] = system([cc ' --version']); 
-        end
+    [exit, ~] = system([cc ' --version']); % suppress output messages
+    if ispc && exit == 0 % global GCC found, find its directory and print info
+        [~, ccpath] = system(['where ' cc]);
+        ccpath = strsplit(ccpath, '\n');
+        fprintf('Using user C compiler at ''%s''\n', ccpath{1});
     end
+    if ispc && exit ~= 0 % global GCC not found, try local GCC distribution
+        add2path([basedir 'gcc/bin']); % add local GCC distribution to path
+        [exit, ~] = system([cc ' --version']); % test GCC again
+    end
+    % Throw error if GCC is still not found
     if exit ~= 0
-        % Reset default PATH
-        if ~isempty(oldpath)
-            setenv('PATH', oldpath);
-        end
-        % Throw error
-        error('minosMex:buildFailed','Unable to find C compiler ''%s''.', cc);
+        resetPath(oldpath);
+        error('minosMex:buildFailed', 'Unable to find C compiler ''%s''.', cc);
     end
-    % Define library output name
-    if ispc % dll for windows
-        libext = 'dll'; 
-    else % so otherwise
-        libext = 'so';
+    % Set the library extension based on the platform
+    if ispc
+        libext = 'dll'; % 'dll' for Windows
+    else
+        libext = 'so';  % 'so' for Linux/macOS
     end
     libname = [libname '.' libext];
     % Build command
-    cc_args = ['-shared -O1 -fPIC "' csource '" -o "' libname '"'];
-    cc_cmd = [cc ' ' cc_args];
+    cc_cmd = sprintf('%s -shared -O1 -fPIC "%s" -o "%s"', cc, csource, libname);
     % Run the build process
     tic;
     [exit, msg] = system(cc_cmd);
     compileTime = toc;
-    % Check exit status
-    if (exit ~= 0)
-        % Reset default PATH
-        if ~isempty(oldpath)
-            setenv('PATH', oldpath);
-        end
-        % Throw error
-        error('minosMex:buildFailed','Unable to build library ''%s'' from file ''%s''\n%s', libname, csource, msg);
+    % Check exit status and reset PATH if needed
+    if exit ~= 0
+        resetPath(oldpath);
+        error('minosMex:buildFailed', 'Unable to build library ''%s'' from file ''%s''\n%s', libname, csource, msg);
     end
     % Print end message
     fprintf("Library %s built in %.2fs\n", libname, compileTime);
-    % Reset default PATH
+    % Reset PATH
+    resetPath(oldpath);
+end
+
+function resetPath(oldpath)
     if ~isempty(oldpath)
         setenv('PATH', oldpath);
     end
