@@ -43,6 +43,14 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Unable to create OCP instance.\n");
         return -1;
     }
+    /*
+    // Alternativelly
+    ocp = minos_new2("brachistochrone_c", N, ti, tf);
+    if (!ocp) {
+        fprintf(stderr, "Unable to create OCP instance.\n");
+        return -1;
+    }
+    */
 
     /* Get problem dimensions */
     int nx, nu, np, nc, nb, nq;
