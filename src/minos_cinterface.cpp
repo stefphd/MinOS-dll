@@ -14,7 +14,8 @@ int MINOSC_PREFIX(new)(
     const char* name,
     int N,
     double ti,
-    double tf) {
+    double tf
+) {
     // create new object and assign pointer
     try {
         *ocp_ptr = (void*) new OCPInterface(name, N, ti, tf);
@@ -23,6 +24,22 @@ int MINOSC_PREFIX(new)(
         return 1;
     }
     return 0;
+}
+
+OCP_t MINOSC_PREFIX(new2)(
+    const char* name,
+    int N,
+    double ti,
+    double tf
+) {
+    // create new object and assign pointer
+    OCP_t ocp_ptr = NULL;
+    try {
+        ocp_ptr = (OCP_t) new OCPInterface(name, N, ti, tf);
+    } catch (const std::exception& e) {
+        ocp_ptr = NULL;
+    }
+    return ocp_ptr;
 }
 
 void MINOSC_PREFIX(free)(

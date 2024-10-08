@@ -83,7 +83,30 @@ MINOS_EXPORT_API int MINOSC_PREFIX(new)(
     const char* name,
     int N,
     double ti,
-    double tf);
+    double tf
+);
+
+/**
+ * @brief Instantiates a new OCP.
+ * 
+ * Instantiates a new OCP with `N` mesh points, initial time `ti`, 
+ * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
+ * The OCP functions are loaded in runtime from a dynamic library `<name>`; returns
+ * the OCP instance.
+ * 
+ * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
+ * \param N Number of mesh points.
+ * \param ti Initial time.
+ * \param tf Final time.
+ * 
+ * \return The OCP instance (NULL if failed).
+ */
+MINOS_EXPORT_API OCP_t MINOSC_PREFIX(new2)(
+    const char* name,
+    int N,
+    double ti,
+    double tf
+);
 
 /**
  * @brief Deletes OCP.
