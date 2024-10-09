@@ -1,4 +1,9 @@
-# Stub file for MinosPy
+"""
+File minosPy.pyi 
+Python interface to @CMAKE_PROJECT_NAME@ version @CMAKE_PROJECT_VERSION@
+Copyright (C) @COPYRIGHT_YEAR@ @COPYRIGHT_NAME@ <@COPYRIGHT_CONTACT@>
+"""
+
 import numpy
 from typing import Tuple
 import casadi 
