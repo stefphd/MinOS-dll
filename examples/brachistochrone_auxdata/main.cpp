@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
     /* Print solution to file */
     std::ofstream outfile;
     outfile.open("brachistochrone_auxdata.txt");
-    outfile << ocp;
+    outfile << *ocp;
     outfile.close();
 
     /* Free mem */
