@@ -18,9 +18,13 @@ execute_process(
     RESULT_VARIABLE CASADI_RESULT)
 
 if (NOT CASADI_RESULT EQUAL 0)
-    message(FATAL_ERROR "CasADi not found.")
+    message(FATAL_ERROR "CasADi not found for C++ examples.")
 endif()
 message(STATUS "CasADi found.")   
+
+# Logical target to build all example with --target examples
+add_custom_target(examples)
+add_dependencies(examples minos-${NLPSOLVER_EXAMPLE})
 
 # Add example subdirectories
 add_subdirectory(brachistochrone)

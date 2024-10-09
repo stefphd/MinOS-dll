@@ -100,23 +100,24 @@ set(MINOS_SOURCES ${CMAKE_SOURCE_DIR}/src/minos_base.cpp
                   ${CMAKE_SOURCE_DIR}/src/minos_cinterface.cpp)
 
 # Main MinOS base library 
-add_library(minoslib SHARED
+add_library(minos SHARED
 			${MINOS_SOURCES}
 			)
-target_compile_definitions(minoslib
+target_compile_definitions(minos
 							PRIVATE MINOS_VERSION=\"${CMAKE_PROJECT_VERSION}\")
-target_include_directories(minoslib
+target_include_directories(minos
 							PUBLIC include
 							)
-set_target_properties(minoslib PROPERTIES
-					OUTPUT_NAME minos)
-set_target_properties(minoslib 
+set_target_properties(minos 
 					PROPERTIES 
 					PUBLIC_HEADER "include/minos.h;include/minosc.h")
-install(TARGETS minoslib
+install(TARGETS minos
 		COMPONENT libraries
 		PUBLIC_HEADER
 		COMPONENT libraries)
+
+# Logical target to build all interfaces with --target minos-nlp
+add_custom_target(minos-nlp)  
 
 # IPOPT interface
 if (WITH_IPOPT)
@@ -129,7 +130,8 @@ if (WITH_IPOPT)
 	# Create IPOPT interface library
 	add_library(minos-ipopt SHARED src/ipoptsolver.cpp)
 	target_include_directories(minos-ipopt PRIVATE include)
-	target_link_libraries(minos-ipopt PRIVATE ipopt minoslib)
+	target_link_libraries(minos-ipopt PRIVATE ipopt minos)
+	add_dependencies(minos-nlp minos-ipopt)
 	# Install target
 	install(TARGETS minos-ipopt
 			RUNTIME
@@ -152,7 +154,8 @@ if (WITH_WORHP)
 	# Create WORHP interface library
 	add_library(minos-worhp SHARED src/worhpsolver.cpp)
 	target_include_directories(minos-worhp PRIVATE include)
-	target_link_libraries(minos-worhp PRIVATE worhp minoslib)
+	target_link_libraries(minos-worhp PRIVATE worhp minos)
+	add_dependencies(minos-nlp minos-worhp)
 	# Install target
 	install(TARGETS minos-worhp
 			RUNTIME
@@ -170,7 +173,8 @@ if (WITH_KNITRO)
 	# Create KNITRO interface library
 	add_library(minos-knitro SHARED src/knitrosolver.cpp)
 	target_include_directories(minos-knitro PRIVATE include)
-	target_link_libraries(minos-knitro PRIVATE knitro minoslib)
+	target_link_libraries(minos-knitro PRIVATE knitro minos)
+	add_dependencies(minos-nlp minos-knitro)
 	# Install target
 	install(TARGETS minos-knitro
 			RUNTIME
@@ -188,7 +192,8 @@ if (WITH_SNOPT)
 	# Create SNOPT interface library
 	add_library(minos-snopt SHARED src/snoptsolver.cpp)
 	target_include_directories(minos-snopt PRIVATE include)
-	target_link_libraries(minos-snopt PRIVATE snopt minoslib)
+	target_link_libraries(minos-snopt PRIVATE snopt minos)
+	add_dependencies(minos-nlp minos-snopt)
 	# Install target
 	install(TARGETS minos-snopt
 			RUNTIME
@@ -219,7 +224,6 @@ enable_testing()
 
 # CPack
 if (WITH_CPACK)
-
 	# Set vars
 	set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}")
 	set(CPACK_PACKAGE_DESCRIPTION "${CMAKE_PROJECT_DESCRIPTION}")
@@ -237,23 +241,19 @@ if (WITH_CPACK)
 		set(CPACK_WIX_UPGRADE_GUID "FBF85747-FC84-4321-937A-A2686D63809A")
 		set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/cmake/minosLogo.ico")
 	endif()
-
 	# Include CPack
 	include(CPack)
-	
 	# Installation types
 	cpack_add_install_type(full
 						DISPLAY_NAME "Full")
 	cpack_add_install_type(dynamic 
 						DISPLAY_NAME "C++ Libraries")
-	
 	# Add main application component
 	cpack_add_component(libraries 
 						DISPLAY_NAME "Application"
 						DESCRIPTION "MinOS library"
 						INSTALL_TYPES full dynamic matlab python
 						REQUIRED)
-
 endif()
 
 # C++ examples
@@ -285,7 +285,7 @@ if (WITH_DOCS)
                     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile 
                     @ONLY)
     # Custom target to generate docs
-    add_custom_target( minos-doc ALL
+    add_custom_target( minos-docs ALL
                         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                         COMMENT "Generating API documentation with Doxygen"
@@ -294,7 +294,6 @@ if (WITH_DOCS)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs 
 			COMPONENT docs
 			DESTINATION ./)
-
 	# CPack
 	cpack_add_component(docs
 						DISPLAY_NAME "Documentation"

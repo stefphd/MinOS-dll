@@ -6,7 +6,7 @@ find_library(MXLIBUT NAMES libut ut
              PATHS ${Matlab_MX_LIBRARY_PATH} REQUIRED)
 matlab_add_mex(NAME minos-mex
                 SRC ${CMAKE_CURRENT_SOURCE_DIR}/minosMex.cpp
-                LINK_TO ${MXLIBUT} minoslib)
+                LINK_TO ${MXLIBUT} minos)
 set_target_properties(minos-mex PROPERTIES OUTPUT_NAME minosMex)
 # P-code buildOCP
 set(BUILDOCP_MFILE ${CMAKE_CURRENT_SOURCE_DIR}/buildOCP.m)

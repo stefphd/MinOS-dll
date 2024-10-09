@@ -34,10 +34,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 find_package(MINOS REQUIRED)
 
 # Create an interface library for minos-base library
-add_library(minoslib INTERFACE)
-target_include_directories(minoslib
+add_library(minos INTERFACE)
+target_include_directories(minos
                            INTERFACE ${MINOS_INCLUDE_DIR})
-target_link_libraries(minoslib
+target_link_libraries(minos
                       INTERFACE ${MINOS_LIBRARY})
 
 # Check Hessian
@@ -64,6 +64,9 @@ if (NOT CASADI_RESULT EQUAL 0)
     message(FATAL_ERROR "CasADi not found.")
 endif()
 message(STATUS "CasADi found.")   
+
+# Add logical target to build all example with --target examples
+add_custom_target(examples)
 
 # Add example subdirectories
 add_subdirectory(brachistochrone)

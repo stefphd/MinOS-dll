@@ -8,7 +8,7 @@ cython_transpile(${CMAKE_CURRENT_SOURCE_DIR}/minosPy.pyx
                 OUTPUT_VARIABLE MINOSPYIPOPT)
 python_add_library(minos-py MODULE "${MINOSPYIPOPT}")
 set_target_properties(minos-py PROPERTIES OUTPUT_NAME minosPy)
-target_link_libraries(minos-py PRIVATE minoslib)
+target_link_libraries(minos-py PRIVATE minos)
 # Configure files
 configure_file(${CMAKE_SOURCE_DIR}/cmake/minosPy.in
         ${CMAKE_CURRENT_BINARY_DIR}/minosPy.pyi

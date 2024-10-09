@@ -17,22 +17,23 @@ else()
     set_target_properties(${EXAMPLE_NAME}-lib PROPERTIES
                             OUTPUT_NAME ${EXAMPLE_NAME})
     # Create the executable
-    add_executable(${EXAMPLE_NAME}-exe
-                  main.cpp ) 
-    set_target_properties(${EXAMPLE_NAME}-exe PROPERTIES
-                        OUTPUT_NAME ${EXAMPLE_NAME}-main)
-    target_link_libraries(${EXAMPLE_NAME}-exe
-                          PRIVATE minoslib)
+    add_executable(${EXAMPLE_NAME}-main
+                  main.cpp)
+    target_link_libraries(${EXAMPLE_NAME}-main
+                          PRIVATE minos)
+    # Add dependencies
+    add_dependencies(${EXAMPLE_NAME}-main ${EXAMPLE_NAME}-lib)
+    add_dependencies(examples ${EXAMPLE_NAME}-main)
     # Add test
-    add_test(NAME ${EXAMPLE_NAME}-exe 
+    add_test(NAME ${EXAMPLE_NAME}-main 
             COMMAND ${EXAMPLE_NAME}-main ${NLPSOLVER_EXAMPLE}
             WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
     # Add IPOPT path to PATH
     if (WIN32)
-    set_property(TEST ${EXAMPLE_NAME}-exe PROPERTY ENVIRONMENT_MODIFICATION  
+    set_property(TEST ${EXAMPLE_NAME}-main PROPERTY ENVIRONMENT_MODIFICATION  
         PATH=path_list_append:${BINARY_DIR})
     else()
-    set_property(TEST ${EXAMPLE_NAME}-exe PROPERTY ENVIRONMENT_MODIFICATION
+    set_property(TEST ${EXAMPLE_NAME}-main PROPERTY ENVIRONMENT_MODIFICATION
         LD_LIBRARY_PATH=path_list_append:${BINARY_DIR})
     endif()
 endif()
