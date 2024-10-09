@@ -9,7 +9,7 @@
 #include "minosc.h"
 #include "macros.h"
 
-int MINOSC_PREFIX(new)(
+void MINOSC_PREFIX(new)(
     OCP_t* ocp_ptr, 
     const char* name,
     int N,
@@ -17,13 +17,16 @@ int MINOSC_PREFIX(new)(
     double tf
 ) {
     // create new object and assign pointer
+    (*ocp_ptr) = new OCP_struct;
+    (*ocp_ptr)->ptr = NULL;
+    (*ocp_ptr)->exitval = 0;
+    (*ocp_ptr)->exitmsg = "";
     try {
-        *ocp_ptr = (void*) new OCPInterface(name, N, ti, tf);
+        (*ocp_ptr)->ptr = (void*) new OCPInterface(name, N, ti, tf);
     } catch (const std::exception& e) {
-        *ocp_ptr = NULL;
-        return 1;
+        (*ocp_ptr)->exitval = 1;
+        (*ocp_ptr)->exitmsg = e.what();
     }
-    return 0;
 }
 
 OCP_t MINOSC_PREFIX(new2)(
@@ -33,20 +36,16 @@ OCP_t MINOSC_PREFIX(new2)(
     double tf
 ) {
     // create new object and assign pointer
-    OCP_t ocp_ptr = NULL;
-    try {
-        ocp_ptr = (OCP_t) new OCPInterface(name, N, ti, tf);
-    } catch (const std::exception& e) {
-        ocp_ptr = NULL;
-    }
-    return ocp_ptr;
+    OCP_t ocp;
+    MINOSC_PREFIX(new)(&ocp, name, N, ti, tf);
+    return ocp;
 }
 
 void MINOSC_PREFIX(free)(
     OCP_t* ocp_ptr
 ) {
-    delete CASTOCPINTERFACE(*ocp_ptr); // call destructor
-    *ocp_ptr = NULL; // reset to null
+    delete CASTOCPINTERFACE((*ocp_ptr)->ptr); // call destructor
+    delete (*ocp_ptr);
 }
 
 void MINOSC_PREFIX(get_dims)(
@@ -63,13 +62,13 @@ void MINOSC_PREFIX(get_dims)(
     int *nnzh,
     int *na
 ) {
-    CASTOCPINTERFACE(ocp)->get_dims(nx, nu, np, nc, nb, nq, nz, ng, nnzj, nnzh, na);
+    CASTOCPINTERFACE(ocp->ptr)->get_dims(nx, nu, np, nc, nb, nq, nz, ng, nnzj, nnzh, na);
 }
 
 int MINOSC_PREFIX(get_N)(
     const OCP_t ocp
 ) {
-    return CASTOCPINTERFACE(ocp)->get_N();
+    return CASTOCPINTERFACE(ocp->ptr)->get_N();
 }
 
 void MINOSC_PREFIX(set_guess)(
@@ -85,7 +84,7 @@ void MINOSC_PREFIX(set_guess)(
     double *lam_b0,
     double *lam_q0
 ) {
-    CASTOCPINTERFACE(ocp)->set_guess(x0, u0, p0, lam_x0, lam_u0, lam_p0, lam_f0, lam_c0, lam_b0, lam_q0);
+    CASTOCPINTERFACE(ocp->ptr)->set_guess(x0, u0, p0, lam_x0, lam_u0, lam_p0, lam_f0, lam_c0, lam_b0, lam_q0);
 }
 
 void MINOSC_PREFIX(set_bounds)(
@@ -103,7 +102,7 @@ void MINOSC_PREFIX(set_bounds)(
     double *lbq,
     double *ubq
 ) {
-    CASTOCPINTERFACE(ocp)->set_bounds(lbx, ubx, lbu, ubu, lbp, ubp, lbc, ubc, lbb, ubb, lbq, ubq);
+    CASTOCPINTERFACE(ocp->ptr)->set_bounds(lbx, ubx, lbu, ubu, lbp, ubp, lbc, ubc, lbb, ubb, lbq, ubq);
 }
 
 int MINOSC_PREFIX(set_option_val)(
@@ -111,7 +110,7 @@ int MINOSC_PREFIX(set_option_val)(
     int optkey,
     double val
 ) {
-    return CASTOCPINTERFACE(ocp)->set_option(optkey, val) ? 0 : 1;
+    return CASTOCPINTERFACE(ocp->ptr)->set_option(optkey, val) ? 0 : 1;
 }
 
 int MINOSC_PREFIX(set_option)(
@@ -119,20 +118,30 @@ int MINOSC_PREFIX(set_option)(
     int optkey,
     const char* str
 ) {
-    return CASTOCPINTERFACE(ocp)->set_option(optkey, str) ? 0 : 1;
+    return CASTOCPINTERFACE(ocp->ptr)->set_option(optkey, str) ? 0 : 1;
 }
 
 void MINOSC_PREFIX(set_auxdata)(
     const OCP_t ocp,
     double *auxdata
 ) {
-    CASTOCPINTERFACE(ocp)->set_auxdata(auxdata);
+    CASTOCPINTERFACE(ocp->ptr)->set_auxdata(auxdata);
 }
 
 int MINOSC_PREFIX(solve)(
-    const OCP_t ocp
+    OCP_t ocp
 )  {
-    return CASTOCPINTERFACE(ocp)->solve();
+    ocp->exitval = 0;
+    ocp->exitmsg = "";
+    int status = -1;
+    try {
+        status = CASTOCPINTERFACE(ocp->ptr)->solve();
+    } catch (const std::exception& e) {
+        ocp->exitval = 1;
+        ocp->exitmsg = e.what();
+        return status;
+    }
+    return status;
 }
 
 void MINOSC_PREFIX(get_sol)(
@@ -147,7 +156,7 @@ void MINOSC_PREFIX(get_sol)(
     size_t *irj, size_t *jcj, double *jac,
     size_t *irh, size_t *jch, double *hess
 ) {
-    CASTOCPINTERFACE(ocp)->get_sol(J_opt, t, 
+    CASTOCPINTERFACE(ocp->ptr)->get_sol(J_opt, t, 
                                     x_opt, u_opt, p_opt,
                                     lamx_opt, lamu_opt, lamp_opt,
                                     lamf_opt, lamc_opt, lamb_opt, lamq_opt,
@@ -161,7 +170,7 @@ void MINOSC_PREFIX(get_sol)(
 const char* MINOSC_PREFIX(print_sol)(
     const OCP_t ocp
 ) {
-    std::string str = CASTOCPINTERFACE(ocp)->toString();
+    std::string str = CASTOCPINTERFACE(ocp->ptr)->toString();
     int len = str.length();
     char* cstr = (char*) malloc((len+1)*sizeof(char));
     std::strcpy(cstr, str.c_str());
@@ -172,7 +181,7 @@ void MINOSC_PREFIX(set_mesh)(
     const OCP_t ocp,
     double *mesh
 ) {
-    CASTOCPINTERFACE(ocp)->set_mesh(mesh);
+    CASTOCPINTERFACE(ocp->ptr)->set_mesh(mesh);
 }
 
 void MINOSC_PREFIX(get_cpu_time)(
@@ -181,19 +190,19 @@ void MINOSC_PREFIX(get_cpu_time)(
     double* tcpu_alg,
     double* tcpu_eval
 ) {
-    CASTOCPINTERFACE(ocp)->get_cpu_time(tcpu_tot, tcpu_alg, tcpu_eval);
+    CASTOCPINTERFACE(ocp->ptr)->get_cpu_time(tcpu_tot, tcpu_alg, tcpu_eval);
 }
 
 double MINOSC_PREFIX(get_mu_curr)(
     const OCP_t ocp
 ) {
-    return CASTOCPINTERFACE(ocp)->get_mu_curr();
+    return CASTOCPINTERFACE(ocp->ptr)->get_mu_curr();
 }
 
 int MINOSC_PREFIX(get_num_iter)(
     const OCP_t ocp
 ) {
-    return CASTOCPINTERFACE(ocp)->get_num_iter();
+    return CASTOCPINTERFACE(ocp->ptr)->get_num_iter();
 }
 
 void MINOSC_PREFIX(get_history)(
@@ -202,7 +211,7 @@ void MINOSC_PREFIX(get_history)(
     double* inf_pr,
     double* inf_du
 ) {
-    CASTOCPINTERFACE(ocp)->get_history(obj, inf_pr, inf_du);
+    CASTOCPINTERFACE(ocp->ptr)->get_history(obj, inf_pr, inf_du);
 }
 
 const char* MINOSC_PREFIX(get_version)(
@@ -214,12 +223,12 @@ void MINOSC_PREFIX(set_printfun)(
     const OCP_t ocp,
     int (*ext_print_funptr)(const char *fmt, ...)
 ) {
-    CASTOCPINTERFACE(ocp)->set_printfun(ext_print_funptr);
+    CASTOCPINTERFACE(ocp->ptr)->set_printfun(ext_print_funptr);
 }
 
 void MINOSC_PREFIX(set_interruptfun)(
     const OCP_t ocp,
     bool (*ext_int_funptr)(void)
 ) {
-    CASTOCPINTERFACE(ocp)->set_interruptfun(ext_int_funptr);
+    CASTOCPINTERFACE(ocp->ptr)->set_interruptfun(ext_int_funptr);
 }

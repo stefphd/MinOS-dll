@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     /* Check number of input arguments */
     if (argc > 3) {
         fprintf(stderr, "Too many input arguments. Number of input arguments must be 1.\n");
-        return -1;
+        return 1;
     }
 
     /* Override nlpsolver if given in input argument */
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
         N = atoi(argv[2]);
         if (N<=0) {
             fprintf(stderr, "Invalid input arguments. Argument must be a positive number.\n");
-            return -1;
+            return 1;
         }
     }
 
@@ -38,17 +38,18 @@ int main(int argc, char* argv[]) {
 
     /* Create OCP Interface */
     OCP_t ocp;
-    int exit = minos_new(&ocp, "brachistochrone_c", N, ti, tf);
-    if (exit) {
-        fprintf(stderr, "Unable to create OCP instance.\n");
-        return -1;
+    minos_new(&ocp, "brachistochrone_c", N, ti, tf);
+    printf("3\n");
+    if (ocp->exitval) {
+        fprintf(stderr, "%s", ocp->exitmsg);
+        return 1;
     }
     /*
     // Alternativelly
     ocp = minos_new2("brachistochrone_c", N, ti, tf);
     if (!ocp) {
         fprintf(stderr, "Unable to create OCP instance.\n");
-        return -1;
+        return 1;
     }
     */
 
@@ -92,6 +93,10 @@ int main(int argc, char* argv[]) {
 
     /* Call to MinOS */
     int status = minos_solve(ocp);
+    if (ocp->exitval) {
+        fprintf(stderr, "%s", ocp->exitmsg);
+        return 1;
+    }
     
     /* Print solution to file */
     FILE *filePtr;
@@ -102,9 +107,8 @@ int main(int argc, char* argv[]) {
 
     /* Free mem */
     minos_free(&ocp);
-    free(x0);
-    free(u0);
-
+    free(x0); free(u0);
+    
     /* Return */
     return 0;
 }

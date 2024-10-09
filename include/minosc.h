@@ -33,12 +33,25 @@ extern "C" {
  *  @{
  */
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+typedef struct {
+    /** Pointer to hold the OCPInterface instance */
+    void* ptr;   
+    /** Exit value, non-zero if fail */
+    int exitval;    
+    /** Exit message for failure detail */
+    const char* exitmsg;   
+} OCP_struct;
+#endif
+
 /** 
  * \brief OCPInterface C type.
  * 
- * C type for OCPInterface instance.
+ * C type to hold the OCPInterface instance. 
+ * Use (int) OCP_t->exitval and (const char*) OCP_t->exitmsg to check for errors.
  */
-typedef void* OCP_t;
+typedef OCP_struct* OCP_t;
+
 
 /**
  * \brief Option keywords.
@@ -67,18 +80,15 @@ enum Opt {
  * 
  * Instantiates a new OCP with `N` mesh points, initial time `ti`, 
  * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
- * The OCP functions are loaded in runtime from a dynamic library `<name>`; returns
- * a non-zero value if fails.
+ * The OCP functions are loaded in runtime from a dynamic library `<name>`.
  * 
- * \param ocp_ptr Pointer to OCP instance.
+ * \param ocp_ptr Pointer to OCP instance structure. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
  * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
  * \param N Number of mesh points.
  * \param ti Initial time.
  * \param tf Final time.
- * 
- * \return Non-zero value in the case of failure.
  */
-MINOS_EXPORT_API int MINOSC_PREFIX(new)(
+MINOS_EXPORT_API void MINOSC_PREFIX(new)(
     OCP_t* ocp_ptr, 
     const char* name,
     int N,
@@ -92,14 +102,14 @@ MINOS_EXPORT_API int MINOSC_PREFIX(new)(
  * Instantiates a new OCP with `N` mesh points, initial time `ti`, 
  * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
  * The OCP functions are loaded in runtime from a dynamic library `<name>`; returns
- * the OCP instance.
+ * the OCP instance structure.
  * 
  * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
  * \param N Number of mesh points.
  * \param ti Initial time.
  * \param tf Final time.
  * 
- * \return The OCP instance (NULL if failed).
+ * \return The OCP instance. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
  */
 MINOS_EXPORT_API OCP_t MINOSC_PREFIX(new2)(
     const char* name,
@@ -293,7 +303,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_auxdata)(
  * 
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(solve)(
-    const OCP_t ocp
+    OCP_t ocp
 );
 
 
