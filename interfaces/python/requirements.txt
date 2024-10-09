@@ -1,2 +1,1 @@
-casadi >= 3.6.3
-numpy >= 1.21.6
+casadi >= 3.6.0
