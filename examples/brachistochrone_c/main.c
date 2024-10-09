@@ -37,20 +37,14 @@ int main(int argc, char* argv[]) {
     double tf = 1;
 
     /* Create OCP Interface */
-    OCP_t ocp;
+    OCP_t* ocp;
     minos_new(&ocp, "brachistochrone_c", N, ti, tf);
+    // Alternativelly
+    //ocp = minos_new2("brachistochrone_c", N, ti, tf);
     if (ocp->exitval) {
         fprintf(stderr, "%s", ocp->exitmsg);
         return 1;
     }
-    /*
-    // Alternativelly
-    ocp = minos_new2("brachistochrone_c", N, ti, tf);
-    if (!ocp) {
-        fprintf(stderr, "Unable to create OCP instance.\n");
-        return 1;
-    }
-    */
 
     /* Get problem dimensions */
     int nx, nu, np, nc, nb, nq;

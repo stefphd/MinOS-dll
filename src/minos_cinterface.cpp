@@ -10,14 +10,14 @@
 #include "macros.h"
 
 void MINOSC_PREFIX(new)(
-    OCP_t* ocp_ptr, 
+    OCP_t** ocp_ptr, 
     const char* name,
     int N,
     double ti,
     double tf
 ) {
     // create new object and assign pointer
-    (*ocp_ptr) = new OCP_struct;
+    (*ocp_ptr) = new OCP_t;
     (*ocp_ptr)->ptr = NULL;
     (*ocp_ptr)->exitval = 0;
     (*ocp_ptr)->exitmsg = "";
@@ -29,27 +29,27 @@ void MINOSC_PREFIX(new)(
     }
 }
 
-OCP_t MINOSC_PREFIX(new2)(
+OCP_t* MINOSC_PREFIX(new2)(
     const char* name,
     int N,
     double ti,
     double tf
 ) {
     // create new object and assign pointer
-    OCP_t ocp;
+    OCP_t* ocp;
     MINOSC_PREFIX(new)(&ocp, name, N, ti, tf);
     return ocp;
 }
 
 void MINOSC_PREFIX(free)(
-    OCP_t* ocp_ptr
+    OCP_t** ocp_ptr
 ) {
     delete CASTOCPINTERFACE((*ocp_ptr)->ptr); // call destructor
     delete (*ocp_ptr);
 }
 
 void MINOSC_PREFIX(get_dims)(
-    const OCP_t ocp, 
+    const OCP_t* ocp, 
     int *nx,
     int *nu,
     int *np,
@@ -66,13 +66,13 @@ void MINOSC_PREFIX(get_dims)(
 }
 
 int MINOSC_PREFIX(get_N)(
-    const OCP_t ocp
+    const OCP_t* ocp
 ) {
     return CASTOCPINTERFACE(ocp->ptr)->get_N();
 }
 
 void MINOSC_PREFIX(set_guess)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *x0,
     double *u0,
     double *p0,
@@ -88,7 +88,7 @@ void MINOSC_PREFIX(set_guess)(
 }
 
 void MINOSC_PREFIX(set_bounds)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *lbx,
     double *ubx,
     double *lbu,
@@ -106,7 +106,7 @@ void MINOSC_PREFIX(set_bounds)(
 }
 
 int MINOSC_PREFIX(set_option_val)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int optkey,
     double val
 ) {
@@ -114,7 +114,7 @@ int MINOSC_PREFIX(set_option_val)(
 }
 
 int MINOSC_PREFIX(set_option)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int optkey,
     const char* str
 ) {
@@ -122,14 +122,14 @@ int MINOSC_PREFIX(set_option)(
 }
 
 void MINOSC_PREFIX(set_auxdata)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *auxdata
 ) {
     CASTOCPINTERFACE(ocp->ptr)->set_auxdata(auxdata);
 }
 
 int MINOSC_PREFIX(solve)(
-    OCP_t ocp
+    OCP_t* ocp
 )  {
     ocp->exitval = 0;
     ocp->exitmsg = "";
@@ -145,7 +145,7 @@ int MINOSC_PREFIX(solve)(
 }
 
 void MINOSC_PREFIX(get_sol)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *J_opt, double *t,
     double *x_opt, double *u_opt, double *p_opt,
     double *lamx_opt, double *lamu_opt, double *lamp_opt,
@@ -168,7 +168,7 @@ void MINOSC_PREFIX(get_sol)(
 }
 
 const char* MINOSC_PREFIX(print_sol)(
-    const OCP_t ocp
+    const OCP_t* ocp
 ) {
     std::string str = CASTOCPINTERFACE(ocp->ptr)->toString();
     int len = str.length();
@@ -178,14 +178,14 @@ const char* MINOSC_PREFIX(print_sol)(
 }
 
 void MINOSC_PREFIX(set_mesh)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *mesh
 ) {
     CASTOCPINTERFACE(ocp->ptr)->set_mesh(mesh);
 }
 
 void MINOSC_PREFIX(get_cpu_time)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double* tcpu_tot,
     double* tcpu_alg,
     double* tcpu_eval
@@ -194,19 +194,19 @@ void MINOSC_PREFIX(get_cpu_time)(
 }
 
 double MINOSC_PREFIX(get_mu_curr)(
-    const OCP_t ocp
+    const OCP_t* ocp
 ) {
     return CASTOCPINTERFACE(ocp->ptr)->get_mu_curr();
 }
 
 int MINOSC_PREFIX(get_num_iter)(
-    const OCP_t ocp
+    const OCP_t* ocp
 ) {
     return CASTOCPINTERFACE(ocp->ptr)->get_num_iter();
 }
 
 void MINOSC_PREFIX(get_history)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double* obj,
     double* inf_pr,
     double* inf_du
@@ -220,14 +220,14 @@ const char* MINOSC_PREFIX(get_version)(
 }
 
 void MINOSC_PREFIX(set_printfun)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int (*ext_print_funptr)(const char *fmt, ...)
 ) {
     CASTOCPINTERFACE(ocp->ptr)->set_printfun(ext_print_funptr);
 }
 
 void MINOSC_PREFIX(set_interruptfun)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     bool (*ext_int_funptr)(void)
 ) {
     CASTOCPINTERFACE(ocp->ptr)->set_interruptfun(ext_int_funptr);

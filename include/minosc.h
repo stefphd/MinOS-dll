@@ -33,30 +33,36 @@ extern "C" {
  *  @{
  */
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-typedef struct {
-    /** Pointer to hold the OCPInterface instance */
-    void* ptr;   
-    /** Exit value, non-zero if fail */
-    int exitval;    
-    /** Exit message for failure detail */
-    const char* exitmsg;   
-} OCP_struct;
-#endif
-
 /** 
  * \brief OCPInterface C type.
  * 
  * C type to hold the OCPInterface instance. 
- * Use (int) OCP_t->exitval and (const char*) OCP_t->exitmsg to check for errors.
  */
-typedef OCP_struct* OCP_t;
+typedef struct {
 
+    /** \brief Pointer to the OCPInterface object.
+     * 
+     * Pointer to hold the OCPInterface object.
+     */
+    void* ptr;   
+
+    /** \brief Exit value.
+     * 
+     * Exit value that is non-zero in the case of failure. Check this value after a call to minos_new, minos_new2, and minos_solve.
+     */
+    int exitval;    
+
+    /** \brief Exit message
+     * 
+     * Exit message in the case of failure. Check this value after a call to minos_new, minos_new2, and minos_solve.
+     */
+    const char* exitmsg;   
+} OCP_t;
 
 /**
  * \brief Option keywords.
  * 
- * Keywords to set option for the solver. Use OCPInterface::set_option to set an option using OCPIneterface::Opt as a option key.
+ * Keywords to set option for the solver. Use minos_set_option to set an option using Opt as a option key.
  * - `MAX_ITER` (value): maximum number of iterations (default 3000).
  * - `MU_INIT` (value): initial NLP barrier parameter (default depends on the NLP solver). This applies only when usng interior-point and may be used for a warm start of the NLP solver.
  * - `FLAG_HESSIAN` (value): true to use approximated Hessian instead of exact one (default false). This option has no effect if the optimal-control problem is built skipping the Hessian calculation.
@@ -82,14 +88,14 @@ enum Opt {
  * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
  * The OCP functions are loaded in runtime from a dynamic library `<name>`.
  * 
- * \param ocp_ptr Pointer to OCP instance. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
+ * \param ocp_ptr Pointer to OCP instance. Use OCP_t::exitval and OCP_t::exitmsg to check for errors.
  * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
  * \param N Number of mesh points.
  * \param ti Initial time.
  * \param tf Final time.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(new)(
-    OCP_t* ocp_ptr, 
+    OCP_t** ocp_ptr, 
     const char* name,
     int N,
     double ti,
@@ -109,9 +115,9 @@ MINOS_EXPORT_API void MINOSC_PREFIX(new)(
  * \param ti Initial time.
  * \param tf Final time.
  * 
- * \return The OCP instance. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
+ * \return The OCP instance. Use OCP_t::exitval and OCP_t::exitmsg to check for errors.
  */
-MINOS_EXPORT_API OCP_t MINOSC_PREFIX(new2)(
+MINOS_EXPORT_API OCP_t* MINOSC_PREFIX(new2)(
     const char* name,
     int N,
     double ti,
@@ -125,7 +131,7 @@ MINOS_EXPORT_API OCP_t MINOSC_PREFIX(new2)(
  * \param ocp_ptr Pointer to OCP instance.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(free)(
-    OCP_t* ocp_ptr
+    OCP_t** ocp_ptr
 );
 
 /** 
@@ -149,7 +155,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(free)(
  * \param na Number of auxdata.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(get_dims)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int *nx,
     int *nu,
     int *np,
@@ -173,7 +179,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(get_dims)(
  * \return The number of mesh points.
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(get_N)(
-    const OCP_t ocp
+    const OCP_t* ocp
 );
 
 
@@ -197,7 +203,7 @@ MINOS_EXPORT_API int MINOSC_PREFIX(get_N)(
  * \param lam_q0 Integral constraint multiplier guess, specified as an array of length `nq`.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_guess)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *x0,
     double *u0,
     double *p0,
@@ -231,7 +237,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_guess)(
  * \param ubq Integral constraint upper bounds, specified as an array of length `nq`.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_bounds)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *lbx,
     double *ubx,
     double *lbu,
@@ -258,7 +264,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_bounds)(
  * \return Non-zero value in the case of errors.
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(set_option_val)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int optkey,
     double val
 );
@@ -274,7 +280,7 @@ MINOS_EXPORT_API int MINOSC_PREFIX(set_option_val)(
  * \return Non-zero value in the case of errors.
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(set_option)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int optkey,
     const char* str
 );
@@ -288,7 +294,7 @@ MINOS_EXPORT_API int MINOSC_PREFIX(set_option)(
  * \param auxdata Auxdata, specified as an array of length `na`.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_auxdata)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *auxdata
 );
 
@@ -297,13 +303,13 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_auxdata)(
  * 
  * Solves the optimal-control problem.
  * 
- * \param ocp OCP instance.
+ * \param ocp OCP instance. Use OCP_t::exitval and OCP_t::exitmsg to check for errors.
  * 
  * \return Exit code of the employed NLP solver.
  * 
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(solve)(
-    OCP_t ocp
+    OCP_t* ocp
 );
 
 
@@ -344,7 +350,7 @@ MINOS_EXPORT_API int MINOSC_PREFIX(solve)(
  * \param hess Values of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(get_sol)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *J_opt, double *t,
     double *x_opt, double *u_opt, double *p_opt,
     double *lamx_opt, double *lamu_opt, double *lamp_opt,
@@ -367,7 +373,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(get_sol)(
  * \return A C string.
  */
 MINOS_EXPORT_API const char* MINOSC_PREFIX(print_sol)(
-    const OCP_t ocp
+    const OCP_t* ocp
 );
 
 /**
@@ -380,7 +386,7 @@ MINOS_EXPORT_API const char* MINOSC_PREFIX(print_sol)(
  * \param mesh Mesh fractions, specify by as an array of length `N-1` that sums to unity.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_mesh)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double *mesh
 );
 
@@ -395,7 +401,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_mesh)(
  * \param tcpu_eval CPU time required for NLP function evaluation in seconds.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(get_cpu_time)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double* tcpu_tot,
     double* tcpu_alg,
     double* tcpu_eval
@@ -412,7 +418,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(get_cpu_time)(
  * \return Current barrier parameter.
  */
 MINOS_EXPORT_API double MINOSC_PREFIX(get_mu_curr)(
-    const OCP_t ocp
+    const OCP_t* ocp
 );
 
 /** 
@@ -425,7 +431,7 @@ MINOS_EXPORT_API double MINOSC_PREFIX(get_mu_curr)(
  * \return Number of iterations.
  */
 MINOS_EXPORT_API int MINOSC_PREFIX(get_num_iter)(
-    const OCP_t ocp
+    const OCP_t* ocp
 );
 
 /** 
@@ -440,7 +446,7 @@ MINOS_EXPORT_API int MINOSC_PREFIX(get_num_iter)(
  * \param inf_du Convergence history for optimality, specified as an array of length returned by `get_num_iter()+1`.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(get_history)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     double* obj,
     double* inf_pr,
     double* inf_du
@@ -467,7 +473,7 @@ MINOS_EXPORT_API const char* MINOSC_PREFIX(get_version)(
  * \param ext_print_funptr Pointer to the printing function, with prototype `int (const char* fmt, ...)`
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_printfun)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     int (*ext_print_funptr)(const char *fmt, ...)
 );
 
@@ -482,7 +488,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(set_printfun)(
  * \param ext_int_funptr Pointer to the interrupt handling function, with prototype `bool (void)`. This function returns true when required to stop the solving.
  */
 MINOS_EXPORT_API void MINOSC_PREFIX(set_interruptfun)(
-    const OCP_t ocp,
+    const OCP_t* ocp,
     bool (*ext_int_funptr)(void)
 );
 
