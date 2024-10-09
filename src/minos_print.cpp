@@ -262,17 +262,10 @@ std::string OCPInterface::get_header() {
     starline.append(maxLength, '*');
     lines.insert(lines.begin(), starline);
     lines.push_back(starline);
-
     // Print to ostringsteam
     numLines = lines.size();
     for (int i = 0; i < numLines; ++i)
         str << lines[i] << std::endl;
-    /*
-    str << "***************************************************************\n";
-    str << "*               MINimal Optimal-control Solver                *\n";
-    str << OCPInterface::format_str("*                        Version %-29s*\n", get_version());
-    str << OCPInterface::format_str("* Copyright (C) %4d %s <%s> *\n", COPYRIGHT_YEAR, COPYRIGHT_NAME, COPYRIGHT_CONTACT);
-    str << "***************************************************************";*/
     return str.str();
 }
 
