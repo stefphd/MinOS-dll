@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     // Alternativelly
     //ocp = minos_new2("brachistochrone_c", N, ti, tf);
     if (ocp->exitval) {
-        fprintf(stderr, "%s", ocp->exitmsg);
+        fprintf(stderr, "%s\n", ocp->exitmsg);
         return 1;
     }
 
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
     /* Call to MinOS */
     int status = minos_solve(ocp);
     if (ocp->exitval) {
-        fprintf(stderr, "%s", ocp->exitmsg);
+        fprintf(stderr, "%s\n", ocp->exitmsg);
         return 1;
     }
     
