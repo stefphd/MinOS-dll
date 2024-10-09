@@ -1,0 +1,70 @@
+% MINOSMEX - Call @CMAKE_PROJECT_NAME@ to solve the optimal-control problem.
+% 
+% Syntax
+%
+% solution = MINOSMEX(problem)
+%
+% Input Arguments
+%   problem     - Problem structure containing the fields
+%                   name: name of the problem and generated OCP library
+%                   N: number of mesh points (1-by-1 matrix)
+%                   ti: initial time (1-by-1 matrix)
+%                   tf: final time (1-by-1 matrix)
+%                   guess.x: state guess (nx-by-N matrix)
+%                   guess.u: control guess (nu-by-N matrix)
+%                   guess.p: parameter guess (np-by-1 matrix)
+%                   bounds.lbx, bounds.ubx: state lower and upper bounds (1-by-nx matrix)
+%                   bounds.lbu, bounds.ubu: control lower and upper bounds (1-by-nu matrix)
+%                   bounds.lbp, bounds.ubp: parameter lower and upper bounds (1-by-np matrix)
+%                   bounds.lbc, bounds.ubc: path constraint lower and upper bounds (1-by-nc matrix)
+%                   bounds.lbb, bounds.ubb: boundary condition lower and upper bounds (1-by-nb matrix)
+%                   bounds.lbq, bounds.ubq: integral constraint lower and upper bounds (1-by-nq matrix)
+%                   mesh: mesh fractions (default 1/(N-1)*ones(1,N-1)) - OPTIONAL
+%                   options.nlpsolver: NLP solver (default "ipopt") - OPTIONAL
+%                   options.flag_hessian: use approximated Hessian (default false) - OPTIONAL
+%                   options.max_iter: max number of iterations (default 3000) - OPTIONAL
+%                   options.mu_init: initial barrier parameter for interior-point NLP solvers (default 
+%                   depends on NLP solver selected) - OPTIONAL
+%                   options.outfile: name of output file, if any - OPTIONAL
+%                   options.logfile: name of NLP solver log file, '' for default name (`<problem.name>.log`) 
+%                   and `none` for no log file - OPTIONAL
+%                   options.print_itersol: iteration interval to print intermediate output file (default 
+%                   0, i.e. deactivated) - OPTIONAL 
+%
+% Output arguments
+%   solution    - Solution structure containing the fields:
+%                   objval: objective value (1-by-1 matrix)
+%                   t: time (1-by-N matrix)
+%                   x: state (nx-by-N matrix)
+%                   u: control (nu-by-N matrix)
+%                   p: parameter (np-by-1 matrix)
+%                   lam_x: state multiplier (nx-by-N matrix)
+%                   lam_u: control multiplier (nu-by-N matrix)
+%                   lam_p: parameter multiplier (np-by-1 matrix)
+%                   lam_f: dynamic multiplier (nx-by-N-1 matrix)
+%                   lam_c: path multiplier (nc-by-N matrix)
+%                   lam_b: boundary multiplier (nb-by-1 matrix)
+%                   lam_q: integral constraint multiplier (nq-by-1 matrix)
+%                   f: dynamic constraint (nx-by-N-1 matrix)
+%                   c: path constraint (nc-by-N matrix)
+%                   b: boundary condition (nb-by-1 matrix)
+%                   q: integral constraint (nq-by-1 matrix)
+%                   l: running (Lagrange) cost (1-by-N matrix)
+%                   m: boundary (Mayer) cost (1-by-1 matrix)
+%                   stats.num_iter: number of iterations (1-by-1 matrix)
+%                   stats.obj_history: objective history (stats.num_iter+1-by-1 matrix)
+%                   stats.infpr_history: feasibility history (stats.num_iter+1-by-1 matrix)
+%                   stats.infdu_history: optimality history (stats.num_iter+1-by-1 matrix)
+%                   stats.mu_curr: final barrier parameter for interior-point solver (1-by-1 matrix)
+%                   stats.nz: number of NLP variables (1-by-1 matrix)
+%                   stats.ng: number of NLP constraints (1-by-1 matrix)
+%                   stats.nnzj: number of non-zero values in NLP constraint Jacobian (1-by-1 matrix)
+%                   stats.nnzh: number of non-zero values in NLP Lagragian Hessian (1-by-1 matrix)
+%                   stats.ttot: total CPU time (1-by-1 matrix)
+%                   stats.talg: CPU time for NLP algorithm (1-by-1 matrix)
+%                   stats.teval: CPU time for OCP function evaluation (1-by-1 matrix)
+%                   next_problem: problem structure suitable for a next simulation
+%
+% @CMAKE_PROJECT_NAME@ version @CMAKE_PROJECT_VERSION@
+%
+% Copyright (C) @COPYRIGHT_YEAR@ <a href="@COPYRIGHT_CONTACT@">@COPYRIGHT_NAME@</a>
