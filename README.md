@@ -64,9 +64,18 @@ The `CMakeLists.txt` file contains a number of options to change the building se
 * `SKIP_HESSIAN`: use approximate Hessian calculation in C++ example
 * `NLPSOLVER_EXAMPLE`: NLP solver for C++ examples (ipopt, knitro, worhp, snopt)
 
+You may build separately the targets by specifying the flag `--config <target>`. Targets are:
+
+* `minos`: base shared library
+* `minos-nlp`: logical target to build NLP interface libraries with `WITH_<NLPSOLVER>` set to `ON`
+* `minos-mex`: MATLAB interface, available if `WITH_MEX_INTERFACE` set to `ON`
+* `minos-py`: Python interface, available if `WITH_PYTHON_INTERFACE` set to `ON`
+* `minos-docs`: documentation, available if `WITH_DOCS` set to `ON`
+* `examples`: logical target to build all C++ examples, available if `WITH_CPP_EXAMPLES` set to `ON`
+
 ## Test
 
-To test the build (run all C++ examples if `WITH_CPP_EXAMPLES` is `ON`)
+To test the build (run all C++ examples if `WITH_CPP_EXAMPLES` set to `ON`)
 
 ```command
 ctest [-C Release]
@@ -82,7 +91,7 @@ and run the examples in `<installdir>/examples/matlab` and  `<installdir>/exampl
 
 ## Package
 
-To package the software into an installer
+To package the software into an installer (available if `WITH_CPACK` set to `ON`)
 
 ```command
 cpack
