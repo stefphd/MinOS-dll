@@ -5,8 +5,8 @@ find_package(Cython MODULE REQUIRED)
 include(UseCython)
 cython_transpile(${CMAKE_CURRENT_SOURCE_DIR}/minosPy.pyx
                 LANGUAGE CXX 
-                OUTPUT_VARIABLE MINOSPYIPOPT)
-python3_add_library(minos-py MODULE "${MINOSPYIPOPT}")
+                OUTPUT_VARIABLE MINOSPY)
+python3_add_library(minos-py MODULE ${MINOSPY})
 set_target_properties(minos-py PROPERTIES OUTPUT_NAME minosPy)
 target_link_libraries(minos-py PRIVATE minos)
 # Configure files
