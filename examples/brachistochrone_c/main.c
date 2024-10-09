@@ -39,7 +39,6 @@ int main(int argc, char* argv[]) {
     /* Create OCP Interface */
     OCP_t ocp;
     minos_new(&ocp, "brachistochrone_c", N, ti, tf);
-    printf("3\n");
     if (ocp->exitval) {
         fprintf(stderr, "%s", ocp->exitmsg);
         return 1;
