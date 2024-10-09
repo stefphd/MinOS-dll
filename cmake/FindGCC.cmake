@@ -1,5 +1,6 @@
 # Find Windows GCC compiler
-# Try to locate the Tiny C compiler searching in system paths.
+# Try to locate the GCC using the GCCDIR environemt variable and
+# searching in the system paths.
 #
 # Create the following variables
 #
@@ -8,8 +9,9 @@
 
 # Find executable
 find_program(GCC_EXECUTABLE
-    NAMES bin/gcc.exe)
-# Find root directory
+    NAMES bin/gcc.exe
+    PATHS $ENV{GCCDIR})
+# Extract root directory
 find_path(GCC_DIR
     NAMES bin/gcc.exe)
 # Handle GCC_FOUND

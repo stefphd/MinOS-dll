@@ -1,5 +1,6 @@
 # Find SNOPT
 # Try to locate the SNOPT7 C library using the SNOPTDIR environment variable
+# and searching in the system paths.
 # SNOPT is found by searching for the static library and header file.
 #
 # Create the following variables:
@@ -11,12 +12,8 @@
 # SNOPT_FOUND       - If false, SNOPT not found
 
 # Test the SNOPTDIR environment variable and create cmake SNOPT_DIR variable accordingly
-set(SNOPT_DIR_TEST $ENV{SNOPTDIR})
-if(SNOPT_DIR_TEST)
-  set(SNOPT_DIR $ENV{SNOPTDIR}      CACHE PATH "Path to SNOPT install directory")
-else()
-  set(SNOPT_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to SNOPT install directory")
-endif()
+set(SNOPT_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to SNOPT install directory")
+set(SNOPT_DIR $ENV{SNOPTDIR})
 
 # Set SNOPT version
 set(SNOPT_VERSION 7)

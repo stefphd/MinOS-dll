@@ -1,5 +1,6 @@
 # Find KNITRO
 # Try to locate the KNITRO C library using the KNITRODIR environment variable
+# and searching in the system paths.
 # KNITRO is found by searching for the static library and header file.
 #
 # Create the following variables:
@@ -12,9 +13,10 @@
 # KNITRO_FOUND       - If false, KNITRO not found
 
 # Test the KNITRODIR environment variable and create cmake KNITRO_DIR variable accordingly
-set(KNITRO_DIR $ENV{KNITRODIR} CACHE PATH "Path to KNITRO install directory")
+set(KNITRO_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to KNITRO install directory")
+set(KNITRO_DIR $ENV{KNITRODIR})
 
-# Extract the version number from KNITRODIR
+# Extract the version number from KNITRO_DIR
 set(KNITRO_VERSION "")
 if (WIN32)
 string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ KNITRO_VERSION_MATCH ${KNITRO_DIR})

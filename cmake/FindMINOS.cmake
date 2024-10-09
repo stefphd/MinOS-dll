@@ -1,6 +1,6 @@
 # Find MINOS
 # Try to locate the MINOS library using the MINOSDIR environment variable
-# or the MINOS_DIR cmake variable.
+# or the MINOS_DIR cmake variable, and searching in the system paths.
 # MINOS is found by searching for the static library and header file.
 #
 # Create the following variables:

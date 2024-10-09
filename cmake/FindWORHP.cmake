@@ -1,5 +1,6 @@
 # Find WORHP
 # Try to locate the WORHP C library using the WORHPDIR environment variable
+# and searching in the system paths.
 # WORHP is found by searching for the static library and header file.
 #
 # Create the following variables:
@@ -11,12 +12,8 @@
 # WORHP_FOUND       - If false, WORHP not found
 
 # Test the WORHPDIR environment variable and create cmake WORHP_DIR variable accordingly
-set(WORHP_DIR_TEST $ENV{WORHPDIR})
-if(WORHP_DIR_TEST)
-  set(WORHP_DIR $ENV{WORHPDIR}      CACHE PATH "Path to WORHP install directory")
-else()
-  set(WORHP_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to WORHP install directory")
-endif()
+set(WORHP_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to WORHP install directory")
+set(WORHP_DIR $ENV{WORHPDIR})
 
 # Find library
 find_library(WORHP_LIBRARY 
