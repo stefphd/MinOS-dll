@@ -1,6 +1,6 @@
 # Find IPOPT
-# Try to locate the IPOPT library using the IPOPT_DIR environment variable.
-# If IPOPT_DIR not exist, just try to find IPOPT in the ${CMAKE_SOURCE_DIR} directory.
+# Try to locate the IPOPT library using the IPOPTDIR environment variable.
+# If IPOPTDIR not exist, just try to find IPOPT in the ${CMAKE_SOURCE_DIR} directory.
 # If not found, search is extended to default system paths.
 # IPOPT is found by searching for the library and header files.
 #
@@ -15,9 +15,9 @@
 # IPOPT_FOUND       - If false, IPOPT not found
 
 # Test the IPOPT_DIR environment variable and create cmake IPOPT_DIR variable accordingly
-set(IPOPT_DIR_TEST $ENV{IPOPT_DIR})
+set(IPOPT_DIR_TEST $ENV{IPOPTDIR})
 if(IPOPT_DIR_TEST)
-  set(IPOPT_DIR $ENV{IPOPT_DIR}     CACHE PATH "Path to IPOPT install directory")
+  set(IPOPT_DIR $ENV{IPOPTDIR}     CACHE PATH "Path to IPOPT install directory")
 else()
   set(IPOPT_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Path to IPOPT install directory")
 endif()
@@ -52,7 +52,6 @@ if (WIN32)
   find_file(IPOPT_RUNTIME
             NAMES ipopt-3.dll ipopt.dll libipopt-3.dll libipopt.dll
             PATHS ${IPOPT_DIR}/bin
-            PATHS ${IPOPT_DIR}/dll
             PATH_SUFFIXES coin coin-or
             NO_DEFAULT_PATH)
   get_filename_component(IPOPT_RUNTIME_DIR "${IPOPT_RUNTIME}" DIRECTORY)
