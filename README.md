@@ -12,7 +12,7 @@ Build and tested with:
 ## Building requirements
 
 * [CMake](https://cmake.org/) build system.
-* A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/) (not tested). Intel compilers may be also employed.
+* A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/). Intel compilers may be also employed.
 * [MATLAB](https://www.mathworks.com/products/matlab.html) to build the MATLAB interface.
 * [Python](https://www.python.org/) to build the Python interface and for code generation of the C++ examples; install the Python requirements for developers with `pip install -r ./requirements-dev.txt` (basically, Cython and CasADi).
 * A NLP solver. Possibilities are:
