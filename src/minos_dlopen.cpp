@@ -20,6 +20,10 @@
     #define LIBEXT ".dll"
     #define LOADLIBRARY(name, libhandle) name += LIBEXT;                           \
         HMODULE libhandle = LoadLibraryA(name.c_str());                            \
+        if (!libhandle) { /* try with name "lib<name>" */                          \
+            std::string libname = "lib" + name;                                    \
+            libhandle = LoadLibraryA(name.c_str());                                \
+        }                                                                          \
         if (!libhandle) {                                                          \
             DWORD errorCode = GetLastError();                                      \
             char errorMessage[256];                                                \
