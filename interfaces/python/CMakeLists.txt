@@ -3,20 +3,25 @@ find_package(Python
                 REQUIRED)
 find_package(Cython MODULE REQUIRED)
 include(UseCython)
-cython_transpile(${CMAKE_SOURCE_DIR}/interfaces/python/minosPy.pyx
+cython_transpile(${CMAKE_CURRENT_SOURCE_DIR}/minosPy.pyx
                 LANGUAGE CXX 
                 OUTPUT_VARIABLE MINOSPYIPOPT)
-python_add_library(minosPy MODULE "${MINOSPYIPOPT}")
-target_link_libraries(minosPy PRIVATE minoslib)
+python_add_library(minos-py MODULE "${MINOSPYIPOPT}")
+set_target_properties(minos-py PROPERTIES OUTPUT_NAME minosPy)
+target_link_libraries(minos-py PRIVATE minoslib)
+# Configure files
+configure_file(${CMAKE_SOURCE_DIR}/cmake/minosPy.in
+        ${CMAKE_CURRENT_BINARY_DIR}/minosPy.pyi
+        @ONLY)
 # Install rules
 set(MINOSPY_DESTDIR lib)
 if (WIN32)
         set(MINOSPY_DESTDIR bin)
 endif()
-install(TARGETS minosPy
+install(TARGETS minos-py
         DESTINATION ${MINOSPY_DESTDIR}
 	COMPONENT python)
-install(FILES minosPy.pyi
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/minosPy.pyi
         COMPONENT python
         DESTINATION ${MINOSPY_DESTDIR})
 install(FILES requirements.txt

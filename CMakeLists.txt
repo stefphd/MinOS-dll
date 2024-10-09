@@ -285,7 +285,7 @@ if (WITH_DOCS)
                     ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile 
                     @ONLY)
     # Custom target to generate docs
-    add_custom_target( doc_doxygen ALL
+    add_custom_target( minos-doc ALL
                         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                         COMMENT "Generating API documentation with Doxygen"
