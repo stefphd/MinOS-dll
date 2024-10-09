@@ -1,5 +1,5 @@
 @CMAKE_PROJECT_NAME@ (@CMAKE_PROJECT_DESCRIPTION@) - Version @CMAKE_PROJECT_VERSION@
-Copyright (c) @COPYRIGHT_YEAR@ @COPYRIGHT_NAME@
+Copyright (c) @COPYRIGHT_YEAR@ @COPYRIGHT_NAME@ <@COPYRIGHT_CONTACT@>
 
 All rights reserved.
 
@@ -19,20 +19,10 @@ Dependencies:
 * MinOS also interfaces with WORHP, which is a commercial software product
 * MinOS also interfaces with SNOPT, which is a commercial software product
 
-For more information, please contact @COPYRIGHT_NAME@.
+For more information, please contact @@COPYRIGHT_CONTACT@@.
 
 IPOPT License:
 The full text of the IPOPT license can be found at https://coin-or.github.io/Ipopt/LICENSE.html.
 
 Python License:
 The full text of the Python license can be found at https://docs.python.org/3/license.html.
-
-MATLAB:
-Please note that MATLAB is a commercial software product provided by MathWorks, Inc. Users must comply with the licensing terms provided by MathWorks, Inc.
-
-KNITRO:
-Please note that KNITRO is a commercial software product provided by Artelys, Inc. Users must comply with the licensing terms provided by Artelys
-
-
-@COPYRIGHT_NAME@
-@COPYRIGHT_CONTACT@
