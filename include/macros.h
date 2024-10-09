@@ -1,10 +1,22 @@
 /*  File macros.h 
-    Macros for MINOS
+    Macros for MINOS.
     Copyright (C) 2024 Stefano Lovato
 */
 
-#ifndef MINOS_VERSION
-#define MINOS_VERSION "devel" // development version
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "<X.Y.Z>"
+#endif
+#ifndef PROJECT_DESCRIPTION
+#define PROJECT_DESCRIPTION "<software description>"
+#endif
+#ifndef COPYRIGHT_YEAR
+#define COPYRIGHT_YEAR "<year>"
+#endif
+#ifndef COPYRIGHT_NAME
+#define COPYRIGHT_NAME "<name> <surname>"
+#endif
+#ifndef COPYRIGHT_CONTACT
+#define COPYRIGHT_CONTACT "<email@domain.com>"
 #endif
 
 #define SPOUT(x) x ## _sparsity_out // get name of CASADI sparsity out function
@@ -22,7 +34,6 @@
 
 #define ITERPRINTINT 10 // Print iteration interval
 #define HEADERPRINTINT 100 // Print header interval
-
 #define MAX_DEFAULT_ITER 3000 // Default max number of iterations
 
 #define CASTOCPINTERFACE(x) ((OCPInterface*) x) // Cast pointer to OCPInterface class

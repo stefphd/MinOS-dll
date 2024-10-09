@@ -13,7 +13,7 @@ int OCPInterface::solve(
 ){
     /* Print MinOS version */
     if (display)
-        OCPInterface::print_ver();
+        (*print_funptr)("%s", get_header().c_str());
 
     /* Reset is_interrupt_requested */
     OCPInterface::is_interrupt_requested = false;

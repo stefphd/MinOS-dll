@@ -44,13 +44,13 @@ std::ostream& operator<<(
     double ttot, talg, teval;
     ocpInterface.get_cpu_time(ttot, talg, teval);
     int num_iter = ocpInterface.get_num_iter();
-    double mu_curr = ocpInterface.get_mu_curr();
+    //double mu_curr = ocpInterface.get_mu_curr();
     if (num_iter>=0) {
         inf_pr = ocpInterface.infpr_history[num_iter];
         inf_du = ocpInterface.infdu_history[num_iter];
     }
     // Print to os
-    os << OCPInterface::get_header() << "\n";
+    os << OCPInterface::get_header();
     os << "\n";
 
     os << "# Problem settings\n";
@@ -224,16 +224,60 @@ std::string OCPInterface::toString() {
 }
 
 std::string OCPInterface::get_header() {
+    int numLines, maxLength, lineLegth;
     std::ostringstream str;
-    str << "***********************************************************\n";
-    str << "*           MINimal Optimal-control Solver                *\n";
-    str << OCPInterface::format_str("*                    Version %-29s*\n", get_version());
-    str << "***********************************************************";
+    std::vector<std::string> lines;
+    std::vector<int> lengths;
+    // Set header lines
+    lines.push_back(PROJECT_DESCRIPTION);
+    lines.push_back(OCPInterface::format_str("Version %s", get_version()));
+    lines.push_back(OCPInterface::format_str("Copyright (C) %s %s <%s>", COPYRIGHT_YEAR, COPYRIGHT_NAME, COPYRIGHT_CONTACT));
+    //lines.push_back(OCPInterface::format_str("Copyright (C) %s %s", COPYRIGHT_YEAR, COPYRIGHT_NAME));
+    //lines.push_back(OCPInterface::format_str("<%s>", COPYRIGHT_CONTACT));
+    numLines = lines.size();
+    // Resize lengths vector to match lines and populate lengths
+    lengths.resize(numLines);
+    for (int i = 0; i < numLines; ++i)
+        lengths[i] = lines[i].length();
+    // Find max length
+    maxLength = 0;
+    for (int i = 0; i < numLines; ++i)
+        maxLength = (lengths[i] > maxLength) ? lengths[i] : maxLength;
+    // Add white spaces to strings
+    maxLength += 1*2; // add white spaces at the line borders
+    for (int i = 0; i < numLines; ++i) {
+        int numLeftSpaces  = (maxLength - lines[i].length()) / 2;
+        int numRightSpaces = (maxLength - lines[i].length()) - numLeftSpaces; // may differ from numLeftSpaces due to odd length
+        // Prepend left spaces
+        lines[i].insert(0, numLeftSpaces, ' '); 
+        // Append right spaces
+        lines[i].append(numRightSpaces, ' ');
+        // Prepend and append '*'
+        lines[i].insert(0, 1, '*'); 
+        lines[i].append(1, '*');
+    }
+    maxLength += 2; // include '*' at the beggining and the end
+    // Add first and end line of '*'
+    std::string starline = "";
+    starline.append(maxLength, '*');
+    lines.insert(lines.begin(), starline);
+    lines.push_back(starline);
+
+    // Print to ostringsteam
+    numLines = lines.size();
+    for (int i = 0; i < numLines; ++i)
+        str << lines[i] << std::endl;
+    /*
+    str << "***************************************************************\n";
+    str << "*               MINimal Optimal-control Solver                *\n";
+    str << OCPInterface::format_str("*                        Version %-29s*\n", get_version());
+    str << OCPInterface::format_str("* Copyright (C) %4d %s <%s> *\n", COPYRIGHT_YEAR, COPYRIGHT_NAME, COPYRIGHT_CONTACT);
+    str << "***************************************************************";*/
     return str.str();
 }
 
 const char* OCPInterface::get_version() {
-    return MINOS_VERSION;
+    return PROJECT_VERSION;
 }
 
 /** Print statistics */
@@ -309,11 +353,6 @@ bool OCPInterface::print_iter(
         (*print_funptr)(print_dataFormat, iter, obj, inf_pr, inf_du);
     
     return true;
-}
-
-/** Print the versio/header */
-void OCPInterface::print_ver() {
-    (*print_funptr)("%s\n", get_header().c_str());
 }
 
 /** Implementation of format strings */

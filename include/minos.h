@@ -153,8 +153,8 @@ private:
     bool flag_lamx, flag_lamu, flag_lamp, flag_lamf, flag_lamc, flag_lamb, flag_lamq;
 
     /* Constant strings */
-    static constexpr char print_headerFormat[] = "%-6s\t%-15s\t%-15s\t%-15s\n"; // using printf
-    static constexpr char print_dataFormat[] = "%-6d\t%-+12.5e\t%-+12.5e\t%-+12.5e\n"; // using printf
+    static constexpr char print_headerFormat[] = "%-10s %-18s %-18s %-18s\n"; // using printf
+    static constexpr char print_dataFormat[] = "%-10d %-+18.6e %-+18.6e %-+18.6e\n"; // using printf
     static constexpr char print_strFormat[] = "%-25s %s"; // using printf
     static constexpr char print_intFormat[] = "%-25s %d"; // using printf
     static constexpr char print_doubleFormat[] = "%-25s %-+12.5e"; // using printf
@@ -746,9 +746,6 @@ private:
     bool check_nlpopt_file(
         const char* filename
     );
-
-    /** Print the MinOS version */
-    void print_ver();
 
     /** Load OCP library */
     void* load_ocplib(

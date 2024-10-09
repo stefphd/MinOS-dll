@@ -104,7 +104,12 @@ add_library(minos SHARED
 			${MINOS_SOURCES}
 			)
 target_compile_definitions(minos
-							PRIVATE MINOS_VERSION=\"${CMAKE_PROJECT_VERSION}\")
+							PRIVATE 
+							PROJECT_DESCRIPTION="${CMAKE_PROJECT_DESCRIPTION}"
+							PROJECT_VERSION=\"${CMAKE_PROJECT_VERSION}\"
+							COPYRIGHT_NAME=\"${COPYRIGHT_NAME}\"
+							COPYRIGHT_YEAR=\"${COPYRIGHT_YEAR}\"
+							COPYRIGHT_CONTACT=\"${COPYRIGHT_CONTACT}\")
 target_include_directories(minos
 							PUBLIC include
 							)
