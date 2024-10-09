@@ -1,4 +1,4 @@
-# Build the Python and C++ examples
+# Build the C++ examples
 
 cmake_minimum_required(VERSION 3.25)
 
