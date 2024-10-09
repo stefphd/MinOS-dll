@@ -22,7 +22,7 @@
         HMODULE libhandle = LoadLibraryA(name.c_str());                            \
         if (!libhandle) { /* try with name "lib<name>" */                          \
             std::string libname = "lib" + name;                                    \
-            libhandle = LoadLibraryA(name.c_str());                                \
+            libhandle = LoadLibraryA(libname.c_str());                             \
         }                                                                          \
         if (!libhandle) {                                                          \
             DWORD errorCode = GetLastError();                                      \
