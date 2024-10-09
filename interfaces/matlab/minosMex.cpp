@@ -327,8 +327,16 @@ void mexFunction( int nlhs, mxArray *plhs[],
     CREATEDOUBLE(mopt, 1, 1);
     CREATEDOUBLE(meshopt, 1, ( static_cast<size_t>((int) GETVAL(N)) - 1));
 
-    /* Call IPOPT solve */
-    int status = ocp->solve();
+    /* Call NLP solver */
+    int status;
+    try {
+        // this throws an error if NLp lib not found
+        status = ocp->solve();
+    } catch (const std::exception& e) {
+        // terminate if errors
+        delete ocp;
+        mexErrMsgIdAndTxt("MinOS:loadLibFailed","%s", e.what());
+    }
 
     /* Get solution */
     ocp->get_sol(GETPTR(objval), GETPTR(t), 

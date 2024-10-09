@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     /* Check number of input arguments */
     if (argc > 3) {
         std::cerr << "Too many input arguments. Number of input arguments must be 1." << std::endl;
-        return -1;
+        return 1;
     }
 
     /* Override nlpsolver if given in input argument */
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
         N = atoi(argv[2]);
         if (N<=0) {
             std::cerr << "Invalid input arguments. Argument must be a positive number." << std::endl;
-            return -1;
+            return 1;
         }
     }
 
@@ -38,11 +38,16 @@ int main(int argc, char* argv[]) {
     double tf = 1;
 
     /* Create OCP Interface */
-    OCPInterface ocp("brachistochrone", N, ti, tf);
+    OCPInterface* ocp;
+    try {
+        ocp = new OCPInterface("brachistochrone", N, ti, tf);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
 
     /* Get problem dimensions */
     int nx, nu, np, nc, nb, nq;
-    ocp.get_dims(&nx, &nu, &np, &nc, &nb, &nq);
+    ocp->get_dims(&nx, &nu, &np, &nc, &nb, &nq);
 
     /* Bounds */
     double lbx[] = { 0, 0, -50 }; // dim nx
@@ -70,7 +75,7 @@ int main(int argc, char* argv[]) {
     }
 
     /* Set bounds */
-    ocp.set_bounds(lbx, ubx,
+    ocp->set_bounds(lbx, ubx,
                    lbu, ubu,
                    lbp, ubp,
                    lbc, ubc,
@@ -78,13 +83,19 @@ int main(int argc, char* argv[]) {
                    lbq, ubq);
     
     /* Set guess */
-    ocp.set_guess(x0, u0, p0);
+    ocp->set_guess(x0, u0, p0);
 
     /* Set NLP solver if any */
-    if (!nlpsolver.empty()) ocp.set_option(OCPInterface::NLPSOLVER, nlpsolver);
+    if (!nlpsolver.empty()) ocp->set_option(OCPInterface::NLPSOLVER, nlpsolver);
 
-    /* Call to MinOS */
-    int status = ocp.solve();
+    /* Call to NLP solver */
+    try {
+        ocp->solve();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        delete ocp;
+        return 1;
+    }
     
     /* Print solution to file */
     std::ofstream outfile;
@@ -93,6 +104,7 @@ int main(int argc, char* argv[]) {
     outfile.close();
 
     /* Free mem */
+    delete ocp;
     delete[] x0; delete[] u0;
 
     /* Return */

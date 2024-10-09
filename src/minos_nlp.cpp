@@ -21,13 +21,9 @@ int OCPInterface::solve(
     /* Load NLP solver library */
     void* nlp_lib = NULL;
     SolveFunc nlp_solve = NULL;
-    try {
-        nlp_lib = load_nlplib("minos-" + nlpsolver);
-        nlp_solve = reinterpret_cast<SolveFunc>(import_nlpsolve(nlp_lib));
-    } catch (const std::exception& e) {
-        (*print_funptr)("%s\n", e.what());
-        return -1;
-    }
+    nlp_lib = load_nlplib("minos-" + nlpsolver);
+    nlp_solve = reinterpret_cast<SolveFunc>(import_nlpsolve(nlp_lib));
+    if (!nlp_solve) { return -1; }
     
     /* Lof filename */
     if (logfile.empty()) this->logfile = name + ".log"; // default logfile name is <name>.log
