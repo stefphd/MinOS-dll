@@ -11,22 +11,20 @@ Build and tested with:
 
 ## Building requirements
 
-* [CMake](https://cmake.org/) build system to build the software.
+* [CMake](https://cmake.org/) build system.
 * A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/) (not tested). Intel compilers may be also employed.
-* A Windows distribution of [GCC](https://gcc.gnu.org/). Make sure that the GCC root directory (i.e. where `bin/gcc.exe` is) is in the `PATH` environment variable. This is needed in *Windows* to compile the problem library in the MATLAB and Python interfaces.
-* [Cython](https://cython.org/) to build the Python interface.
-* A NLP solver to solve the large-scale NLP. Possibilities are:
-  * [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://github.com/coin-or-tools/ThirdParty-Mumps), which are freely available. For *Windows*, dynamic and static libraries should be placed in `./bin` and `./lib`. Alternativelly, one could set a `IPOPT_DIR` environment variable pointing to the IPOPT installation path, which should contain the folders `bin`, `lib`, and `include`. IPOPT headers provided with this repository in `./include/coin-or` may be also employed (current IPOPT version is 3.14). For *Linux*, one should install IPOPT in `/usr/lib` and `/usr/include` (or `/usr/local/lib` and `/usr/local/include`). Again, alternativelly one could use a local installation of IPOPT with and set `$IPOPT_DIR` pointing to the IPOPT installation path that contains `lib` and `include` folders.
-  * [KNITRO](https://www.artelys.com/solvers/knitro/), which is a commercial software. Free trial license is freely available for academics. A `KNITRODIR` environment variable pointing to the KNITRO installation path should be automatically set when installing KNITRO. If not, one needs to set `KNITRODIR` pointing to the KNITRO installation path. KNITRO is compatible only with MSVC for *Windows*.
-  * [WORHP](https://worhp.de/), whose license is freely available for academics. For *Windows*, one should set a `WORHPDIR` environment variable pointing to the KNITRO installation path.
-  * [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/), which is a commercial software. Free trial license is freely available for academics. A `SNOPTDIR` environment variable pointing to the SNOPT installation path needs to be set.
-* [MATLAB](https://www.mathworks.com/products/matlab.html) to run the MATLAB examples.
-* [Python](https://www.python.org/) to run the Python examples and generate the C code for the C++ examples; use `interfaces/python/requirements.txt` to install the Python requirements.
-* [CasADi](https://web.casadi.org/) to generate the C code for the examples (with MATLAB and Python interfaces).
-* [Doxygen](https://doxygen.nl/) and a latex distribution to generate the documentation.
-* A CMake-CPack generator compatible with your system to generate the release.
+* [MATLAB](https://www.mathworks.com/products/matlab.html) to build the MATLAB interface.
+* [Python](https://www.python.org/) to build the Python interface and for code generation of the C++ examples; install the Python requirements for developers with `pip install -r ./requirements-dev.txt` (basically, Cython and CasADi).
+* A NLP solver. Possibilities are:
+  * [IPOPT](https://github.com/coin-or/Ipopt) release 3.14, which is freely available. For *Windows*, set a `IPOPTDIR` environment variable pointing to the IPOPT installation path. For *Linux*, one can either install IPOPT system-wide (in `/usr/lib` or `/usr/local/lib` and `/usr/include` or  `/usr/local/include`), or use a local installation by setting `IPOPTDIR` pointing to the IPOPT root path.
+  * [WORHP](https://worhp.de/), whose license is freely available for academics. For *Windows*, set a `WORHPDIR` environment variable pointing to the WORHP installation path. For *Linux*, one can either install WORHP system-wide, or use a local installation by setting `WORHPDIR` pointing to the WORHP root path.
+  * [KNITRO](https://www.artelys.com/solvers/knitro/), which is a commercial software; trial license is freely available for academics. For *Windows*, make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is created during installation. For *Linux*, one needs to set `KNITRODIR` pointing to the local installation path of KNITRO.
+  * [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/), which is a commercial software; trial license is freely available for academics. A `SNOPTDIR` environment variable pointing to the SNOPT installation path needs to be set.
+* (*Windows* only) A Windows distribution of [GCC](https://gcc.gnu.org/). This is not strictly necessary to build the software but it is used in the MATLAB and Python interfaces of the *Windows* release. Either set a `GCCDIR` environment variable pointing to the GCC root directory (i.e. where `bin/gcc.exe` is) or include it into the `PATH`.
+* (optional) [Doxygen](https://doxygen.nl/) and a Wlatex distribution to generate the documentation.
+* (optional) A CMake-CPack generator compatible with your system to generate the release.
 
-Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory of the NLP solver into `PATH` for *Windows* and `LD_LIBRARY_PATH` for *Linux*.
+Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory of the NLP solver(s) into `PATH` for *Windows* and `LD_LIBRARY_PATH` for *Linux*.
 
 ## Installing IPOPT with MUMPS
 
@@ -35,7 +33,7 @@ Make sure that the necessary runtime libraries are found by the system. Basicall
 
 ## Building
 
-Building is performed using CMake. Building should be performed in release mode in *Windows*.
+Building is performed using CMake. Building should be performed in release mode in *Windows* (flag `--config Release`).
 
 ```command
 mkdir build
@@ -47,7 +45,7 @@ cmake --build . [--config Release]
 To employ MinGW-w64 compilers in *Windows*, you need to add `path/to/mingw-w64/bin` to the `PATH` and configure the project using
 
 ```command
-set PATH=path/to/mingw-w64/bin;%PATH%
+set PATH=<path/to/mingw-w64>/bin;%PATH%
 cmake -G "MinGW Makefiles"
 ```
 

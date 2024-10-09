@@ -1,41 +1,58 @@
 # @CMAKE_PROJECT_NAME@
 
-@CMAKE_PROJECT_NAME@ (<b>Min</b>imal <b>O</b>ptimal-control <b>S</b>olver) is a C++  solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and @NLP_SOLVER@ to solve the subsequent large-scale nonlinear programming problem (NLP).
+@CMAKE_PROJECT_NAME@ (<b>Min</b>imal <b>O</b>ptimal-control <b>S</b>olver) is a C++ solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and a NLP solver (such as IPOPT) to solve the subsequent large-scale nonlinear programming problem (NLP).
 
-Interfaces to MATLAB and Python are available, which generate a shared library for the OCP functions; a MEX function or a Python module are employed to load the generate library into the OCP solver. For expert user, the solver may be also used directly from C++.
+Interfaces to MATLAB and Python are available, which generate a shared library for the OCP functions; a MEX function or a Python module are employed to load the generate library into the OCP solver. For expert user, the solver may be also used directly from C++ or C.
 
-Built and tested with Linux (Debian 12) with gcc/g++.
+Built and tested with Linux (Debian 12) with GCC.
 
 Version @CMAKE_PROJECT_VERSION@
 
+Copyright (C) @COPYRIGHT_YEAR@ <a href="@COPYRIGHT_CONTACT@">@COPYRIGHT_NAME@</a>
+
 ## Requirements
 
-* [MATLAB](https://www.mathworks.com/products/matlab.html) for the MEX interface (>=2022b).
-* [Python3](https://www.python.org/) for the Python interface (>=3.7.0).
-* [CasADi](https://web.casadi.org/) to generate the C code for the OCP functions (available with interfances for MATLAB, Python, and C++).
+* [MATLAB](https://www.mathworks.com/products/matlab.html) together with [CasADi](https://web.casadi.org/) for the MEX interface (version >=2022b).
+* [Python3](https://www.python.org/) for the Python interface (version >=3.7.0). Install the Python requirements using `pip install -r <path/to/installation>/requirements.txt` (basically, CasADi together with its dependencies).
 * [GCC](https://gcc.gnu.org/) compiler.
-* [CMake](https://cmake.org/) build system to build the C++ examples.
-* [IPOPT](https://github.com/coin-or/Ipopt) version 3.14 with linear solver [MUMPS](https://mumps-solver.org/index.php) solver (together with their dependencies), which is freely available; alternative linear solvers, such as HSL routines, might be used.
-* (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver, which is a commercial software. Free trial license is freely available for academics. Make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is set.
-* (optional) [WORHP](https://worhp.de/) solver. License is freely available for academics. If not installed in system directories, one should set a `WORHPDIR` environment variable pointing to the WORHP installation path.
-* (optional) [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) solver,  which is a commercial software. Free trial license is freely available for academics. Make sure that a `SNOPTDIR` environment variable pointing to the KNITRO installation path is set.
+* [IPOPT](https://github.com/coin-or/Ipopt) release 3.14 together with its dependencies; license is freely available.
+* (optional) [CMake](https://cmake.org/) build system to build the C++ examples.
+* (optional) [WORHP](https://worhp.de/) solver; license is freely available for academics.
+* (optional) [KNITRO](https://www.artelys.com/solvers/knitro/) solver; trial license is freely available for academics.
+* (optional) [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) solver; trial license is freely available for academics.
 
 ## Installation
 
-For MATLAB usage, you need to add `<path/to/installation>/lib` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB is able to locate `<path/to/installation>/lib/minosMex.mexa64` and `<path/to/installation>/lib/buildOCP.m`.
+You can install the package in any local directory, preferably without spaces Make sure that the necessary runtime libraries are accessible by the system. Basically, you need to include the binary directories (i.e. `<path/to/installation>/lib` and possibly the NLP solver binary directory) into the `LD_LIBRARY_PATH` environment variable.
 
-For Python usage, you need to install the requirements in `<path/to/installation>/requirements.txt`, e.g. using `pip install -r requirements.txt`. You need to ensure that Python is able to locate the Python module `<path/to/installation>/lib/minosPy.so`. It may be convenient to add the directory into `PYTHONPATH`.
+\note IPOPT release 3.14 needs to be installed separately.
 
-Examples can be found in `<path/to/installation>/examples`.
+### MATLAB
 
-\warning Make sure that the necessary runtime libraries are found by the system. Basically, you need to add the binary directory into `LD_LIBRARY_PATH`.
+For MATLAB usage, you need to add `<path/to/installation>/lib` to the MATLAB path, where `<path/to/installation>` is the installation directory. Make sure that MATLAB can locate `<path/to/installation>/lib/minosMex.mexa64` and `<path/to/installation>/lib/buildOCP.p`.
+
+Examples can be found in `<path/to/installation>/examples/matlab`.
+
+### Python
+
+For Python usage, you need to ensure that Python can to locate the module `<path/to/installation>/lib/minosPy.so`. It may be convenient to add `<path/to/installation>/lib` into the `PYTHONPATH` environment variable.
+
+Examples can be found in `<path/to/installation>/examples/python`.
+
+### C/C++
+
+For C or C++ usage, you need to include `<path/to/installation>/include/minos.h` (for the C++ interface) or `<path/to/installation>/include/minosc.h` (for the C interface) in your project and link the shared library `<path/to/installation>/lib/minos.so`.
+
+You can also use CMake to build your project; in CMakeLists.txt, set a `MINOS_DIR` variable pointing to the MinOS root directory and use `<path/to/installation>/examples/cpp/cmake/FindMINOS.cmake` to find the MinOS package with `find_package(MINOS REQUIRED)`.
+
+Examples using CMake can be found in `<path/to/installation>/examples/cpp`.
 
 ### Installing IPOPT
 
-IPOPT should be built and installed separately. IPOPT version 3.14 is currently supported and preferred.
-For Debian-based distribution you can follow the steps in [Installing IPOPT](https://coin-or.github.io/Ipopt/INSTALL.html). 
-For other distro, just replace the commands with you package manager and the corresponding packages.
-In other distributions pre-built IPOPT packages may be employed, as they meet the supported version (e.g. [IPOPT-aur](https://aur.archlinux.org/packages/coin-or-ipopt) for ArchLinux).
+IPOPT should be built and installed separately. IPOPT version 3.14 is currently supported.
+
+For Debian-based distribution you can follow the steps in [Installing IPOPT](https://coin-or.github.io/Ipopt/INSTALL.html). For other distro, just replace the commands with you package manager and the corresponding packages. In other distributions pre-built IPOPT packages may be employed, as they meet the supported version (e.g. [IPOPT-aur](https://aur.archlinux.org/packages/coin-or-ipopt) for ArchLinux).
+
 Basically, to build and install IPOPT with linear solver MUMPS you need to:
 
 1. Install necessary tools. For Debian-based distro
@@ -44,7 +61,7 @@ Basically, to build and install IPOPT with linear solver MUMPS you need to:
   sudo apt-get install gcc g++ gfortran git patch wget pkg-config liblapack-dev libmetis-dev
   ```
 
-  Use your package manager with the corresponding package for other distros.
+  Use your package manager for other distros.
 
 2. Build and install MUMPS linear solver
 
@@ -71,20 +88,14 @@ Basically, to build and install IPOPT with linear solver MUMPS you need to:
   sudo make install
   ```
 
-Be sure that IPOPT and MUMPS (libipopt.so and libcoinmumps.so) are installed in one of the following paths:
+make sure that IPOPT and MUMPS (`libipopt.so` and `libcoinmumps.so`) are installed in one of the following paths:
 
 * `/usr/lib`
 * `/usr/local/lib`
 
-Alternativelly, you could set an environment variable `$IPOPT_DIR` pointing to the IPOPT installation path containing lib folder. Such folder should also be added to the `$LD_LIBRARY_PATH` environment variable, e.g. using
+\note You may also employ an alternative linear solver instead of MUMPS, such as HSL routines, using the ipopt.opt option file to specify the alternative linear solver.
 
-```command
-export LD_LIBRARY_PATH=$IPOPT_DIR/lib:$LD_LIBRARY_PATH
-```
-
-\note You may also employ an alternative linear solver instead of MUMPS, such as HSL routines. In such case, you need to employ the ipopt.opt file to specify the alternative linear solver.
-
-\warning MATLAB supports only 64-bit integer version of IPOPT (together with its dependencies), since LAPACK library used by MATLAB employs 64-bit integers; see [Building for 64-bit integers](https://coin-or.github.io/Ipopt/INSTALL.html#INT64_BUILD) for details on building IPOPT with 64-bit integers. Basically, you need to obtain liblapack64-dev and build METIS with 64-bit integers; MUMPS and IPOPT can be built with 64-bit integers using the configure flag `--with-intsize=64`. Note that using a 64-bit integer version of IPOPT has a number of limitations, such such limited linear solvers that can be used.
+\warning MATLAB supports only 64-bit integer version of IPOPT (together with its dependencies), since LAPACK library used by MATLAB employs 64-bit integers; see [Building for 64-bit integers](https://coin-or.github.io/Ipopt/INSTALL.html#INT64_BUILD) for details on building IPOPT with 64-bit integers. Basically, you need to obtain liblapack64-dev and build METIS with 64-bit integers; MUMPS and IPOPT can be built with 64-bit integers using the configure flag `--with-intsize=64`. Note that using a 64-bit integer version of IPOPT has a number of limitations, such such a limited number of linear solvers that can be used.
 
 ## Getting started
 
@@ -256,9 +267,9 @@ Shortly, `buildOCP` performs the following operations:
 * use CasADi to generate the C code of the functions required for the solver, which are stored in a temporary source file `<name>.c`;
 * call the compiler `gcc` to build a shared library `<name>.so` containing the OCP functions.
 
-Type `help buildOCP` for a full documentation.
+Type `help buildOCP` for a full documentation of `buildOCP`.
 
-The next steps consist in creating the guess and the problem structure to be provided to the MEX function.
+The next steps consist in creating the guess and the problem structure to be provided to the MEX function `minosMex`.
 
 ```matlab
 % Create guess
@@ -282,8 +293,8 @@ problem.bounds.lbu = lbu; problem.bounds.ubu = ubu;
 problem.bounds.lbc = lbc; problem.bounds.ubc = ubc;
 problem.bounds.lbb = lbb; problem.bounds.ubb = ubb;
 problem.bounds.lbq = lbq; problem.bounds.ubq = ubq;
-% problem.nlpsolver = 'ipopt'; % NLP solver to use - OPTIONAL
 % problem.mesh = 1/(N-1) * ones(1,N-1); % mesh fractions - OPTIONAL
+% problem.options.nlpsolver = 'ipopt'; % NLP solver to use - OPTIONAL
 % problem.options.flag_hessian = false; % use approx Hessian - OPTIONAL
 % problem.options.max_iter = 1000; % max number of iterations - OPTIONAL
 % problem.options.mu_init = 1; % initial barrier parameter for interior-point NLP solvers (e.g. IPOPT) - OPTIONAL
@@ -294,22 +305,24 @@ problem.bounds.lbq = lbq; problem.bounds.ubq = ubq;
 
 A number of optional settings are available:
 
-* `nlpsolver`: NLP solver to use (default `ipopt`);
 * `mesh`: mesh fractions, specify by as a row or column matrix of `N-1` elements that sum to unity. If not specified, an equally-spaced mesh grid is employed, i.e. default is `1/(N-1)*ones(1,N-1)`. This option is usefull when mesh refinements is required;
+* `options.nlpsolver`: NLP solver to use (default `ipopt`);
 * `options.flag_hessian` (default `false`): set to `true` to use approximated Hessian; note that this option has no effect if `skip_hessian = false`, i.e. approximated Hessian is always used in such case;
 * `options.max_iter` (default 3000): maximum number of iterations;
-* `options.mu_init`: initial barrier parameter for the NLP solver (interior-point only, e.g. IPOPT);
-* `options.outfile`: name of output file, if any;
-* `options.logfile`: name of NLP solver log file. Use '' for default name (which is <problem.name>.log) and `none` for no log file;
-* `options.print_itersol`: integer number for the iteration interval to print a intermediate output file. Output file for final iteration is also printed.
+* `options.mu_init` (default depends on NLP solver selected): initial barrier parameter for the NLP solver (interior-point only, e.g. IPOPT);
+* `options.logfile` (default ''): name of NLP solver log file. Use '' for default name (which is `<problem.name>.log`) and `none` for no log file;
+* `options.print_itersol` (default 0): integer number for the iteration interval to print an intermediate output file. Output file for final iteration is also printed. Use 0 to deactivate;
+* `options.outfile`: name of final output file, if any.
 
-Finally, the OCP is solved calling the MEX function.
+Finally, the OCP is solved calling the MEX function `minosMex`.
 
 ```matlab
 % Call OCP solver
 solution = minosMex(problem); 
 clear minosMex % clear MEX function to realase everything
 ```
+
+Type `help minosMex` for a full documentation of `minosMex`.
 
 The `solution` structure contains the following fields
 
@@ -357,11 +370,9 @@ solution = minosMex(problem);
 % [...]
 ```
 
-More examples for MATLAB can be found in `./examples/matlab`.
-
 ### Auxdata
 
-The above workflow requires re-building every time the model parameters change. To avoid this, one may set a CasADi vector `auxdata`, which contains the model paramaters, as a last input arguments of the OCP functions. See `./examples/matlab/brachistochrone_auxdata.m` for example usage of this functionality.
+The above workflow requires re-building every time a model parameter changes. To avoid this, one may set a CasADi vector `auxdata` containing the model paramaters as the last input arguments of the OCP functions. See `<path/to/installation>/examples/matlab/brachistochrone_auxdata.m` for example usage of this functionality.
 
 ## Python interface
 
@@ -467,15 +478,13 @@ Expert users may also employ MinOS in C or C++. Jacobians and possibly Hessians 
 * `ocp_hessi(t, x1, u, x2, p, h, sigma, lamc, lamf, lamq)` (OPTIONAL)
   The function returns the lower-triangular part of the Hessian matrix of the internal Lagragian. A single returned value is expected, which corresponds to the Hessian matrix with respect to `[x1, u, x2, p]` (order is NOT arbitrary). Order of the input arguments is not arbitrary.
 
-Again, the name of the CasADi functions is NOT arbitrary. The functions may have an additional input arguments `auxdata` in the case that auxdata need to be defined. Refer to the Optimal-control-problem section for the details on the OCP functions.
+Again, the name of the CasADi functions is NOT arbitrary. The functions may have an additional input arguments `auxdata` in the case that auxdata need to be defined. Refer to the optimal-control-problem section for the details on the OCP functions.
 
-The C code for these functions must be generated in a unique `.cpp` file (say `ocp.cpp`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int ="int"`. This option is needed to ensure consistency between the data type of CasADi and IPOPT. Note that the whole procedure can be done in Python using `minosPy.Builder.generate`, without the need to specify Jacobians or Hessians. The C code should be finally compiled as a shared library.
+The C code for these functions must be generated in a unique `.c` file (say `ocp.c`) using the CasADi code generator (via MATLAB, Python, or C++) with the option `casadi_int = "int"`. Note that the whole procedure can be done in Python using `minosPy.Builder.generate` module. The C code should be finally compiled as a dynamic library.
 
-The OCPInterface class is employed to load the generated library and solve the OCP. The C++ API documentation can be found in this documentation or in the header `./include/minos.h`.
+The OCPInterface class is employed to load the generated library and solve the OCP. The C++ API can be found in the header `<path/to/installation>/include/minos.h`.
 
-Alternatively, a pure C interface is available in the header `./include/minosc.h`. See also the C example in `examples/cpp/brachistochrone_c`.
-
-Building can be performed using the [CMake](https://cmake.org/) build system. Refer to `examples/cpp/CMakeLists.txt` and the C++ examples in `examples/cpp`.
+Alternatively, a pure C interface is available in `<path/to/installation>/include/minosc.h`. See also the C example in `<path/to/installation>/examples/cpp/brachistochrone_c`.
 
 ## Optimal-control problem
 
