@@ -82,7 +82,7 @@ enum Opt {
  * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
  * The OCP functions are loaded in runtime from a dynamic library `<name>`.
  * 
- * \param ocp_ptr Pointer to OCP instance structure. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
+ * \param ocp_ptr Pointer to OCP instance. OCP_t::exitval is non-zero if failed; see also OCP_t::exitmsg.
  * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
  * \param N Number of mesh points.
  * \param ti Initial time.
@@ -102,7 +102,7 @@ MINOS_EXPORT_API void MINOSC_PREFIX(new)(
  * Instantiates a new OCP with `N` mesh points, initial time `ti`, 
  * and final time `tf`. The default mesh consists in an equally-spaced mesh grid.
  * The OCP functions are loaded in runtime from a dynamic library `<name>`; returns
- * the OCP instance structure.
+ * the OCP instance.
  * 
  * \param name Problem name (i.e. dynamic library name implementing OCP functions, without extension).
  * \param N Number of mesh points.
