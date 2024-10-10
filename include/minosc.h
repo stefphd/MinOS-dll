@@ -453,16 +453,6 @@ MINOS_EXPORT_API void MINOSC_PREFIX(get_history)(
 );
 
 /**
- * \brief Gets MinOS version.
- * 
- * Gets the current version of MinOS.
- * 
- * \return MinOS version in the format X.Y.Z (X=major version, Y=minor version, Z=release number).
- */
-MINOS_EXPORT_API const char* MINOSC_PREFIX(get_version)(
-);
-
-/**
  * \brief Sets the printing function.
  * 
  * Sets the printing function to be used by the solver to print the output messages. 

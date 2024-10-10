@@ -17,8 +17,7 @@ add_custom_command(TARGET minos-mex POST_BUILD
     COMMAND ${Matlab_MAIN_PROGRAM} -batch ${MATLAB_PCODE_CMD}                               
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}          
     COMMENT "Running MATLAB to convert ${BUILDOCP_MFILE} to ${BUILDOCP_PFILE}"
-    VERBATIM                                                 
-)
+    VERBATIM)
 # Configure files
 configure_file(${CMAKE_SOURCE_DIR}/cmake/buildOCP.in
         ${CMAKE_CURRENT_BINARY_DIR}/buildOCP.m
@@ -49,12 +48,13 @@ install(DIRECTORY ./examples/
         PATTERN examples/*.asv EXCLUDE
         PATTERN examples/*.mex* EXCLUDE
         PATTERN examples/*.log EXCLUDE)
-
 # CPack
-cpack_add_install_type(matlab 
-                DISPLAY_NAME "Matlab interface")
-cpack_add_component(matlab 
-                DISPLAY_NAME "Matlab interface"
-                DESCRIPTION "MinOS MEX inteface"
-                DEPENDS libraries
-                INSTALL_TYPES full matlab)
+if (WITH_CPACK)
+        cpack_add_install_type(matlab 
+                        DISPLAY_NAME "Matlab interface")
+        cpack_add_component(matlab 
+                        DISPLAY_NAME "Matlab interface"
+                        DESCRIPTION "MinOS MEX inteface"
+                        DEPENDS libraries
+                        INSTALL_TYPES full matlab)
+endif()

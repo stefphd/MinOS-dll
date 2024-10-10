@@ -3,8 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#define MAKE_MINOS
-
 #include "minos.h" 
 #include "macros.h" // for nlp macros
 #include <signal.h> // for CTRL+C catch using signal

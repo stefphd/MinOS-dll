@@ -484,7 +484,3 @@ cdef class OCP:
 
     def __str__(self):
         return self.cobj.toString()
-        
-    @staticmethod
-    def get_version():
-        return CObj.get_version()

@@ -20,13 +20,13 @@
 
 #ifndef MINOS_EXPORT_API
     #ifdef _WIN32  // For Windows
-        #ifdef MAKE_MINOS
+        #ifdef BUILD_MINOS
             #define MINOS_EXPORT_API __declspec(dllexport)
         #else
             #define MINOS_EXPORT_API __declspec(dllimport)
         #endif
     #elif defined(__linux__) || defined(__APPLE__)  // For Linux and macOS
-        #ifdef MAKE_MINOS
+        #ifdef BUILD_MINOS
             #define MINOS_EXPORT_API __attribute__((visibility("default")))
         #else
             #define MINOS_EXPORT_API
@@ -574,15 +574,6 @@ public:
         int optkey,
         std::string str
     );
-
-    /**
-     * \brief Gets MinOS version.
-     * 
-     * Gets the current version of MinOS.
-     * 
-     * \return MinOS version in the format X.Y.Z (X=major version, Y=minor version, Z=release number).
-     */
-    static const char* get_version();
 
     /**
      * \brief Sets the printing function.

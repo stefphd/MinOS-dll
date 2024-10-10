@@ -3,22 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#ifndef PROJECT_VERSION
-#define PROJECT_VERSION "<X.Y.Z>"
-#endif
-#ifndef PROJECT_DESCRIPTION
-#define PROJECT_DESCRIPTION "<software description>"
-#endif
-#ifndef COPYRIGHT_YEAR
-#define COPYRIGHT_YEAR "<year>"
-#endif
-#ifndef COPYRIGHT_NAME
-#define COPYRIGHT_NAME "<name> <surname>"
-#endif
-#ifndef COPYRIGHT_CONTACT
-#define COPYRIGHT_CONTACT "<email@domain.com>"
-#endif
-
 #define SPOUT(x) x ## _sparsity_out // get name of CASADI sparsity out function
 #define SPIN(x) x ## _sparsity_in // get name of CASADI sparsity in function
 #define NIN(x) x ## _n_in // get number of input arguments of CASADI function

@@ -3,8 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#define MAKE_MINOS
-
 #include "minos.h" 
 #include "macros.h" // for nlp macros
 
@@ -13,7 +11,7 @@ int OCPInterface::solve(
 ){
     /* Print MinOS version */
     if (display)
-        (*print_funptr)("%s", get_header().c_str());
+        (*print_funptr)("%s\n", get_header().c_str());
 
     /* Reset is_interrupt_requested */
     OCPInterface::is_interrupt_requested = false;

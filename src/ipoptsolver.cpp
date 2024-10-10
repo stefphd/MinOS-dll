@@ -3,8 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#define MAKE_MINOS
-
 #include "ipoptsolver.h" // base class with all method implementations
 #include "macros.h" // for nlp macros
 

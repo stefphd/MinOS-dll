@@ -3,8 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#define MAKE_MINOS
-
 #include "minos.h"
 #include "minosc.h"
 #include "macros.h"
@@ -212,11 +210,6 @@ void MINOSC_PREFIX(get_history)(
     double* inf_du
 ) {
     CASTOCPINTERFACE(ocp->ptr)->get_history(obj, inf_pr, inf_du);
-}
-
-const char* MINOSC_PREFIX(get_version)(
-) {
-    return OCPInterface::get_version();
 }
 
 void MINOSC_PREFIX(set_printfun)(

@@ -7,7 +7,6 @@ cdef extern from "minos.h":
     cdef cppclass OCPInterface:
         # Constructor
         OCPInterface(string name, int N, double ti, double tf) except +
-
         # Methods
         void get_dims(int* nx, int* nu, int* np, int* nc, int* nb, int* nq, int* nz, int* ng, int* nnzj, int* nnzh, int* na)
         int get_N()
@@ -25,6 +24,3 @@ cdef extern from "minos.h":
         void get_history(double* obj_history, double* infpr_history, double* infdu_history)
         bool set_option(int opt_id, double val)
         bool set_option(int opt_id, string str)
-        # Static
-        @staticmethod
-        const char* get_version()

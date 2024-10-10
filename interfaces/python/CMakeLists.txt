@@ -43,12 +43,13 @@ install(DIRECTORY ./examples/
         PATTERN old-minos.py EXCLUDE
         PATTERN __pycache__ EXCLUDE
         PATTERN examples/build EXCLUDE)
-
 # CPack
-cpack_add_install_type(python 
-                    DISPLAY_NAME "Python interface")
-cpack_add_component(python
-                    DISPLAY_NAME "Python interface"
-                    DESCRIPTION "MinOS Python interface"
-                    DEPENDS libraries
-                    INSTALL_TYPES full python)
+if (WITH_CPACK)
+        cpack_add_install_type(python 
+                        DISPLAY_NAME "Python interface")
+        cpack_add_component(python
+                        DISPLAY_NAME "Python interface"
+                        DESCRIPTION "MinOS Python interface"
+                        DEPENDS libraries
+                        INSTALL_TYPES full python)
+endif()
