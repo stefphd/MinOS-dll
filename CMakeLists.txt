@@ -22,7 +22,7 @@ option(WITH_CPACK "Generate CPack target" ON)
 option(WITH_CPP_EXAMPLES "Compile with C++ examples" ON)
 option(SKIP_HESSIAN "Use approximate Hessian calculation in C++ examples" OFF)
 set(NLPSOLVER_EXAMPLE "ipopt" CACHE STRING "NLP solver for C++ examples (ipopt, knitro, worhp, snopt)")
-set(MINOS_HMACLIC_PRIVATE_KEY "minosprivatekey4lic-copyright-2024-stefano-lovato" CACHE STRING "Private key for HMACLIC license (used with WITH_HMACLIC set to ON)")
+set(HMACLIC_PRIVATE_KEY "minosprivatekey4lic-copyright-2024-stefano-lovato" CACHE STRING "Private key for HMACLIC license (used with WITH_HMACLIC set to ON)")
 
 # CPP_EXAMPLES_NLPSOL choices
 set_property(CACHE NLPSOLVER_EXAMPLE PROPERTY STRINGS
@@ -145,7 +145,7 @@ if (WITH_HMACLIC)
 	target_link_libraries(hmaclic INTERFACE ${HMACLIC_LIBRARY})
 	# Link library to minos
 	target_compile_definitions(minos PRIVATE WITH_HMACLIC
-					MINOS_PRIVATE_KEY="${MINOS_HMACLIC_PRIVATE_KEY}")
+					MINOS_PRIVATE_KEY="${HMACLIC_PRIVATE_KEY}")
 	target_link_libraries(minos PRIVATE hmaclic)
 	# Install HMACLIC
 	if (WIN32)

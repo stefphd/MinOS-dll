@@ -65,7 +65,7 @@ The `CMakeLists.txt` file contains a number of options to change the building se
 * `WITH_CPP_EXAMPLES`: compile C++ examples
 * `SKIP_HESSIAN`: use approximate Hessian calculation in C++ example
 * `NLPSOLVER_EXAMPLE`: NLP solver for C++ examples (ipopt, knitro, worhp, snopt)
-* `MINOS_HMACLIC_PRIVATE_KEY`: private key for HMACLIC license (used with `WITH_HMACLIC` set to `ON`)
+* `HMACLIC_PRIVATE_KEY`: private key for HMACLIC license (used with `WITH_HMACLIC` set to `ON`)
 
 You may build separately the targets by specifying the flag `--config <target>`. Targets are:
 
