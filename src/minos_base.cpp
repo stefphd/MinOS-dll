@@ -10,6 +10,9 @@
 #ifdef WITH_HMACLIC
 #include "hmaclic.h" // include for HMACLIC library
 #include <stdexcept>  // For std::runtime_error
+#ifndef MINOS_PRIVATE_KEY
+#define MINOS_PRIVATE_KEY "0000000000"
+#endif
 #endif
 
 /* Forward declarations */
@@ -33,6 +36,7 @@ OCPInterface::OCPInterface(
 )  {
 #ifdef WITH_HMACLIC
     // Validate license
+    char licmsg[HMACLIC_MAXPATH];
     // get machine current hostname and MAC
     char* hostname = get_hostname();
     char* mac = get_mac();
@@ -51,35 +55,37 @@ OCPInterface::OCPInterface(
     char* lic_filename_full = find_lic_file(lic_filename, search_envs, sizeof(search_envs)/sizeof(char*));
     // check if license file found
     if (!lic_filename_full) {
-        char msg[HMACLIC_MAXPATH];
-        sprintf(msg, "Failed to find license file: %s", lic_filename);
-        throw std::runtime_error(msg);      
+        sprintf(licmsg, "Failed to find license file: %s", lic_filename);
+        throw std::runtime_error(licmsg);      
         free(hostname); free(mac);
         return;
     }
     // get license key
-    char* license_key = read_lic_key(lic_filename_full);
-    if (!license_key) {
-        char msg[HMACLIC_MAXPATH];
-        sprintf(msg, "Failed to retrieve license key from file: %s", lic_filename_full);
-        throw std::runtime_error(msg);   
+    char* license_key, *exp_date;
+    if (read_lic_key(lic_filename_full, &license_key, &exp_date)) {
+        sprintf(licmsg, "Failed to retrieve license from file: %s", lic_filename_full);
+        throw std::runtime_error(licmsg);   
         free(hostname); free(mac);
         free(lic_filename_full);   
         return;
     }
     // validate license key
-    if (validate_lic(mac, MINOS_PRIVATE_KEY, license_key)) {
-        char msg[HMACLIC_MAXPATH];
-        sprintf(msg, "Unvalid license key from file: %s", lic_filename_full);
-        throw std::runtime_error(msg);   
-        free(hostname); free(mac);
-        free(lic_filename_full);
-        free(license_key);
-        return;
+    int licexit = validate_lic(mac, exp_date, MINOS_PRIVATE_KEY, license_key);
+    switch (licexit) {
+        case EXIT_EXPIRED:
+            sprintf(licmsg, "Expired license from file: %s\nExpiration date: %s", lic_filename_full, exp_date);
+            break;
+        case EXIT_UNVALID:
+            sprintf(licmsg, "Unvalid license key from file: %s", lic_filename_full);
+            break;
     }
     free(hostname); free(mac);
     free(lic_filename_full);
-    free(license_key);
+    free(license_key); free(exp_date);
+    if (licexit != EXIT_VALID) {
+        throw std::runtime_error(licmsg);   
+        return;
+    }
     // OK, valid license
 #endif
     // Problem name 
