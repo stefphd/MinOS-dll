@@ -47,11 +47,11 @@ OCPInterface::OCPInterface(
     // look for minos-<hostname>.lic in current directory + specified environment variable
     char lic_filename[HMACLIC_MAXPATH];
     sprintf(lic_filename, "minos-%s.lic", hostname);
-    char* search_envs[] = { "MINOS_LICENSE",
-                            "USERPROFILE",
-                            "HOME",
-                            "PATH"
-                            }; // search paths
+    const char* search_envs[] = { "MINOS_LICENSE",
+                                "USERPROFILE",
+                                "HOME",
+                                "PATH"
+                                }; // search paths
     char* lic_filename_full = find_lic_file(lic_filename, search_envs, sizeof(search_envs)/sizeof(char*));
     // check if license file found
     if (!lic_filename_full) {
