@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
         ocp = new OCPInterface("brachistochrone", N, ti, tf);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
+        return 1;
     }
 
     /* Get problem dimensions */
