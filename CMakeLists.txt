@@ -15,6 +15,7 @@ option(WITH_KNITRO "Compile KNITRO interface" ON)
 option(WITH_SNOPT "Compile SNOPT interface" ON)
 option(WITH_MEX_INTERFACE "Compile MEX interface for MATLAB" ON)
 option(WITH_PYTHON_INTERFACE "Compile Python interface" ON)
+option(WITH_CLI "Compile command-line interface" ON)
 option(WITH_HMACLIC "Use HMACLIB library for license management" OFF)
 option(WITH_GCC "Install GCC distribution (for Windows only)" ON)
 option(WITH_DOCS "Generate docs using Doxygen (require Doxygen and latex)" ON)
@@ -296,6 +297,13 @@ endif()
 # C++ examples
 if (WITH_CPP_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+# Command-line interface
+if(WITH_CLI)
+	add_executable(minos-cli src/minos_cli.cpp)
+	target_include_directories(minos-cli PRIVATE include)
+	target_link_libraries(minos-cli PRIVATE minos)
 endif()
 
 # MATLAB interface
