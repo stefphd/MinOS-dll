@@ -111,7 +111,7 @@ set(MINOS_SOURCES ${CMAKE_SOURCE_DIR}/src/minos_base.cpp
 
 # Generate file minos_header.h with project header
 include(cmake/HeaderGenerator.cmake)
-set(MINOS_HEADER_H ${CMAKE_BINARY_DIR}/minos_header.h)
+set(MINOS_HEADER_H include/minos_header.h)
 generate_header(
     DESCRIPTION ${CMAKE_PROJECT_DESCRIPTION}
     VERSION ${CMAKE_PROJECT_VERSION}
@@ -128,7 +128,6 @@ file(APPEND ${MINOS_HEADER_H} "R\"(${PROJECT_HEADER})\";")
 add_library(minos SHARED
 			${MINOS_SOURCES})
 target_include_directories(minos PUBLIC include)
-target_include_directories(minos PRIVATE ${CMAKE_BINARY_DIR})
 target_compile_definitions(minos PRIVATE BUILD_MINOS)
 set_target_properties(minos 
 					 PROPERTIES PUBLIC_HEADER "include/minos.h;include/minosc.h")
