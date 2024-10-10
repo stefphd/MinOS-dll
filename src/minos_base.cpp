@@ -7,6 +7,11 @@
 #include "macros.h" // for nlp macros
 #include <signal.h> // for CTRL+C catch using signal
 
+#ifdef WITH_HMACLIC
+#include "hmaclic.h" // include for HMACLIC library
+#include <stdexcept>  // For std::runtime_error
+#endif
+
 /* Forward declarations */
 std::atomic_bool OCPInterface::is_interrupt_requested;
 
@@ -26,6 +31,57 @@ OCPInterface::OCPInterface(
     double ti,
     double tf
 )  {
+#ifdef WITH_HMACLIC
+    // Validate license
+    // get machine current hostname and MAC
+    char* hostname = get_hostname();
+    char* mac = get_mac();
+    if (!mac) {
+        throw std::runtime_error("Failed to retrieve MAC address for license validation");
+        return;
+    }
+    // look for minos-<hostname>.lic in current directory + specified environment variable
+    char lic_filename[HMACLIC_MAXPATH];
+    sprintf(lic_filename, "minos-%s.lic", hostname);
+    char* search_envs[] = { "MINOS_LICENSE",
+                            "USERPROFILE",
+                            "HOME",
+                            "PATH"
+                            }; // search paths
+    char* lic_filename_full = find_lic_file(lic_filename, search_envs, sizeof(search_envs)/sizeof(char*));
+    // check if license file found
+    if (!lic_filename_full) {
+        char msg[HMACLIC_MAXPATH];
+        sprintf(msg, "Failed to find license file: %s", lic_filename);
+        throw std::runtime_error(msg);      
+        free(hostname); free(mac);
+        return;
+    }
+    // get license key
+    char* license_key = read_lic_key(lic_filename_full);
+    if (!license_key) {
+        char msg[HMACLIC_MAXPATH];
+        sprintf(msg, "Failed to retrieve license key from file: %s", lic_filename_full);
+        throw std::runtime_error(msg);   
+        free(hostname); free(mac);
+        free(lic_filename_full);   
+        return;
+    }
+    // validate license key
+    if (validate_lic(mac, MINOS_PRIVATE_KEY, license_key)) {
+        char msg[HMACLIC_MAXPATH];
+        sprintf(msg, "Unvalid license key from file: %s", lic_filename_full);
+        throw std::runtime_error(msg);   
+        free(hostname); free(mac);
+        free(lic_filename_full);
+        free(license_key);
+        return;
+    }
+    free(hostname); free(mac);
+    free(lic_filename_full);
+    free(license_key);
+    // OK, valid license
+#endif
     // Problem name 
     this->name = name;
 

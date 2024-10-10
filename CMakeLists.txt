@@ -15,12 +15,14 @@ option(WITH_KNITRO "Compile KNITRO interface" ON)
 option(WITH_SNOPT "Compile SNOPT interface" ON)
 option(WITH_MEX_INTERFACE "Compile MEX interface for MATLAB" ON)
 option(WITH_PYTHON_INTERFACE "Compile Python interface" ON)
+option(WITH_HMACLIC "Use HMACLIB library for license management" OFF)
 option(WITH_GCC "Install GCC distribution (for Windows only)" ON)
 option(WITH_DOCS "Generate docs using Doxygen (require Doxygen and latex)" ON)
 option(WITH_CPACK "Generate CPack target" ON)
 option(WITH_CPP_EXAMPLES "Compile with C++ examples" ON)
 option(SKIP_HESSIAN "Use approximate Hessian calculation in C++ examples" OFF)
 set(NLPSOLVER_EXAMPLE "ipopt" CACHE STRING "NLP solver for C++ examples (ipopt, knitro, worhp, snopt)")
+set(MINOS_HMACLIC_PRIVATE_KEY "minosprivatekey4lic-copyright-2024-stefano-lovato" CACHE STRING "Private key for HMACLIC license (used with WITH_HMACLIC set to ON)")
 
 # CPP_EXAMPLES_NLPSOL choices
 set_property(CACHE NLPSOLVER_EXAMPLE PROPERTY STRINGS
@@ -90,6 +92,15 @@ if (WITH_SNOPT)
     endif()
 endif()
 
+# Find HMACLIC library
+if (WITH_HMACLIC)
+	find_package(HMACLIC)
+    if(NOT HMACLIC_FOUND)
+        message(WARNING "HMACLIC library not found, disabling WITH_HMACLIC.")
+        set(WITH_HMACLIC OFF)
+    endif()
+endif()
+
 # MinOS sources with no solver source
 set(MINOS_SOURCES ${CMAKE_SOURCE_DIR}/src/minos_base.cpp
                   ${CMAKE_SOURCE_DIR}/src/minos_nlp.cpp
@@ -125,6 +136,27 @@ install(TARGETS minos
 		COMPONENT libraries
 		PUBLIC_HEADER
 		COMPONENT libraries)
+
+# Include HMACLIC library
+if (WITH_HMACLIC)
+	# Create an interface library for HMACLIC
+	add_library(hmaclic INTERFACE)
+	target_include_directories(hmaclic INTERFACE ${HMACLIC_INCLUDE_DIR})
+	target_link_libraries(hmaclic INTERFACE ${HMACLIC_LIBRARY})
+	# Link library to minos
+	target_compile_definitions(minos PRIVATE WITH_HMACLIC
+					MINOS_PRIVATE_KEY="${MINOS_HMACLIC_PRIVATE_KEY}")
+	target_link_libraries(minos PRIVATE hmaclic)
+	# Install HMACLIC
+	if (WIN32)
+        set(HMACLIC_INSTALL_DIR bin)
+    else()
+        set(HMACLIC_INSTALL_DIR lib)
+    endif()
+	install(FILES ${HMACLIC_RUNTIME} 
+			COMPONENT libraries
+			DESTINATION ${HMACLIC_INSTALL_DIR})
+endif()
 
 # Logical target to build all interfaces with --target minos-nlp
 add_custom_target(minos-nlp)  

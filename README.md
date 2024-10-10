@@ -18,9 +18,10 @@ Build and tested with:
 * A NLP solver. Possibilities are:
   * [IPOPT](https://github.com/coin-or/Ipopt) release 3.14, which is freely available. For *Windows*, set a `IPOPTDIR` environment variable pointing to the IPOPT installation path. For *Linux*, one can either install IPOPT system-wide (in `/usr/lib` or `/usr/local/lib` and `/usr/include` or  `/usr/local/include`), or use a local installation by setting `IPOPTDIR` pointing to the IPOPT root path.
   * [WORHP](https://worhp.de/), whose license is freely available for academics. For *Windows*, set a `WORHPDIR` environment variable pointing to the WORHP installation path. For *Linux*, one can either install WORHP system-wide, or use a local installation by setting `WORHPDIR` pointing to the WORHP root path.
-  * [KNITRO](https://www.artelys.com/solvers/knitro/), which is a commercial software; trial license is freely available for academics. For *Windows*, make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is created during installation. For *Linux*, one needs to set `KNITRODIR` pointing to the local installation path of KNITRO.
-  * [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/), which is a commercial software; trial license is freely available for academics. A `SNOPTDIR` environment variable pointing to the SNOPT installation path needs to be set.
+  * [KNITRO](https://www.artelys.com/solvers/knitro/), which is a commercial software; trial license is freely available for academics. For *Windows*, make sure that a `KNITRODIR` environment variable pointing to the KNITRO installation path is created during installation. For *Linux*, set `KNITRODIR` pointing to the local installation path of KNITRO.
+  * [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/), which is a commercial software; trial license is freely available for academics. Set a `SNOPTDIR` environment variable pointing to the SNOPT installation path.
 * (*Windows* only) A Windows distribution of [GCC](https://gcc.gnu.org/). This is not strictly necessary to build the software but it is used in the MATLAB and Python interfaces of the *Windows* release. Either set a `GCCDIR` environment variable pointing to the GCC root directory (i.e. where `bin/gcc.exe` is) or include it into the `PATH`.
+* (Optional) [HMACLIC](https://github.com/stefphd/license-hmac) for optional license management. Set a `HMACLICDIR` environment variable pointing to the HMACLIC installation path.
 * (optional) [Doxygen](https://doxygen.nl/) and a Wlatex distribution to generate the documentation.
 * (optional) A CMake-CPack generator compatible with your system to generate the release.
 
@@ -57,12 +58,14 @@ The `CMakeLists.txt` file contains a number of options to change the building se
 * `WITH_SNOPT`: compile SNOPT interface
 * `WITH_MEX_INTERFACE`: compile MEX interface for MATLAB
 * `WITH_PYTHON_INTERFACE`: compile Python interface
+* `WITH_HMACLIC`. use HMACLIB library for license management (disabled by default)
 * `WITH_GCC`: install GCC distribution (for Windows only)
 * `WITH_DOCS`: generate docs using Doxygen (require Doxygen and latex installed)
 * `WITH_CPACK`: generate CPack target
 * `WITH_CPP_EXAMPLES`: compile C++ examples
 * `SKIP_HESSIAN`: use approximate Hessian calculation in C++ example
 * `NLPSOLVER_EXAMPLE`: NLP solver for C++ examples (ipopt, knitro, worhp, snopt)
+* `MINOS_HMACLIC_PRIVATE_KEY`: private key for HMACLIC license (used with `WITH_HMACLIC` set to `ON`)
 
 You may build separately the targets by specifying the flag `--config <target>`. Targets are:
 
