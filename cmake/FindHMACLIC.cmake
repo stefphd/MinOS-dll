@@ -9,8 +9,8 @@
 # HMACLIC_LIBRARY     - Default library to link against to use HMACLIC
 # HMACLIC_LIBRARY_DIR - Directory to the HMACLIC library
 # HMACLIC_INCLUDE_DIR - Directory to include to use HMACLIC
-# HMACLIC_RUNTIME     - HMACLIC runtime libraries
-# HMACLIC_RUNTIME_DIR - Directory to the HMACLIC runtime libraries
+# HMACLIC_RUNTIME     - HMACLIC runtime libraries (if any)
+# HMACLIC_RUNTIME_DIR - Directory to the HMACLIC runtime libraries (if any)
 # HMACLIC_FOUND       - If false, HMACLIC not found
 
 # Test the HMACLICDIR environment variable and create cmake HMACLIC_DIR variable accordingly
@@ -41,4 +41,4 @@ endif()
 
 # Handle HMACLIC_FOUND
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(HMACLIC DEFAULT_MSG HMACLIC_LIBRARY HMACLIC_INCLUDE_DIR HMACLIC_RUNTIME)
+find_package_handle_standard_args(HMACLIC DEFAULT_MSG HMACLIC_LIBRARY HMACLIC_INCLUDE_DIR)
