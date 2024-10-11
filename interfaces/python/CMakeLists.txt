@@ -1,8 +1,11 @@
+# Find Python development module
 find_package(Python3
-                COMPONENTS Development.Module
-                REQUIRED)
+        COMPONENTS Development.Module
+        REQUIRED)
+# Find Cython module and include
 find_package(Cython MODULE REQUIRED)
 include(UseCython)
+# Python interface target
 cython_transpile(${CMAKE_CURRENT_SOURCE_DIR}/minosPy.pyx
                 LANGUAGE CXX 
                 OUTPUT_VARIABLE MINOSPY)

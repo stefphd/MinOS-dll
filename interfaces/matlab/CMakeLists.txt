@@ -1,6 +1,6 @@
 # Find the MATLAB package
 find_package(Matlab REQUIRED COMPONENTS MAIN_PROGRAM MEX_COMPILER)
-# MinOS MEX
+# Matlab interface target
 get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
 find_library(MXLIBUT NAMES libut ut 
              PATHS ${Matlab_MX_LIBRARY_PATH} REQUIRED)
