@@ -16,16 +16,17 @@
 %                   guess.lam_x: state guess (nx-by-N matrix) - OPTIONAL
 %                   guess.lam_u: control guess (nu-by-N matrix) - OPTIONAL
 %                   guess.lam_p: parameter guess (np-by-1 matrix) - OPTIONAL
-%                   guess.lam_f: state guess (nx-by-N-1 matrix) - OPTIONAL
-%                   guess.lam_c: state guess (nx-by-N matrix) - OPTIONAL
-%                   guess.lam_b: state guess (nb-by-1 matrix) - OPTIONAL
-%                   guess.lam_q: state guess (nb-by-1 matrix) - OPTIONAL
-%                   bounds.lbx, bounds.ubx: state lower and upper bounds (1-by-nx matrix)
-%                   bounds.lbu, bounds.ubu: control lower and upper bounds (1-by-nu matrix)
-%                   bounds.lbp, bounds.ubp: parameter lower and upper bounds (1-by-np matrix)
-%                   bounds.lbc, bounds.ubc: path constraint lower and upper bounds (1-by-nc matrix)
-%                   bounds.lbb, bounds.ubb: boundary condition lower and upper bounds (1-by-nb matrix)
-%                   bounds.lbq, bounds.ubq: integral constraint lower and upper bounds (1-by-nq matrix)
+%                   guess.lam_f: dynamic multiplier guess (nx-by-N-1 matrix) - OPTIONAL
+%                   guess.lam_c: path multiplier guess (nc-by-N matrix) - OPTIONAL
+%                   guess.lam_b: boundary multiplier guess (nb-by-1 matrix) - OPTIONAL
+%                   guess.lam_q: integral multiplier guess (nq-by-1 matrix) - OPTIONAL
+%                   bounds.lbx, bounds.ubx: state lower and upper bounds (nx-by-1 matrix)
+%                   bounds.lbu, bounds.ubu: control lower and upper bounds (nu-by-1 matrix)
+%                   bounds.lbp, bounds.ubp: parameter lower and upper bounds (np-by-1 matrix)
+%                   bounds.lbc, bounds.ubc: path constraint lower and upper bounds (nc-by-1 matrix)
+%                   bounds.lbb, bounds.ubb: boundary condition lower and upper bounds (nb-by-1 matrix)
+%                   bounds.lbq, bounds.ubq: integral constraint lower and upper bounds (nq-by-1 matrix)
+%                   auxdata: problem auxiliary data (na-by-1 matrix)
 %                   mesh: mesh fractions (default 1/(N-1)*ones(1,N-1)) - OPTIONAL
 %                   options.nlpsolver: NLP solver (default "ipopt") - OPTIONAL
 %                   options.flag_hessian: use approximated Hessian (default false) - OPTIONAL

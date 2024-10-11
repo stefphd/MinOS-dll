@@ -224,20 +224,27 @@ u0 = linspace(0,1,N);
 p0 = 1;
 
 % Create problem structure
-problem.name = name;
-problem.N = N;
-problem.ti = ti;
-problem.tf = tf;
-problem.guess.x = x0;
-problem.guess.u = u0;
-problem.guess.p = p0;
-problem.bounds.lbx = lbx; problem.bounds.ubx = ubx;
-problem.bounds.lbp = lbp; problem.bounds.ubp = ubp;
-problem.bounds.lbu = lbu; problem.bounds.ubu = ubu;
-problem.bounds.lbc = lbc; problem.bounds.ubc = ubc;
-problem.bounds.lbb = lbb; problem.bounds.ubb = ubb;
-problem.bounds.lbq = lbq; problem.bounds.ubq = ubq;
+problem.name = name; % name of the problem (1-by-1 matrix)
+problem.N = N; % number of mesh points (1-by-1 matrix)
+problem.ti = ti; % initial time (1-by-1 matrix)
+problem.tf = tf; % final time (1-by-1 matrix)
+problem.guess.x = x0; % state guess (nx-by-N matrix)
+problem.guess.u = u0; % control guess (nu-by-1 matrix)
+problem.guess.p = p0; % parameter guess (np-by-1 matrix)
+problem.bounds.lbx = lbx; problem.bounds.ubx = ubx; % state bounds (nx-by-1 matrix)
+problem.bounds.lbu = lbu; problem.bounds.ubu = ubu; % control bounds (nu-by-1 matrix)
+problem.bounds.lbp = lbp; problem.bounds.ubp = ubp; % parameter bounds (np-by-1 matrix)
+problem.bounds.lbc = lbc; problem.bounds.ubc = ubc; % path bounds (nc-by-1 matrix)
+problem.bounds.lbb = lbb; problem.bounds.ubb = ubb; % boundary bounds (nb-by-1 matrix)
+problem.bounds.lbq = lbq; problem.bounds.ubq = ubq; % integral bounds (nq-by-1 matrix)
 % problem.mesh = 1/(N-1) * ones(1,N-1); % mesh fractions - OPTIONAL
+% problem.guess.lam_x = lam_x0; % state multiplier guess (nx-by-N matrix) - OPTIONAL
+% problem.guess.lam_u = lam_u0; % control multiplier guess (nu-by-N matrix) - OPTIONAL
+% problem.guess.lam_p = lam_p0; % parameter multiplier guess (np-by-1 matrix) - OPTIONAL
+% problem.guess.lam_f = lam_f0; % dynamic multiplier guess (nx-by-N-1 matrix) - OPTIONAL
+% problem.guess.lam_c = lam_c0; % path multiplier guess (nc-by-N-1 matrix) - OPTIONAL
+% problem.guess.lam_b = lam_b0; % boundary multiplier guess (nb-by-1 matrix) - OPTIONAL
+% problem.guess.lam_q = lam_q0; % integral multiplier guess (nq-by-1 matrix) - OPTIONAL
 % problem.options.nlpsolver = 'ipopt'; % NLP solver to use - OPTIONAL
 % problem.options.flag_hessian = false; % use approx Hessian - OPTIONAL
 % problem.options.max_iter = 1000; % max number of iterations - OPTIONAL
@@ -250,6 +257,7 @@ problem.bounds.lbq = lbq; problem.bounds.ubq = ubq;
 A number of optional settings are available:
 
 * `mesh`: mesh fractions, specify by as a row or column matrix of `N-1` elements that sum to unity. If not specified, an equally-spaced mesh grid is employed, i.e. default is `1/(N-1)*ones(1,N-1)`. This option is usefull when mesh refinements is required;
+* `guess.lam_*`: guess for multipliers; must be fully specified to enable warm start of the NLP solver;
 * `options.nlpsolver`: NLP solver to use (default `ipopt`);
 * `options.flag_hessian` (default `false`): set to `true` to use approximated Hessian; note that this option has no effect if `skip_hessian = false`, i.e. approximated Hessian is always used in such case;
 * `options.max_iter` (default 3000): maximum number of iterations;
