@@ -9,18 +9,18 @@ project(MinOS
         )
 
 # User options
-option(WITH_IPOPT "Compile IPOPT interface" ON)
-option(WITH_WORHP "Compile WORHP interface" ON)
-option(WITH_KNITRO "Compile KNITRO interface" ON)
-option(WITH_SNOPT "Compile SNOPT interface" ON)
-option(WITH_MEX_INTERFACE "Compile MEX interface for MATLAB" ON)
-option(WITH_PYTHON_INTERFACE "Compile Python interface" ON)
-option(WITH_CLI "Compile command-line interface" ON)
+option(WITH_IPOPT "Build IPOPT interface" ON)
+option(WITH_WORHP "Build WORHP interface" ON)
+option(WITH_KNITRO "Build KNITRO interface" ON)
+option(WITH_SNOPT "Build SNOPT interface" ON)
+option(WITH_MEX_INTERFACE "Build MEX interface for MATLAB" ON)
+option(WITH_PYTHON_INTERFACE "Build Python interface" ON)
+option(WITH_CLI "Build command-line interface" ON)
 option(WITH_HMACLIC "Use HMACLIB library for license management" OFF)
 option(WITH_GCC "Install GCC distribution (for Windows only)" ON)
 option(WITH_DOCS "Generate docs using Doxygen (require Doxygen and latex)" ON)
 option(WITH_CPACK "Generate CPack target" ON)
-option(WITH_CPP_EXAMPLES "Compile with C++ examples" ON)
+option(WITH_CPP_EXAMPLES "Build with C++ examples" ON)
 option(SKIP_HESSIAN "Use approximate Hessian calculation in C++ examples" OFF)
 set(NLPSOLVER_EXAMPLE "ipopt" CACHE STRING "NLP solver for C++ examples (ipopt, knitro, worhp, snopt)")
 set(HMACLIC_PRIVATE_KEY "minosprivatekey4lic-copyright-2024-stefano-lovato" CACHE STRING "Private key for HMACLIC license (used with WITH_HMACLIC set to ON)")
@@ -153,9 +153,11 @@ if (WITH_HMACLIC)
     else()
         set(HMACLIC_INSTALL_DIR lib)
     endif()
+	if (HMACLIC_RUNTIME)
 	install(FILES ${HMACLIC_RUNTIME} 
 			COMPONENT libraries
 			DESTINATION ${HMACLIC_INSTALL_DIR})
+	endif()
 endif()
 
 # Logical target to build all interfaces with --target minos-nlp
@@ -301,9 +303,7 @@ endif()
 
 # Command-line interface
 if(WITH_CLI)
-	add_executable(minos-cli src/minos_cli.cpp)
-	target_include_directories(minos-cli PRIVATE include)
-	target_link_libraries(minos-cli PRIVATE minos)
+	add_subdirectory(interfaces/cli)
 endif()
 
 # MATLAB interface
@@ -320,23 +320,23 @@ endif()
 if (WITH_DOCS) 
     # Configure files
 	if(WIN32) # Windows readme
-		set(README_IN "${CMAKE_CURRENT_SOURCE_DIR}/cmake/README.win.in")
+		set(README_IN "${CMAKE_SOURCE_DIR}/cmake/README.win.in")
 	else() # Unix assumed otherwise
-		set(README_IN "${CMAKE_CURRENT_SOURCE_DIR}/cmake/README.unix.in")
+		set(README_IN "${CMAKE_SOURCE_DIR}/cmake/README.unix.in")
 	endif()
-    set(README_OUT "${CMAKE_CURRENT_BINARY_DIR}/README.md")
+    set(README_OUT "${CMAKE_BINARY_DIR}/README.md")
     configure_file(${README_IN} ${README_OUT} @ONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Doxyfile.in 
-                    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile 
-                    @ONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/Doxyfile.in 
+                ${CMAKE_BINARY_DIR}/Doxyfile 
+                @ONLY)
     # Custom target to generate docs
-    add_custom_target( minos-docs ALL
-                        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                        COMMENT "Generating API documentation with Doxygen"
-                        VERBATIM )
+    add_custom_target(minos-docs ALL
+                    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                    COMMENT "Generating API documentation with Doxygen"
+                    VERBATIM )
     # Install rules
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs 
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/docs 
 			COMPONENT docs
 			DESTINATION ./)
 	# CPack
