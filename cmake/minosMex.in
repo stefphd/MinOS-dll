@@ -13,6 +13,13 @@
 %                   guess.x: state guess (nx-by-N matrix)
 %                   guess.u: control guess (nu-by-N matrix)
 %                   guess.p: parameter guess (np-by-1 matrix)
+%                   guess.lam_x: state guess (nx-by-N matrix) - OPTIONAL
+%                   guess.lam_u: control guess (nu-by-N matrix) - OPTIONAL
+%                   guess.lam_p: parameter guess (np-by-1 matrix) - OPTIONAL
+%                   guess.lam_f: state guess (nx-by-N-1 matrix) - OPTIONAL
+%                   guess.lam_c: state guess (nx-by-N matrix) - OPTIONAL
+%                   guess.lam_b: state guess (nb-by-1 matrix) - OPTIONAL
+%                   guess.lam_q: state guess (nb-by-1 matrix) - OPTIONAL
 %                   bounds.lbx, bounds.ubx: state lower and upper bounds (1-by-nx matrix)
 %                   bounds.lbu, bounds.ubu: control lower and upper bounds (1-by-nu matrix)
 %                   bounds.lbp, bounds.ubp: parameter lower and upper bounds (1-by-np matrix)
