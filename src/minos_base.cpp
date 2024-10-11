@@ -620,6 +620,7 @@ bool OCPInterface::set_option(
             this->display = (bool) (val > 0);
             break;
         case OCPInterface::PRINT_ITERSOL:
+            if (val<0) { return false; }
             this->print_itersol = (int) val;
             break;
         default: // case not convered
