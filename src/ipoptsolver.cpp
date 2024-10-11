@@ -248,7 +248,6 @@ int IPOPTSolver::callSolve(
     if (ocpInterface->logfile == "none") ocpInterface->logfile = ""; // no log file
     SET_IPOPT_STR_OPTION(app, output_file, ocpInterface->logfile);
 
-
     if (ocpInterface->check_lambda_guess())
         SET_IPOPT_STR_OPTION(app, warm_start_init_point, "yes");
     if (ocpInterface->max_iter<0) 
