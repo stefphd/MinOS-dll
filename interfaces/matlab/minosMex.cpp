@@ -28,8 +28,6 @@
                             mxIsComplex(x) || \
                             mxGetNumberOfElements(x)!=1 ) ) ? \
                             mexErrMsgIdAndTxt("MinOS:notScalar","%s must be a scalar.", #x) : (void(0))
-#define ASSERTGREATER(x1,x2) ( mxGetScalar(x1) <= mxGetScalar(x2) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notGreater","%s must be greater than %s.", #x1, #x2) : (void(0))
 #define ASSERTDOUBLE(x)   ( (x) && (!mxIsDouble(x) || mxIsComplex(x)) ) ? \
                             mexErrMsgIdAndTxt("MinOS:notDouble","%s must be of type double.", #x) : (void(0))
 #define ASSERTLOGICAL(x) ( (x) && (!mxIsLogicalScalar(x)) ) ? \
@@ -166,7 +164,6 @@ void mexFunction( int nlhs, mxArray *plhs[],
     ASSERTPOSINTSCALAR(N);
     ASSERTSCALAR(ti);
     ASSERTSCALAR(tf);
-    ASSERTGREATER(tf,ti);
     std::string namestr(mxArrayToString(name));
 
     /* Create OCPInterface object */
