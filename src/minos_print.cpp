@@ -49,7 +49,7 @@ std::ostream& operator<<(
         inf_du = ocpInterface.infdu_history[num_iter];
     }
     // Print to os
-    os << OCPInterface::get_header();
+    os << OCPInterface::get_header() << "\n";
     os << "\n";
 
     os << "# Problem settings\n";
@@ -57,7 +57,7 @@ std::ostream& operator<<(
     os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "ti:", ocpInterface.ti) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_doubleFormat, "tf:", ocpInterface.tf) << "\n";
     os << "\t" << OCPInterface::format_str(OCPInterface::print_intFormat, "N:", N) << "\n";
-    os << "\t" << OCPInterface::format_str(OCPInterface::print_strFormat, "solver:", ocpInterface.nlpsolver.c_str()) << "\n";
+    os << "\t" << OCPInterface::format_str(OCPInterface::print_strFormat, "NLP solver:", ocpInterface.nlpsolver.c_str()) << "\n";
     os << "\n";
 
     os << "# Problem dimensions\n";
