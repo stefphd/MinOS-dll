@@ -252,6 +252,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     ASSERTDOUBLE(p); ASSERTNUMEL(p, np);
     ASSERTDOUBLE(lam_x); ASSERTSIZE(lam_x, nx, ((int) GETVAL(N)));
     ASSERTDOUBLE(lam_u); ASSERTSIZE(lam_u, nu, ((int) GETVAL(N)));
+    ASSERTDOUBLE(lam_p); ASSERTNUMEL(lam_p, np);
     ASSERTDOUBLE(lam_f); ASSERTSIZE(lam_f, nx, (static_cast<size_t>((int) GETVAL(N)) - 1));
     ASSERTDOUBLE(lam_c); ASSERTSIZE(lam_c, nc, ((int) GETVAL(N)));
     ASSERTDOUBLE(lam_b); ASSERTNUMEL(lam_b, nb);
