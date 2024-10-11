@@ -225,12 +225,13 @@ void OCPInterface::dealloc_casadi_mem(
 ) {
     int sz_arg = 0, sz_res = 0, sz_iw = 0, sz_w = 0;
     dealloc_mem_casadi(mem);
-    delete[] arg;
-    delete[] res;
-    delete[] iw;
-    delete[] w;
+    if (arg) {
+        delete[] arg;
+        delete[] res;
+        delete[] iw;
+        delete[] w;
+    }
 }
-
 
 /** Check NLP option file */
 bool OCPInterface::check_nlpopt_file(

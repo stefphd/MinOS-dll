@@ -96,14 +96,14 @@ OCPInterface::OCPInterface(
     this->ti = ti; // initial time
     this->tf = tf; // final time
 
+    // Load dynamic library <name> with OCP functions
+    ocp_lib = load_ocplib(name);
+    if (!ocp_lib) { return; }
+
     // Create default mesh consisting equally-space mesh points
     this->mesh = new double[N-1];
     for (int i = 0; i < N-1; ++i)
         this->mesh[i] = 1.0/( (double) N - 1.0);
-
-    // Load dynamic library <name> with OCP functions
-    ocp_lib = load_ocplib(name);
-    if (!ocp_lib) { return; }
 
     // Get dimensions of OCP
     get_sizes(SPIN(ocp_path),  1, &nx, NULL, NULL); // num of states
@@ -152,30 +152,40 @@ OCPInterface::OCPInterface(
 /** Destructor */
 OCPInterface::~OCPInterface() {
     // free data
-    delete[] x0;     delete[] u0;     delete[] p0; 
-    delete[] lam_x0; delete[] lam_u0; delete[] lam_p0; 
-    delete[] lam_f0; delete[] lam_c0; delete[] lam_b0; delete[] lam_q0;
-    delete[] lbx; delete[] ubx; 
-    delete[] lbu; delete[] ubu; 
-    delete[] lbp; delete[] ubp; 
-    delete[] lbc; delete[] ubc; 
-    delete[] lbb; delete[] ubb; 
-    delete[] lbq; delete[] ubq;
+    if (x0)  {
+        delete[] x0;     delete[] u0;     delete[] p0; 
+        delete[] lam_x0; delete[] lam_u0; delete[] lam_p0; 
+        delete[] lam_f0; delete[] lam_c0; delete[] lam_b0; delete[] lam_q0;
+    }
+    if (lbx)  {
+        delete[] lbx; delete[] ubx; 
+        delete[] lbu; delete[] ubu; 
+        delete[] lbp; delete[] ubp; 
+        delete[] lbc; delete[] ubc; 
+        delete[] lbb; delete[] ubb; 
+        delete[] lbq; delete[] ubq;
+    }
     if (auxdata)  delete[] auxdata;
-    delete[] z_opt;    delete[] g_opt;
-    delete[] lamz_opt; delete[] lamg_opt;
-    delete[] grad_opt; delete[] jac_opt;
+    if (z_opt) {
+        delete[] z_opt;    delete[] g_opt;
+        delete[] lamz_opt; delete[] lamg_opt;
+        delete[] grad_opt; delete[] jac_opt;
+    }
     if (hess_opt) delete[] hess_opt;
     // free cost gradient mem
-    delete[] irrcg;  delete[] irbcg; delete[] krcg; delete[] kbcg;
-    delete[] resrcg[0]; delete[] resbcg[0]; 
+    if (irrcg) {
+        delete[] irrcg;  delete[] irbcg; delete[] krcg; delete[] kbcg;
+        delete[] resrcg[0]; delete[] resbcg[0]; 
+    }
     // free jacobian mem
-    delete[] irdj; delete[] jcdj; 
-    delete[] irpj; delete[] jcpj; 
-    delete[] irbj; delete[] jcbj; 
-    delete[] irqj; delete[] jcqj; 
-    delete[] resq[0]; delete[] resqj[0]; 
-    delete[] kjq;  delete[] kj;
+    if (irdj) {
+        delete[] irdj; delete[] jcdj; 
+        delete[] irpj; delete[] jcpj; 
+        delete[] irbj; delete[] jcbj; 
+        delete[] irqj; delete[] jcqj; 
+        delete[] resq[0]; delete[] resqj[0]; 
+        delete[] kjq;  delete[] kj;
+    }
     // free hessian mem
     if (irhb) {
         delete[] irhb;  delete[] jchb; 
