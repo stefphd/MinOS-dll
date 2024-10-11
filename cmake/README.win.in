@@ -252,6 +252,7 @@ problem.bounds.lbq = lbq; problem.bounds.ubq = ubq; % integral bounds (nq-by-1 m
 % problem.options.outfile = 'output.txt'; % output filename - OPTIONAL
 % problem.options.logfile = 'nlp.log'; % NLP log filename - OPTIONAL
 % problem.options.print_itersol = 10; % iteration interval to print output file - OPTIONAL
+% problem.options.display = true; % display to monitor - OPTIONAL
 ```
 
 A number of optional settings are available:
@@ -265,6 +266,7 @@ A number of optional settings are available:
 * `options.logfile` (default ''): name of NLP solver log file. Use '' for default name (which is `<problem.name>.log`) and `none` for no log file;
 * `options.print_itersol` (default 0): integer number for the iteration interval to print an intermediate output file. Output file for final iteration is also printed. Use 0 to deactivate;
 * `options.outfile`: name of final output file, if any.
+* `options.display` (default `true`): set to `false` to turn off display to monitor.
 
 Finally, the OCP is solved calling the MEX function `minosMex`.
 

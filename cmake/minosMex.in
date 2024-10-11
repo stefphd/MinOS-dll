@@ -38,6 +38,7 @@
 %                   and `none` for no log file - OPTIONAL
 %                   options.print_itersol: iteration interval to print intermediate output file (default 
 %                   0, i.e. deactivated) - OPTIONAL 
+%                   options.dispay: display to monitor (default true, i.e. activated) - OPTIONAL
 %
 % Output arguments
 %   solution    - Solution structure containing the fields:
