@@ -35,11 +35,11 @@ extern "C" {
     #include "lauxlib.h"
 }
 
+#define UNVALID_USAGE -1
 #define BUILD_USAGE 0
-#define RUN_USAGE 1
-#define UNVALID_USAGE 2
+#define SOLVE_USAGE 1
+#define RUN_USAGE 2
 
-int luasolve_called = 0; // global flag for solve_lua() called
 const std::string helpstr = 
 R"(Command-line interface usage
 
@@ -49,17 +49,22 @@ R"(Command-line interface usage
 
 Build the OCP library from the C file.
 
+  minos-cli -s <luafile.lua>
+
+Solve the LUA problem.
+
   minos-cli -r <luafile.lua>
 
-Run the solver from the LUA file.
+Run the LUA script.
 
 Options:
   -h [--help]                = Print this help
   -v [--version]             = Print the header with version
   -b [--build] <ocp.c>       = Specify the name of the C file to buildy
-  -r [--run]   <luafile.lua> = Specify the LUA file to run the solver
   -o [--out]   <outname>     = Specify the name of the output library
-  -d [--dir]   <outdir>      = Specify the output directory of the library)";
+  -d [--dir]   <outdir>      = Specify the output directory of the library
+  -s [--solve] <luafile.lua> = Specify the LUA file with problem to solve
+  -r [--run]   <luafile.lua> = Specify the LUA file to run as a script)";
 
 void print_help() {
     std::cout << projectHeader << std::endl;
@@ -114,7 +119,16 @@ int parse_args(int argc, char* argv[], std::string& infile, std::string& outfile
         print_errusage(args); // print error and throw
         return UNVALID_USAGE;
     }
-    // run usage: -r <luafile.lua>
+    // solve usage: -s <luafile.lua>
+    if ((args[0] == "-s") || (args[0] == "--solve")) {
+        infile = args[1];
+        if (argc > 2) {    
+            print_errusage(args); // print error and throw
+            return UNVALID_USAGE;
+        }
+        return SOLVE_USAGE;
+    }
+    // run usage: -s <luafile.lua>
     if ((args[0] == "-r") || (args[0] == "--run")) {
         infile = args[1];
         if (argc > 2) {    
@@ -132,7 +146,7 @@ int parse_args(int argc, char* argv[], std::string& infile, std::string& outfile
     }
     // init optional flags
     outdir = "."; // current dir
-    outfile = rem_ext(infile); // TODO remove extension
+    outfile = rem_ext(infile); 
     // check other build args
     int flago = 1, flagd = 1; // 0 when flag consumed
     for (int i = 2; i < 6; i+=2) {
@@ -488,7 +502,7 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
 
     // Get the problem table
     if (!lua_istable(L, index)) {
-        throw std::runtime_error("Expecting table for problem argument");
+        throw std::runtime_error("Expecting table for argument");
         return 1;
     }
 
@@ -754,80 +768,6 @@ void write_luasolution(lua_State *L, OCPInterface* ocp) {
     // TODO
 }
 
-int solve_lua(lua_State *L) {
-    OCPInterface *ocp = NULL;
-    std::string outfile;
-    luasolve_called = 1;
-    // Parse solve input
-    try {
-        read_luaproblem(L, 1, &ocp, outfile);
-    } catch (const std::exception &e) {
-        if (ocp) delete ocp;
-        return luaL_error(L, "%s", e.what()); // pass error to LUA
-    }
-    // Call to solve
-    try {
-        ocp->solve();
-    } catch (const std::exception &e) {
-        delete ocp;
-        return luaL_error(L, "%s", e.what()); // pass error to LUA
-    }
-    // Write solution
-    write_luasolution(L, ocp);
-    // Write outfile if required
-    if (outfile.size()) {
-        std::ofstream outstream;
-        outstream.open(outfile);
-        if (!outstream.is_open()) {
-            delete ocp;
-            return luaL_error(L, "Failed to open outfile file: %s", outfile.c_str()); // pass error to LUA
-        }
-        outstream << *ocp;
-        outstream.close();
-    }
-    // Free mem
-    delete ocp;
-    // Return num of outputs
-    return 1;
-}
-
-int solve_internal(lua_State *L) {
-    OCPInterface *ocp = NULL;
-    std::string outfile;
-    // Parse solve input
-    try {
-        lua_getglobal(L, "problem"); // push problem on the top of the stack
-        read_luaproblem(L, -1, &ocp, outfile);
-    } catch (const std::exception &e) {
-        if (ocp) delete ocp;
-        throw e;
-        return 1;
-    }
-    // Call to solve
-    try {
-        ocp->solve();
-    } catch (const std::exception &e) {
-        delete ocp;
-        throw e;
-        return 1;
-    }
-    // Write outfile if required
-    if (outfile.size()) {
-        std::ofstream outstream;
-        outstream.open(outfile);
-        if (!outstream.is_open()) {
-            delete ocp;
-            throw std::runtime_error("Failed to open outfile file: " + outfile);
-        return 1;
-        }
-        outstream << *ocp;
-        outstream.close();
-    }
-    // Free mem and return
-    delete ocp;
-    return 0;
-}
-
 int build(std::string cc, std::string csource, std::string outfile, 
     std::string outdir) {
     // Check if C file exists
@@ -903,12 +843,122 @@ int build(std::string cc, std::string csource, std::string outfile,
     return 0;
 }
 
+int solve(const std::string &luafile) {
+    // Start LUA
+    lua_State* L = luaL_newstate();    // Create a new Lua state
+    luaL_openlibs(L);                  // Load Lua libraries
+    // Register empty C function to avoid errors in the case of mixing usage
+    auto run_build_empty = [](lua_State* L) -> int { return 0; };
+    auto run_solve_empty = [](lua_State* L) -> int { return 0; };
+    lua_register(L, "build", run_build_empty);
+    lua_register(L, "solve", run_solve_empty);
+    // Load LUA file
+    if (luaL_dofile(L, luafile.c_str())) {
+        std::string strerr = lua_tostring(L,-1);
+        lua_close(L);
+        throw std::runtime_error("Failed to load LUA file: " + strerr);
+        return 1;
+    }
+    // Read problem and allocate OCP
+    OCPInterface *ocp = NULL;
+    std::string outfile;
+    // Parse solve input
+    try {
+        lua_getglobal(L, "problem"); // push problem on the top of the stack
+        read_luaproblem(L, -1, &ocp, outfile); // read problem
+    } catch (const std::exception &e) {
+        if (ocp) delete ocp;
+        throw e;
+        return 1;
+    }
+    // Solve OCP
+    try {
+        ocp->solve();
+    } catch (const std::exception &e) {
+        delete ocp;
+        throw e;
+        return 1;
+    }
+    // Write outfile if required
+    if (outfile.size()) {
+        std::ofstream outstream;
+        outstream.open(outfile);
+        if (!outstream.is_open()) {
+            delete ocp;
+            throw std::runtime_error("Failed to open outfile file: " + outfile);
+        return 1;
+        }
+        outstream << *ocp;
+        outstream.close();
+    }
+    // Free mem and return
+    lua_close(L);
+    delete ocp;
+    return 0;
+}
+
+int run_build(lua_State *L) {
+    // Check first argument: cfile
+    if (!lua_isstring(L, 1)) {
+        return luaL_error(L, "Expecting string for argument #1 to 'build'");
+    }
+    std::string infile = lua_tostring(L, 1);
+    // Check second argument: outfile
+    std::string outfile = luaL_optstring(L, 2, rem_ext(infile).c_str());
+    // Check third argument: outdir
+    std::string outdir = luaL_optstring(L, 3, ".");
+    // Call to build
+    try {
+        build("gcc", infile, outfile, outdir);
+    } catch (const std::exception &e) {
+        return luaL_error(L, "%s", e.what()); // pass error to LUA
+    }
+    return 0;
+}
+
+int run_solve(lua_State *L) {
+    OCPInterface *ocp = NULL;
+    std::string outfile;
+    // Parse solve input
+    try {
+        read_luaproblem(L, 1, &ocp, outfile);
+    } catch (const std::exception &e) {
+        if (ocp) delete ocp;
+        return luaL_error(L, "%s", e.what()); // pass error to LUA
+    }
+    // Call to solve
+    try {
+        ocp->solve();
+    } catch (const std::exception &e) {
+        delete ocp;
+        return luaL_error(L, "%s", e.what()); // pass error to LUA
+    }
+    // Write solution
+    write_luasolution(L, ocp);
+    // Write outfile if required
+    if (outfile.size()) {
+        std::ofstream outstream;
+        outstream.open(outfile);
+        if (!outstream.is_open()) {
+            delete ocp;
+            return luaL_error(L, "Failed to open outfile file: %s", outfile.c_str()); // pass error to LUA
+        }
+        outstream << *ocp;
+        outstream.close();
+    }
+    // Free mem
+    delete ocp;
+    // Return num of outputs
+    return 1;
+}
+
 int run(const std::string &luafile) {
     // Start LUA
     lua_State* L = luaL_newstate();    // Create a new Lua state
     luaL_openlibs(L);                  // Load Lua libraries
     // Register the C function
-    lua_register(L, "solve_ocp", solve_lua);
+    lua_register(L, "build", run_build);
+    lua_register(L, "solve", run_solve);
     // Run LUA file
     if (luaL_dofile(L, luafile.c_str())) {
         std::string strerr = lua_tostring(L,-1);
@@ -916,20 +966,10 @@ int run(const std::string &luafile) {
         throw std::runtime_error("Failed to run LUA file: " + strerr);
         return 1;
     }
-    // Run internal solve if solve_lua not called
-    if (!luasolve_called) {
-        try {
-            solve_internal(L);
-        } catch (const std::exception &e) {
-            std::cout << "AA\n";
-            lua_close(L);
-            throw e;
-            return 1;
-        }
-    }
-    // Return
+    // Return 
     lua_close(L);
     return 0;
+
 }
 
 int main(int argc, char* argv[]) {
@@ -951,6 +991,9 @@ int main(int argc, char* argv[]) {
         switch (usage) {
             case BUILD_USAGE:
                 build("gcc", infile, outfile, outdir);
+                break;
+            case SOLVE_USAGE:
+                solve(infile);
                 break;
             case RUN_USAGE:
                 run(infile);
