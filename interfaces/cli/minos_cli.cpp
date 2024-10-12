@@ -918,7 +918,14 @@ int run(const std::string &luafile) {
     }
     // Run internal solve if solve_lua not called
     if (!luasolve_called) {
-        solve_internal(L);
+        try {
+            solve_internal(L);
+        } catch (const std::exception &e) {
+            std::cout << "AA\n";
+            lua_close(L);
+            throw e;
+            return 1;
+        }
     }
     // Return
     lua_close(L);
