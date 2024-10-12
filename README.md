@@ -1,6 +1,6 @@
 # MinOS
 
-MinOS (**Min**imal **O**ptimal-control **S**olver) is a C++ solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and a NLP solver (such as IPOPT) to solve the subsequent large-scale nonlinear programming problem (NLP). Interfaces are available for MATLAB, Python, and C or C++.
+MinOS (**Min**imal **O**ptimal-control **S**olver) is a C++ solver for optimal control problem (OCP) using a direct method together with CasADi to generate the C code of the OCP functions and a NLP solver (such as IPOPT) to solve the subsequent large-scale nonlinear programming problem (NLP). Interfaces are available for MATLAB, Python, and C or C++. A command-line interface using LUA is also available.
 
 This README is developer-oriented. User-oriented README is provided with the release in the documentation.
 

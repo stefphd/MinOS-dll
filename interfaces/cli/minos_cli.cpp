@@ -43,28 +43,28 @@ extern "C" {
 const std::string helpstr = 
 R"(Command-line interface usage
 
-  minos-cli -b <ocp.c>
-  minos-cli -b <ocp.c> -o <outname>
-  minos-cli -b <ocp.c> -o <outname> -d <outdir>
+  minos-cli -b <csource>
+  minos-cli -b <csource> -o <outname>
+  minos-cli -b <csource> -o <outname> -d <outdir>
 
 Build the OCP library from the C file.
 
-  minos-cli -s <luafile.lua>
+  minos-cli -s <luafile>
 
 Solve the LUA problem.
 
-  minos-cli -r <luafile.lua>
+  minos-cli -r <luafile>
 
 Run the LUA script.
 
 Options:
-  -h [--help]                = Print this help
-  -v [--version]             = Print the header with version
-  -b [--build] <ocp.c>       = Specify the name of the C file to buildy
-  -o [--out]   <outname>     = Specify the name of the output library
-  -d [--dir]   <outdir>      = Specify the output directory of the library
-  -s [--solve] <luafile.lua> = Specify the LUA file with problem to solve
-  -r [--run]   <luafile.lua> = Specify the LUA file to run as a script)";
+  -h [--help]            = Print this help
+  -v [--version]         = Print the header with version
+  -b [--build] <csource> = Specify the name of the C file to buildy
+  -o [--out]   <outname> = Specify the name of the output library
+  -d [--dir]   <outdir>  = Specify the output directory of the library
+  -s [--solve] <luafile> = Specify the LUA file with problem to solve
+  -r [--run]   <luafile> = Specify the LUA file to run as a script)";
 
 void print_help() {
     std::cout << projectHeader << std::endl;
