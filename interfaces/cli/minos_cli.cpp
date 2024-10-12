@@ -99,7 +99,6 @@ int parse_args(int argc, char* argv[], std::string& infile, std::string& outfile
     for (int i = 0; i < argc; ++i) {
         args[i] = std::string(argv[i]); // Use emplace_back to add each argument
     }
-    
     // too many args
     if (argc > 6) {
         print_errusage(args); // print error and throw
@@ -262,9 +261,8 @@ int find_executable(const std::string& exec_name, std::string& exec_path) {
     const char delimiter = ':';
 #endif
     std::vector<std::string> paths = split_path(path_env, delimiter);
-
     for (const std::string& dir : paths) {
-        std::string full_path = dir + "\\" + exec_name;
+        std::string full_path = dir + "/" + exec_name;
         if (exist_file(full_path)) {
             exec_path = full_path;
             return 0;
@@ -499,19 +497,11 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
     std::string nlpsolver, logfile;
     int flag_hessian = -1, max_iter = -1, print_itersol = -1, display = -1;
     double mu_init = -1;
-
-    // Get the problem table
-    if (!lua_istable(L, index)) {
-        throw std::runtime_error("Expecting table for argument");
-        return 1;
-    }
-
     // Get problem definitions
     name = read_luastring(L, index, "name");
     N = (int) read_luanumber(L, index, "N");
     ti = read_luanumber(L, index, "ti");
     tf = read_luanumber(L, index, "tf");
-
     // Create OCP object
     try {
         (*ocp) = new OCPInterface(name, N, ti, tf);
@@ -519,10 +509,8 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
         throw e;
         return 1;
     }
-
     // Get OCP dimensions
     (*ocp)->get_dims(&nx, &nu, &np, &nc, &nb, &nq, NULL, NULL, NULL, NULL, &na);
-
     // Get guess
     if (!exist_luakey(L, "guess")) {
         throw std::runtime_error("Expecting table for 'guess'");
@@ -559,7 +547,6 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
     lamuv = mat_to_vec(lamu);
     lamfv = mat_to_vec(lamf);
     lamcv = mat_to_vec(lamc);
-
     // Get bounds
     if (!exist_luakey(L, "bounds")) {
         throw std::runtime_error("Expecting table for 'bounds'");
@@ -580,13 +567,11 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
     if (!check_vector_size(lbc, nc, "lbc") || !check_vector_size(ubc, nc, "ubc")) { return 1; }
     if (!check_vector_size(lbb, nb, "lbb") || !check_vector_size(ubb, nb, "ubb")) { return 1; }
     if (!check_vector_size(lbq, nq, "lbq") || !check_vector_size(ubq, nq, "ubq")) { return 1; }
-
     // Get auxdata
     if (exist_luakey(L, "auxdata")) {
         auxdata = read_luavector(L, "auxdata");
         if (!check_vector_size(auxdata, na, "auxdata")) {return 1; }
     }
-
     // Get mesh
     if (exist_luakey(L, "mesh")) {
         mesh = read_luavector(L, "mesh");
@@ -604,7 +589,6 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
             return 1;
         }
     }
-
     // Get options
     if (exist_luakey(L, "options")) {
         lua_getfield(L, index, "options");
@@ -626,7 +610,6 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
             display = (int) read_luabool(L, -1, "display");
         lua_pop(L, 1); // pop options   
     }
-
     // Set OCP
     // Set bounds
     double* lbxp = (lbx.size()) ? lbx.data() : NULL;
@@ -666,7 +649,6 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
     if (mu_init > 0)        (*ocp)->set_option(OCPInterface::MU_INIT,       mu_init);
     if (print_itersol >= 0) (*ocp)->set_option(OCPInterface::PRINT_ITERSOL, print_itersol);
     if (display >= 0)       (*ocp)->set_option(OCPInterface::DISPLAY,       display);
-
     // Return
     return 0;
 }
@@ -800,7 +782,6 @@ int build(std::string cc, std::string csource, std::string outfile,
             basedir = basedir.substr(0, pos) + "/";
         }
         set_env("PATH", basedir + "gcc/bin;" + oldpath);
-        std::cout << "basedir: " << basedir << std::endl;
         exitcode = exec_cmd(cc + " --version", false);
     }
 #endif
@@ -862,9 +843,14 @@ int solve(const std::string &luafile) {
     // Read problem and allocate OCP
     OCPInterface *ocp = NULL;
     std::string outfile;
+    //Check problem type
+    lua_getglobal(L, "problem"); // push problem on the top of the stack
+    if (!lua_istable(L, -1)) {
+        throw std::runtime_error("Expecting table for 'problem'");
+        return 1;
+    }
     // Parse solve input
     try {
-        lua_getglobal(L, "problem"); // push problem on the top of the stack
         read_luaproblem(L, -1, &ocp, outfile); // read problem
     } catch (const std::exception &e) {
         if (ocp) delete ocp;
@@ -898,11 +884,8 @@ int solve(const std::string &luafile) {
 }
 
 int run_build(lua_State *L) {
-    // Check first argument: cfile
-    if (!lua_isstring(L, 1)) {
-        return luaL_error(L, "Expecting string for argument #1 to 'build'");
-    }
-    std::string infile = lua_tostring(L, 1);
+    // Check first argument: infile
+    std::string infile = luaL_checkstring(L, 1);
     // Check second argument: outfile
     std::string outfile = luaL_optstring(L, 2, rem_ext(infile).c_str());
     // Check third argument: outdir
@@ -919,6 +902,8 @@ int run_build(lua_State *L) {
 int run_solve(lua_State *L) {
     OCPInterface *ocp = NULL;
     std::string outfile;
+    // Check input argument
+    luaL_checktype(L, 1, LUA_TTABLE);
     // Parse solve input
     try {
         read_luaproblem(L, 1, &ocp, outfile);
@@ -969,14 +954,13 @@ int run(const std::string &luafile) {
     // Return 
     lua_close(L);
     return 0;
-
 }
 
 int main(int argc, char* argv[]) {
-    argv++; argc--; // consume first arg that is the filename
-    // no args: print help and exit
+    argv++; argc--; // Consume first arg that is the filename
+    // No args: print help and exit
     if (argc < 1) print_help();
-    // parse args
+    // Parse args
     std::string infile, outfile, outdir;
     int usage;
     try {
@@ -985,7 +969,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "minos-cli error: " << e.what() << std::endl;
         return 1;
     }
-    // call function
+    // Call function
     int exit;
     try {
         switch (usage) {
@@ -1003,6 +987,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "minos-cli error: " << e.what() << std::endl;
         return 1;
     }
-    // return success
+    // Return success
     return 0;
 }
