@@ -39,6 +39,7 @@ extern "C" {
 #define RUN_USAGE 1
 #define UNVALID_USAGE 2
 
+int luasolve_called = 0; // global flag for solve_lua() called
 const std::string helpstr = 
 R"(Command-line interface usage
 
@@ -48,7 +49,7 @@ R"(Command-line interface usage
 
 Build the OCP library from the C file.
 
-  minos-cli -r <luafile.lua> -o <outname>
+  minos-cli -r <luafile.lua>
 
 Run the solver from the LUA file.
 
@@ -57,7 +58,7 @@ Options:
   -v [--version]             = Print the header with version
   -b [--build] <ocp.c>       = Specify the name of the C file to buildy
   -r [--run]   <luafile.lua> = Specify the LUA file to run the solver
-  -o [--out]   <outname>     = Specify the name of the output file
+  -o [--out]   <outname>     = Specify the name of the output library
   -d [--dir]   <outdir>      = Specify the output directory of the library)";
 
 void print_help() {
@@ -72,7 +73,7 @@ void print_version() {
 }
 
 void print_errusage(std::vector<std::string> args) {
-    std::string strerr = "unknown usage 'minos-cli";
+    std::string strerr = "Unknown usage 'minos-cli";
     for (int i = 0; i < args.size(); ++i) strerr += " " + args[i];
     strerr += "'";
     strerr += "\n                 run 'minos-cli -h' for all supported options";
@@ -113,19 +114,14 @@ int parse_args(int argc, char* argv[], std::string& infile, std::string& outfile
         print_errusage(args); // print error and throw
         return UNVALID_USAGE;
     }
-    // run usage: -r <luafile.lua> [-o <outname>]
+    // run usage: -r <luafile.lua>
     if ((args[0] == "-r") || (args[0] == "--run")) {
         infile = args[1];
-        if (argc <= 2) {    
-            return RUN_USAGE;
-        } else if (argc <= 4) {
-            if ((args[2] == "-o") || (args[2] == "--out")) {
-                outfile = args[3];
-                return RUN_USAGE;
-            }
+        if (argc > 2) {    
+            print_errusage(args); // print error and throw
+            return UNVALID_USAGE;
         }
-        print_errusage(args); // print error and throw
-        return UNVALID_USAGE;
+        return RUN_USAGE;
     }
     // build usage: -b <ocp.h> [-o <outname> -d <outdir>]
     if ((args[0] == "-b") || (args[0] == "--build")) {
@@ -267,6 +263,39 @@ void reset_path(const std::string &oldpath) {
     set_env("PATH", oldpath);
 }
 
+std::vector<double> mat_to_vec(const std::vector<std::vector<double>>& mat) {
+    // Check if matrix is non-empty
+    if (mat.empty()) {
+        return {};
+    }
+    // Result vector to hold the rolled-out matrix
+    std::vector<double> vec;
+    // Get number of rows and columns
+    size_t rows = mat.size();
+    size_t cols = mat[0].size();
+    // Loop through each column
+    for (size_t col = 0; col < cols; ++col) {
+        // Loop through each row in the current column
+        for (size_t row = 0; row < rows; ++row) {
+            vec.push_back(mat[row][col]);
+        }
+    }
+    return vec;
+}
+
+std::vector<std::vector<double>> vec_to_mat(const std::vector<double>& vec, size_t n, size_t m) {
+    // Result matrix to hold the reshaped data
+    std::vector<std::vector<double>> mat(n, std::vector<double>(m));
+    // Fill the matrix by iterating over the vector
+    for (size_t col = 0; col < m; ++col) {
+        for (size_t row = 0; row < n; ++row) {
+            mat[row][col] = vec[col * n + row];
+        }
+    }
+    return mat;
+}
+
+
 std::vector<std::vector<double>> read_luamatrix(lua_State* L, const char* key) {
     std::vector<std::vector<double>> mat;
     // Push the key (as a string) to access the table
@@ -275,7 +304,7 @@ std::vector<std::vector<double>> read_luamatrix(lua_State* L, const char* key) {
     // Check if the retrieved value is a table
     if (!lua_istable(L, -1)) {
         std::ostringstream strerr;
-        strerr << "expected table for '" << key << "'";
+        strerr << "Expecting table for '" << key << "'";
         lua_pop(L, 1); // Pop the invalid value
         throw std::runtime_error(strerr.str());
         return mat;
@@ -292,7 +321,7 @@ std::vector<std::vector<double>> read_luamatrix(lua_State* L, const char* key) {
         // Ensure the row is a table
         if (!lua_istable(L, -1)) {
             std::ostringstream strerr;
-            strerr << "expected table for '" << key << "[" << i << "]'";
+            strerr << "Expecting table for '" << key << "[" << i << "]'";
             lua_pop(L, 1); // Pop the invalid row
             throw std::runtime_error(strerr.str());
             return mat;
@@ -311,7 +340,7 @@ std::vector<std::vector<double>> read_luamatrix(lua_State* L, const char* key) {
                 row.push_back(lua_tonumber(L, -1)); // Add value to the row
             } else {
                 std::ostringstream strerr;
-                strerr << "expected number for '" << key << "[" << i << "][" << j << "]'";
+                strerr << "Expecting number for '" << key << "[" << i << "][" << j << "]'";
                 lua_pop(L, 1); // Pop invalid value
                 throw std::runtime_error(strerr.str());
                 return mat;
@@ -333,7 +362,7 @@ std::vector<double> read_luavector(lua_State* L, const char* key) {
     // Check if the retrieved value is a table
     if (!lua_istable(L, -1)) {
         std::ostringstream strerr;
-        strerr << "expected table for '" << key << "'";
+        strerr << "Expecting table for '" << key << "'";
         lua_pop(L, 1); // Pop the invalid value
         throw std::runtime_error(strerr.str());
         return vec; 
@@ -352,7 +381,7 @@ std::vector<double> read_luavector(lua_State* L, const char* key) {
             vec.push_back(lua_tonumber(L, -1)); // Add the value to the vector
         } else {
             std::ostringstream strerr;
-            strerr << "expected number for '" << key << "[" << i << "]'" << std::endl;
+            strerr << "Expecting number for '" << key << "[" << i << "]'" << std::endl;
             lua_pop(L, 1); // Pop the invalid value
             throw std::runtime_error(strerr.str());
         return vec; 
@@ -363,12 +392,12 @@ std::vector<double> read_luavector(lua_State* L, const char* key) {
     return vec; // Return the constructed vector
 }
 
-std::string read_luastring(lua_State* L, const char* key) {
+std::string read_luastring(lua_State* L, int index, const char* key) {
     std::string str;
-    lua_getfield(L, -1, key); // Get the string associated with the key
+    lua_getfield(L, index, key); // Get the string associated with the key
     if (!lua_isstring(L, -1)) {
         std::ostringstream strerr;
-        strerr << "expected string for '" << key << "'";
+        strerr << "Expecting string for '" << key << "'";
         lua_pop(L, 1); // Pop the invalid value
         throw std::runtime_error(strerr.str());
         return str;
@@ -378,12 +407,12 @@ std::string read_luastring(lua_State* L, const char* key) {
     return str;
 }
 
-double read_luanumber(lua_State* L, const char* key) {
+double read_luanumber(lua_State* L, int index, const char* key) {
     int val;
-    lua_getfield(L, -1, key); // Get the number associated with the key
+    lua_getfield(L, index, key); // Get the number associated with the key
     if (!lua_isnumber(L, -1)) {
         std::ostringstream strerr;
-        strerr << "expected number for '" << key << "'";
+        strerr << "Expecting number for '" << key << "'";
         lua_pop(L, 1); // Pop the invalid value
         throw std::runtime_error(strerr.str());
         return val;
@@ -393,12 +422,12 @@ double read_luanumber(lua_State* L, const char* key) {
     return val;
 }
 
-bool read_luabool(lua_State* L, const char* key) {
+bool read_luabool(lua_State* L, int index, const char* key) {
     bool val;
-    lua_getfield(L, -1, key); // Get the value associated with the key
+    lua_getfield(L, index, key); // Get the value associated with the key
     if (!lua_isboolean(L, -1)) { // Check if it's a boolean
         std::ostringstream strerr;
-        strerr << "expected boolean for '" << key << "'";
+        strerr << "Expecting boolean for '" << key << "'";
         lua_pop(L, 1); // Pop the invalid value
         throw std::runtime_error(strerr.str());
         return val;
@@ -408,7 +437,7 @@ bool read_luabool(lua_State* L, const char* key) {
     return val;
 }
 
-bool exist_lua_key(lua_State* L, const char* key) {
+bool exist_luakey(lua_State* L, const char* key) {
     lua_pushstring(L, key); // Push the key onto the stack
     lua_gettable(L, -2); // Get the value from the table using the key
     bool exists = !lua_isnil(L, -1); // If the value is not nil, the key exists
@@ -419,7 +448,7 @@ bool exist_lua_key(lua_State* L, const char* key) {
 bool check_vector_size(std::vector<double> vec, size_t n, const char* key) {
     if (vec.size() != n) {
         std::ostringstream strerr;
-        strerr << "expecting " << n << " elements for '" << key << "' (found " << vec.size() << ")";
+        strerr << "Expecting " << n << " elements for '" << key << "' (found " << vec.size() << ")";
         throw std::runtime_error(strerr.str());
         return false;
     }
@@ -429,14 +458,14 @@ bool check_vector_size(std::vector<double> vec, size_t n, const char* key) {
 bool check_matrix_size(std::vector<std::vector<double>> mat, size_t n, size_t m, const char* key) {
     if (mat.size() != n) {
         std::ostringstream strerr;
-        strerr << "expecting " << n << " elements for '" << key << "' (found " << mat.size() << ")";
+        strerr << "Expecting " << n << " elements for '" << key << "' (found " << mat.size() << ")";
         throw std::runtime_error(strerr.str());
         return false;
     }
     for (int i = 0; i < n; ++i) {
         if (mat[i].size() != m) {
             std::ostringstream strerr;
-            strerr << "expecting " << m << " elements for '" << key << "[" << (i + 1) << "]' (found " << mat[i].size() << ")";
+            strerr << "Expecting " << m << " elements for '" << key << "[" << (i + 1) << "]' (found " << mat[i].size() << ")"; // one-based
             throw std::runtime_error(strerr.str());
             return false;
         }
@@ -444,27 +473,7 @@ bool check_matrix_size(std::vector<std::vector<double>> mat, size_t n, size_t m,
     return true;
 }
 
-std::vector<double> mat_to_vec(const std::vector<std::vector<double>>& mat) {
-    // Check if matrix is non-empty
-    if (mat.empty()) {
-        return {};
-    }
-    // Result vector to hold the rolled-out matrix
-    std::vector<double> vec;
-    // Get number of rows and columns
-    size_t rows = mat.size();
-    size_t cols = mat[0].size();
-    // Loop through each column
-    for (size_t col = 0; col < cols; ++col) {
-        // Loop through each row in the current column
-        for (size_t row = 0; row < rows; ++row) {
-            vec.push_back(mat[row][col]);
-        }
-    }
-    return vec;
-}
-
-int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
+int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &outfile) {
     // Declarations
     std::string name;
     int N, nx, nu, np, nc, nb, nq, na;
@@ -477,28 +486,17 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
     int flag_hessian = -1, max_iter = -1, print_itersol = -1, display = -1;
     double mu_init = -1;
 
-    if (luaL_dofile(L, luafile.c_str()) != LUA_OK) {
-        // Error handling
-        std::string strerr = "error loading Lua file: " + std::string(lua_tostring(L, -1));
-        lua_pop(L, 1); // Remove error message from the stack
-        lua_close(L);
-        throw std::runtime_error("failed to execute Lua file: " + strerr);
-        return 1;
-    }
-
     // Get the problem table
-    lua_getglobal(L, "problem");
-    if (!lua_istable(L, -1)) {
-        lua_close(L);
-        throw std::runtime_error("expected table for 'problem'");
+    if (!lua_istable(L, index)) {
+        throw std::runtime_error("Expecting table for problem argument");
         return 1;
     }
 
     // Get problem definitions
-    name = read_luastring(L, "name");
-    N = (int) read_luanumber(L, "N");
-    ti = read_luanumber(L, "ti");
-    tf = read_luanumber(L, "tf");
+    name = read_luastring(L, index, "name");
+    N = (int) read_luanumber(L, index, "N");
+    ti = read_luanumber(L, index, "ti");
+    tf = read_luanumber(L, index, "tf");
 
     // Create OCP object
     try {
@@ -512,22 +510,22 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
     (*ocp)->get_dims(&nx, &nu, &np, &nc, &nb, &nq, NULL, NULL, NULL, NULL, &na);
 
     // Get guess
-    if (!exist_lua_key(L, "guess")) {
-        throw std::runtime_error("expecting table for 'guess'");
+    if (!exist_luakey(L, "guess")) {
+        throw std::runtime_error("Expecting table for 'guess'");
         return 1;
     }
-    lua_getfield(L, -1, "guess");
+    lua_getfield(L, index, "guess");
     x = read_luamatrix(L, "x");
     u = read_luamatrix(L, "u");
     p = read_luavector(L, "p");
     // Retrieve optional guess
-    if (exist_lua_key(L, "lam_x")) lamx = read_luamatrix(L, "lam_x");
-    if (exist_lua_key(L, "lam_u")) lamu = read_luamatrix(L, "lam_u");
-    if (exist_lua_key(L, "lam_p")) lamp = read_luavector(L, "lam_p");
-    if (exist_lua_key(L, "lam_f")) lamf = read_luamatrix(L, "lam_f");
-    if (exist_lua_key(L, "lam_c")) lamc = read_luamatrix(L, "lam_c");
-    if (exist_lua_key(L, "lam_b")) lamb = read_luavector(L, "lam_b");
-    if (exist_lua_key(L, "lam_q")) lamq = read_luavector(L, "lam_q");
+    if (exist_luakey(L, "lam_x")) lamx = read_luamatrix(L, "lam_x");
+    if (exist_luakey(L, "lam_u")) lamu = read_luamatrix(L, "lam_u");
+    if (exist_luakey(L, "lam_p")) lamp = read_luavector(L, "lam_p");
+    if (exist_luakey(L, "lam_f")) lamf = read_luamatrix(L, "lam_f");
+    if (exist_luakey(L, "lam_c")) lamc = read_luamatrix(L, "lam_c");
+    if (exist_luakey(L, "lam_b")) lamb = read_luavector(L, "lam_b");
+    if (exist_luakey(L, "lam_q")) lamq = read_luavector(L, "lam_q");
     lua_pop(L, 1); // pop guess
     // Check sizes
     if (!check_matrix_size(x, nx, N, "x")) { return 1; }
@@ -549,11 +547,11 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
     lamcv = mat_to_vec(lamc);
 
     // Get bounds
-    if (!exist_lua_key(L, "bounds")) {
-        throw std::runtime_error("expecting table for 'bounds'");
+    if (!exist_luakey(L, "bounds")) {
+        throw std::runtime_error("Expecting table for 'bounds'");
         return 1;
     }
-    lua_getfield(L, -1, "bounds");
+    lua_getfield(L, index, "bounds");
     lbx = read_luavector(L, "lbx"); ubx = read_luavector(L, "ubx");
     lbu = read_luavector(L, "lbu"); ubu = read_luavector(L, "ubu");
     lbp = read_luavector(L, "lbp"); ubp = read_luavector(L, "ubp");
@@ -570,13 +568,13 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
     if (!check_vector_size(lbq, nq, "lbq") || !check_vector_size(ubq, nq, "ubq")) { return 1; }
 
     // Get auxdata
-    if (exist_lua_key(L, "auxdata")) {
+    if (exist_luakey(L, "auxdata")) {
         auxdata = read_luavector(L, "auxdata");
         if (!check_vector_size(auxdata, na, "auxdata")) {return 1; }
     }
 
     // Get mesh
-    if (exist_lua_key(L, "mesh")) {
+    if (exist_luakey(L, "mesh")) {
         mesh = read_luavector(L, "mesh");
         if (!check_vector_size(mesh, N-1, "mesh")) {return 1; }
         // check sum to unity
@@ -587,34 +585,33 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
             std::ostringstream strerr;
             char sumstr[256];
             sprintf(sumstr, "%.9f", sum);
-            strerr << "expecting sum to 1 for 'mesh' (sum to " << sumstr << ")";
+            strerr << "Expecting sum to 1 for 'mesh' (sum to " << sumstr << ")";
             throw std::runtime_error(strerr.str());
             return 1;
         }
     }
 
     // Get options
-    if (exist_lua_key(L, "options")) {
-        lua_getfield(L, -1, "options");
-        if (exist_lua_key(L, "nlpsolver"))
-            nlpsolver = read_luastring(L, "nlpsolver");
-        if (exist_lua_key(L, "flag_hessian"))
-            flag_hessian = (int) read_luabool(L, "flag_hessian");
-        if (exist_lua_key(L, "max_iter"))
-            max_iter = (int) read_luanumber(L, "max_iter");
-        if (exist_lua_key(L, "mu_init"))
-            mu_init = (double) read_luanumber(L, "mu_init");
-        if (exist_lua_key(L, "logfile"))
-            logfile = read_luastring(L, "logfile");
-        if (exist_lua_key(L, "print_itersol"))
-            print_itersol = (int) read_luanumber(L, "print_itersol");
-        if (exist_lua_key(L, "display"))
-            display = (int) read_luabool(L, "display");
+    if (exist_luakey(L, "options")) {
+        lua_getfield(L, index, "options");
+        if (exist_luakey(L, "nlpsolver"))
+            nlpsolver = read_luastring(L, -1, "nlpsolver");
+        if (exist_luakey(L, "flag_hessian"))
+            flag_hessian = (int) read_luabool(L, -1, "flag_hessian");
+        if (exist_luakey(L, "max_iter"))
+            max_iter = (int) read_luanumber(L, -1, "max_iter");
+        if (exist_luakey(L, "mu_init"))
+            mu_init = (double) read_luanumber(L, -1, "mu_init");
+        if (exist_luakey(L, "logfile"))
+            logfile = read_luastring(L, -1, "logfile");
+        if (exist_luakey(L, "outfile"))
+            outfile = read_luastring(L, -1, "outfile");
+        if (exist_luakey(L, "print_itersol"))
+            print_itersol = (int) read_luanumber(L, -1, "print_itersol");
+        if (exist_luakey(L, "display"))
+            display = (int) read_luabool(L, -1, "display");
         lua_pop(L, 1); // pop options   
     }
-
-    // pop problem
-    lua_pop(L, 1);
 
     // Set OCP
     // Set bounds
@@ -660,11 +657,182 @@ int read_luafile(lua_State* L, const std::string& luafile, OCPInterface** ocp) {
     return 0;
 }
 
+void write_luamatrix(lua_State *L, const char *key, std::vector<std::vector<double>> mat) {
+    lua_pushstring(L, key);
+    lua_newtable(L);
+    for (size_t i = 0; i < mat.size(); ++i) {
+        lua_pushnumber(L, i + 1); // one-based
+        lua_newtable(L);
+        for (size_t j = 0; j < mat[i].size(); ++j) {
+            lua_pushnumber(L, j + 1); // one-based
+            lua_pushnumber(L, mat[i][j]);
+            lua_settable(L, -3); // set row[j+1]=mat[i][j]
+        }
+        lua_settable(L, -3); // set table[i+1] = row
+    }
+    lua_settable(L, -3); // set main[key] = table
+}
+
+void write_luavector(lua_State *L, const char *key, std::vector<double> vec) {
+    lua_pushstring(L, key);
+    lua_newtable(L);
+    for (size_t i = 0; i < vec.size(); ++i) {
+        lua_pushnumber(L, i + 1); // one-based
+        lua_pushnumber(L, vec[i]);
+        lua_settable(L, -3); // set table[i+1]=vec[i]
+    }
+    lua_settable(L, -3); // set main[key] = table
+}
+
+void write_luanumber(lua_State *L, const char *key, double val) {
+    lua_pushstring(L, key);
+    lua_pushnumber(L, val);
+    lua_settable(L, -3); // set main[key] = val
+}
+
+void write_luasolution(lua_State *L, OCPInterface* ocp) {
+    // Get dims
+    int nx, nu, np, nc, nb, nq, nz, ng, nnzj, nnzh;
+    int N = ocp->get_N();
+    ocp->get_dims(&nx, &nu, &np, &nc, &nb, &nq, &nz, &ng, &nnzj, &nnzh);
+    // Init variables
+    double objval, m, ttot, talg, teval, mu_curr;
+    int num_iter = ocp->get_num_iter();
+    std::vector<double> t(N), x(nx*N), u(nu*N), p(np),
+                        lamx(nx*N), lamu(nu*N), lamp(np),
+                        lamf(nx*(N-1)), lamc(nc*N), lamb(nb), lamq(nq), 
+                        f(nx*(N-1)), c(nc*N), b(nb), q(nq), l(N-1),
+                        obj_history(num_iter+1), infpr_history(num_iter+1), infdu_history(num_iter+1);
+    // Get solution
+    ocp->get_sol(&objval, t.data(),
+            x.data(), u.data(), p.data(),
+            lamx.data(), lamu.data(), lamp.data(),
+            lamf.data(), lamc.data(), lamb.data(), lamq.data(),
+            f.data(), c.data(), b.data(), q.data(), 
+            l.data(), &m);
+    ocp->get_cpu_time(ttot, talg, teval);
+    ocp->get_history(obj_history.data(), infpr_history.data(), infdu_history.data());
+    mu_curr = ocp->get_mu_curr();
+    // Instantiate new empty table
+    lua_newtable(L);
+    // Write solution
+    write_luanumber(L, "objval", objval);
+    write_luavector(L, "t", t);
+    write_luamatrix(L, "x", vec_to_mat(x, nx, N));
+    write_luamatrix(L, "u", vec_to_mat(u, nu, N));
+    write_luavector(L, "p", p);
+    write_luamatrix(L, "lam_x", vec_to_mat(lamx, nx, N));
+    write_luamatrix(L, "lam_u", vec_to_mat(lamu, nu, N));
+    write_luavector(L, "lam_p", lamp);
+    write_luamatrix(L, "lam_f", vec_to_mat(lamf, nx, N-1));
+    write_luamatrix(L, "lam_c", vec_to_mat(lamc, nc, N));
+    write_luavector(L, "lam_b", lamb);
+    write_luavector(L, "lam_q", lamq);
+    write_luamatrix(L, "f", vec_to_mat(f, nx, N-1));
+    write_luamatrix(L, "c", vec_to_mat(c, nc, N));
+    write_luavector(L, "b", b);
+    write_luavector(L, "q", q);
+    write_luavector(L, "l", l);
+    write_luanumber(L, "m", m);
+    // Write stats
+    lua_pushstring(L, "stats");
+    lua_newtable(L);
+    write_luanumber(L, "num_iter", num_iter);
+    write_luavector(L, "obj_history", obj_history);
+    write_luavector(L, "infpr_history", infpr_history);
+    write_luavector(L, "infdu_history", infdu_history);
+    write_luanumber(L, "mu_curr", mu_curr);
+    write_luanumber(L, "nz", nz);
+    write_luanumber(L, "ng", ng);
+    write_luanumber(L, "nnzj", nnzj);
+    write_luanumber(L, "nnzh", nnzh);
+    write_luanumber(L, "ttot", ttot);
+    write_luanumber(L, "talg", talg);
+    write_luanumber(L, "teval", teval);
+    lua_settable(L, -3); // set main["stats"] = stats
+    // Write next_problem
+    // TODO
+}
+
+int solve_lua(lua_State *L) {
+    OCPInterface *ocp = NULL;
+    std::string outfile;
+    luasolve_called = 1;
+    // Parse solve input
+    try {
+        read_luaproblem(L, 1, &ocp, outfile);
+    } catch (const std::exception &e) {
+        if (ocp) delete ocp;
+        return luaL_error(L, "%s", e.what()); // pass error to LUA
+    }
+    // Call to solve
+    try {
+        ocp->solve();
+    } catch (const std::exception &e) {
+        delete ocp;
+        return luaL_error(L, "%s", e.what()); // pass error to LUA
+    }
+    // Write solution
+    write_luasolution(L, ocp);
+    // Write outfile if required
+    if (outfile.size()) {
+        std::ofstream outstream;
+        outstream.open(outfile);
+        if (!outstream.is_open()) {
+            delete ocp;
+            return luaL_error(L, "Failed to open outfile file: %s", outfile.c_str()); // pass error to LUA
+        }
+        outstream << *ocp;
+        outstream.close();
+    }
+    // Free mem
+    delete ocp;
+    // Return num of outputs
+    return 1;
+}
+
+int solve_internal(lua_State *L) {
+    OCPInterface *ocp = NULL;
+    std::string outfile;
+    // Parse solve input
+    try {
+        lua_getglobal(L, "problem"); // push problem on the top of the stack
+        read_luaproblem(L, -1, &ocp, outfile);
+    } catch (const std::exception &e) {
+        if (ocp) delete ocp;
+        throw e;
+        return 1;
+    }
+    // Call to solve
+    try {
+        ocp->solve();
+    } catch (const std::exception &e) {
+        delete ocp;
+        throw e;
+        return 1;
+    }
+    // Write outfile if required
+    if (outfile.size()) {
+        std::ofstream outstream;
+        outstream.open(outfile);
+        if (!outstream.is_open()) {
+            delete ocp;
+            throw std::runtime_error("Failed to open outfile file: " + outfile);
+        return 1;
+        }
+        outstream << *ocp;
+        outstream.close();
+    }
+    // Free mem and return
+    delete ocp;
+    return 0;
+}
+
 int build(std::string cc, std::string csource, std::string outfile, 
     std::string outdir) {
     // Check if C file exists
     if (!exist_file(csource)) {
-        throw std::runtime_error("unable to find source C file: " + csource);
+        throw std::runtime_error("Unable to find source C file: " + csource);
         return 1;
     }
     // Get current PATH
@@ -699,14 +867,14 @@ int build(std::string cc, std::string csource, std::string outfile,
     // Throw error if GCC is still not found
     if (exitcode != 0) {
         reset_path(oldpath);
-        throw std::runtime_error("unable to find C compiler: " + cc);
+        throw std::runtime_error("Unable to find C compiler: " + cc);
         return 1;
     }
     // Creatr outdir if not exists
     exitcode = create_dir(outdir);
     if (exitcode != 0) {
         reset_path(oldpath);
-        throw std::runtime_error("failed to create directory: " + outdir);
+        throw std::runtime_error("Failed to create directory: " + outdir);
         return 1;
     }
     // Set the library extension based on the platform
@@ -727,7 +895,7 @@ int build(std::string cc, std::string csource, std::string outfile,
     // Check exit status and reset PATH if needed
     if (exitcode != 0) {
         reset_path(oldpath);
-        throw std::runtime_error("unable to build library '" + libname + "' from file '" + csource + "'\n" + build_out);
+        throw std::runtime_error("Unable to build library '" + libname + "' from file '" + csource + "'\n" + build_out);
         return 1;
     }
     // Print end message
@@ -735,58 +903,25 @@ int build(std::string cc, std::string csource, std::string outfile,
     return 0;
 }
 
-int run(const std::string &luafile, const std::string &outfile) {
-    // Hold the OCPInterface
-    OCPInterface *ocp = NULL;
-
+int run(const std::string &luafile) {
     // Start LUA
     lua_State* L = luaL_newstate();    // Create a new Lua state
     luaL_openlibs(L);                  // Load Lua libraries
-
-    // Read and parse LUA file
-    try {
-        read_luafile(L, luafile, &ocp);
-    } catch (const std::exception &e) {
-        lua_close(L); 
-        if (ocp) delete ocp;
-        throw e;
+    // Register the C function
+    lua_register(L, "solve_ocp", solve_lua);
+    // Run LUA file
+    if (luaL_dofile(L, luafile.c_str())) {
+        std::string strerr = lua_tostring(L,-1);
+        lua_close(L);
+        throw std::runtime_error("Failed to run LUA file: " + strerr);
         return 1;
     }
-
-    // Solve OCP
-    try {
-        ocp->solve();
-    } catch (const std::exception &e) {
-        lua_close(L); 
-        delete ocp;
-        throw e;
-        return 1;
+    // Run internal solve if solve_lua not called
+    if (!luasolve_called) {
+        solve_internal(L);
     }
-
-    // Write outfile if required
-    if (outfile.size()) {
-        std::ofstream outstream;
-        outstream.open(outfile);
-        if (!outstream.is_open()) {
-            lua_close(L); 
-            delete ocp;
-            throw std::runtime_error("failed to open outfile file: " + outfile);
-            return 1;
-        }
-        outstream << *ocp;
-        outstream.close();
-    }
-
-    //TODO Call LUA function 'postprocess_ocp' if exists (user-defined)
-    //TODO pass a table like the 'solution' in MATLAB
-    // sth like run_luapost(L, "postprocess_ocp");
-    // here I need to build 'solution' and call 'postprocess_ocp' from C with 'solution' as the input arg 
-
-    // Free memory
-    lua_close(L); 
-    delete ocp;
-
     // Return
+    lua_close(L);
     return 0;
 }
 
@@ -811,7 +946,7 @@ int main(int argc, char* argv[]) {
                 build("gcc", infile, outfile, outdir);
                 break;
             case RUN_USAGE:
-                run(infile, outfile);
+                run(infile);
                 break;
         } 
     } catch (const std::exception &e) {
