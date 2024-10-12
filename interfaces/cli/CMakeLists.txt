@@ -12,6 +12,12 @@ target_link_libraries(minos-cli PRIVATE minos lua)
 install(TARGETS minos-cli
         RUNTIME
         COMPONENT cli)
+install(DIRECTORY ./examples/
+        COMPONENT cli
+        DESTINATION ./examples/cli
+        PATTERN *.dll EXCLUDE
+        PATTERN *.so EXCLUDE
+        PATTERN *.c EXCLUDE)
 # CPack
 if (WITH_CPACK)
     cpack_add_install_type(cli 
