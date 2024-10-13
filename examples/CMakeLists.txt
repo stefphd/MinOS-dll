@@ -50,5 +50,5 @@ if (WITH_CPACK)
                         DISPLAY_NAME "C++ examples"
                         DESCRIPTION "MinOS examples for C++"
                         DEPENDS libraries
-                        INSTALL_TYPES full static)
+                        INSTALL_TYPES full dynamic)
 endif()

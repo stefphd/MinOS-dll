@@ -177,7 +177,6 @@ if (WITH_IPOPT)
 	add_dependencies(minos-nlp minos-ipopt)
 	# Install target
 	install(TARGETS minos-ipopt
-			RUNTIME
 			COMPONENT libraries)
 	if (WIN32)
 		install(FILES ${IPOPT_RUNTIME} 
@@ -200,7 +199,6 @@ if (WITH_WORHP)
 	add_dependencies(minos-nlp minos-worhp)
 	# Install target
 	install(TARGETS minos-worhp
-			RUNTIME
 			COMPONENT libraries)
 endif()
 
@@ -218,7 +216,6 @@ if (WITH_KNITRO)
 	add_dependencies(minos-nlp minos-knitro)
 	# Install target
 	install(TARGETS minos-knitro
-			RUNTIME
 			COMPONENT libraries)
 endif()
 
@@ -236,7 +233,6 @@ if (WITH_SNOPT)
 	add_dependencies(minos-nlp minos-snopt)
 	# Install target
 	install(TARGETS minos-snopt
-			RUNTIME
 			COMPONENT libraries)
 endif()
 
@@ -245,7 +241,7 @@ if (WIN32 AND WITH_GCC)
 	find_package(GCC REQUIRED)
 	# Install GCC
 	install(DIRECTORY ${GCC_DIR}/
-			COMPONENT libraries
+			COMPONENT gcc
 			DESTINATION bin/gcc
 			PATTERN doc EXCLUDE
 			PATTERN examples EXCLUDE)
@@ -278,7 +274,7 @@ if (WITH_CPACK)
 		# INNOSETUP
 		set(CPACK_INNOSETUP_ICON_FILE "${CMAKE_SOURCE_DIR}/cmake/minosLogo.ico")
 		# Wix
-		set(CPACK_WIX_UPGRADE_GUID "FBF85747-FC84-4321-937A-A2686D63809A")
+		set(CPACK_WIX_UPGRADE_GUID "FBF85747-FC84-4321-937A-A2686D63809B")
 		set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/cmake/minosLogo.ico")
 	endif()
 	# Include CPack
@@ -287,13 +283,19 @@ if (WITH_CPACK)
 	cpack_add_install_type(full
 						DISPLAY_NAME "Full")
 	cpack_add_install_type(dynamic 
-						DISPLAY_NAME "C++ Libraries")
+						DISPLAY_NAME "Application libraries")
 	# Add main application component
 	cpack_add_component(libraries 
 						DISPLAY_NAME "Application"
-						DESCRIPTION "MinOS library"
-						INSTALL_TYPES full dynamic matlab python
+						DESCRIPTION "Include the Application libraries for MinOS"
+						INSTALL_TYPES full dynamic matlab python cli
 						REQUIRED)
+	if (WIN32 AND WITH_GCC)
+		cpack_add_component(gcc 
+							DISPLAY_NAME "GNU compiler"
+							DESCRIPTION "Include a GCC version for Windows"
+							INSTALL_TYPES full matlab python cli)
+	endif()
 endif()
 
 # C++ examples
@@ -343,7 +345,7 @@ if (WITH_DOCS)
 	if (WITH_CPACK)
 	cpack_add_component(docs
 						DISPLAY_NAME "Documentation"
-						DESCRIPTION "HTML documentation"
-						INSTALL_TYPES full dynamic matlab python)	
+						DESCRIPTION "Include the HTML documentation"
+						INSTALL_TYPES full dynamic matlab python cli)	
 	endif()
 endif()

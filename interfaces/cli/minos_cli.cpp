@@ -828,11 +828,6 @@ int solve(const std::string &luafile) {
     // Start LUA
     lua_State* L = luaL_newstate();    // Create a new Lua state
     luaL_openlibs(L);                  // Load Lua libraries
-    // Register empty C function to avoid errors in the case of mixing usage
-    auto run_build_empty = [](lua_State* L) -> int { return 0; };
-    auto run_solve_empty = [](lua_State* L) -> int { return 0; };
-    lua_register(L, "build", run_build_empty);
-    lua_register(L, "solve", run_solve_empty);
     // Load LUA file
     if (luaL_dofile(L, luafile.c_str())) {
         std::string strerr = lua_tostring(L,-1);

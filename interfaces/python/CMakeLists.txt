@@ -52,7 +52,7 @@ if (WITH_CPACK)
                         DISPLAY_NAME "Python interface")
         cpack_add_component(python
                         DISPLAY_NAME "Python interface"
-                        DESCRIPTION "MinOS Python interface"
+                        DESCRIPTION "Include the Python interface"
                         DEPENDS libraries
                         INSTALL_TYPES full python)
 endif()

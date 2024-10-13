@@ -54,7 +54,7 @@ if (WITH_CPACK)
                         DISPLAY_NAME "Matlab interface")
         cpack_add_component(matlab 
                         DISPLAY_NAME "Matlab interface"
-                        DESCRIPTION "MinOS MEX inteface"
+                        DESCRIPTION "Include the Matlab MEX inteface"
                         DEPENDS libraries
                         INSTALL_TYPES full matlab)
 endif()
