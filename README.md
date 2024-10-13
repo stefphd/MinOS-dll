@@ -12,7 +12,7 @@ Build and tested with:
 ## Building requirements
 
 * [CMake](https://cmake.org/) build system.
-* A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/). Intel compilers may be also employed.
+* A C++ compiler. Preferred option is [MSVC](https://learn.microsoft.com/en-us/cpp) for *Windows* and [GCC](https://gcc.gnu.org/) for *Linux*. Alternativelly, for *Windows* one can employ [MinGW64-w64](https://www.mingw-w64.org/) (not fully tested). Intel compilers may be also employed.
 * A NLP solver. Possibilities are:
   * [IPOPT](https://github.com/coin-or/Ipopt) release 3.14, which is freely available. For *Windows*, set a `IPOPTDIR` environment variable pointing to the IPOPT installation path. For *Linux*, one can either install IPOPT system-wide (in `/usr/lib` or `/usr/local/lib` and `/usr/include` or  `/usr/local/include`), or use a local installation by setting `IPOPTDIR` pointing to the IPOPT root path.
   * [WORHP](https://worhp.de/), whose license is freely available for academics. For *Windows*, set a `WORHPDIR` environment variable pointing to the WORHP installation path. For *Linux*, one can either install WORHP system-wide, or use a local installation by setting `WORHPDIR` pointing to the WORHP root path.
@@ -20,7 +20,7 @@ Build and tested with:
   * [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/), which is a commercial software; trial license is freely available for academics. Set a `SNOPTDIR` environment variable pointing to the SNOPT installation path.
 * [MATLAB](https://www.mathworks.com/products/matlab.html) to build the MATLAB interface.
 * [Python](https://www.python.org/) to build the Python interface and for code generation of the C++ examples; install the Python requirements for developers with `pip install -r ./requirements-dev.txt` (basically, Cython and CasADi).
-* [LUA](https://www.lua.org/home.html) with development headers to build the command-line interface. Include the LUA root directory into the `PATH` or set a `LUA_DIR` environment variable.
+* [LUA](https://www.lua.org/home.html) with development headers to build the command-line interface (either static or shared library). Include the LUA root directory into the `PATH` or set a `LUA_DIR` environment variable.
 * (*Windows* only) A Windows distribution of [GCC](https://gcc.gnu.org/). This is not strictly necessary to build the software but it is used in the interfaces of the *Windows* release. Either set a `GCCDIR` environment variable pointing to the GCC root directory (i.e. where `bin/gcc.exe` is) or include it into the `PATH`.
 * (Optional) [HMACLIC](https://github.com/stefphd/license-hmac) for optional license management. Set a `HMACLICDIR` environment variable pointing to the HMACLIC installation path.
 * (optional) [Doxygen](https://doxygen.nl/) and a Wlatex distribution to generate the documentation.
