@@ -4,76 +4,62 @@
 */
 
 /* Macros */
-#define ASSERTIN(x) (x) ? mexErrMsgIdAndTxt("MinOS:wrongNumInputs", "One input argument required.\n") : (void(0))
-#define ASSERTOUT(x) (x) ? mexErrMsgIdAndTxt("MinOS:wrongNumout_vars", "Too many output arguments.\n") : (void(0))
-#define ASSERTSTRUCT(x) ( (x) && (!mxIsStruct(x))) ? mexErrMsgIdAndTxt("ocpSOlver:wrongInputType", "Input must be a struct\n") : (void(0))
-#define ASSERTPOSINTSCALAR(x) ( (x) && (!mxIsDouble(x) || \
-                            mxIsComplex(x) || \
-                            mxGetNumberOfElements(x)!=1 || \
-                            mxGetScalar(x)<=0 || \
-                            ((((int) mxGetScalar(x)) != mxGetScalar(x)) != 0) ) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notScalar","%s must be a positive integer scalar.", #x) : (void(0))
-#define ASSERTNONEGINTSCALAR(x) ( (x) && (!mxIsDouble(x) || \
-                            mxIsComplex(x) || \
-                            mxGetNumberOfElements(x)!=1 || \
-                            mxGetScalar(x)<0 || \
-                            ((((int) mxGetScalar(x)) != mxGetScalar(x)) != 0) ) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notScalar","%s must be a positive integer scalar.", #x) : (void(0))
-#define ASSERTPOSSCALAR(x) ( (x) && (!mxIsDouble(x) || \
-                            mxIsComplex(x) || \
-                            mxGetNumberOfElements(x)!=1 || \
-                            mxGetScalar(x)<=0 ) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notScalar","%s must be a positive scalar.", #x) : (void(0))
-#define ASSERTSCALAR(x) ( (x) && ( !mxIsDouble(x) || \
-                            mxIsComplex(x) || \
-                            mxGetNumberOfElements(x)!=1 ) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notScalar","%s must be a scalar.", #x) : (void(0))
-#define ASSERTDOUBLE(x)   ( (x) && (!mxIsDouble(x) || mxIsComplex(x)) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notDouble","%s must be of type double.", #x) : (void(0))
-#define ASSERTLOGICAL(x) ( (x) && (!mxIsLogicalScalar(x)) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notLogical","%s must be a logical scalar.", #x) : (void(0))
-#define ASSERTSIZE(x,n,m) ( (x) && \
-                            ((mxGetM(x) != n) || (mxGetN(x) != m)) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:wrongSize","%s must be a have dimension %d-by-%d (found %d-by-%d).",#x,n,m,mxGetM(x),mxGetN(x)) : (void(0))
-#define ASSERTNUMEL(x,n)  ( (x) && \
-                            (mxGetNumberOfElements(x) != n) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:wrongSize","%s must be have %d elements (found %d).", #x,n,mxGetNumberOfElements(x)) : (void(0))
-#define ASSERTSTRING(x,n)   ( (x) && (!mxIsChar(x) || mxGetM(x) != n) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:notString","%s must be a string.", #x) : (void(0))
-#define ASSERTOPTIONALNUMEL(x,n)  ( !(x) && (n > 0) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:missingField", "Field %s with %d elements is required.", #x, n) : \
-                            ( (x) && \
-                            (mxGetNumberOfElements(x) != n) ) ? \
-                            mexErrMsgIdAndTxt("MinOS:wrongSize","%s must be have %d elements (found %d).", #x,n,mxGetNumberOfElements(x)) : (void(0))
-#define ASSERT(x)  ( ! (x) ) ? \
-                   m        exErrMsgIdAndTxt("MinOS:falseReturn", "%s return false.", #x) : (void(0))
+#define ASSERTIN(x)             if (x) mexErrMsgIdAndTxt("minosMex:wrongNumInputs", "Expecting one input argument for 'minosMex'.")
+#define ASSERTOUT(x)            if (x) mexErrMsgIdAndTxt("minosMex:wrongNumOutputs", "Expecting one output argument for 'minosMex'.")
+#define ASSERTSTRUCT(x,p)       if ( (x) && (!mxIsStruct(x))) { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongInputType", "Expecting structure for '%s'.", #x); }
+#define ASSERTPOSINTSCALAR(x,p) if ( (x) && (!mxIsDouble(x) || mxIsComplex(x) || mxGetNumberOfElements(x)!=1 || mxGetScalar(x)<=0 || \
+                                    ((((int) mxGetScalar(x)) != mxGetScalar(x)) != 0) ) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notScalar","Expecting positive integer scalar for '%s'.", #x); }
+#define ASSERTNONEGINTSCALAR(x,p) if ( (x) && (!mxIsDouble(x) || mxIsComplex(x) || mxGetNumberOfElements(x)!=1 || mxGetScalar(x)<0 || \
+                                    ((((int) mxGetScalar(x)) != mxGetScalar(x)) != 0) ) ) \
+                                    {if (p) delete p; mexErrMsgIdAndTxt("minosMex:notScalar","Expecting non-negative integer scalar for '%s'.", #x); }
+#define ASSERTPOSSCALAR(x,p)    if ( (x) && (!mxIsDouble(x) || mxIsComplex(x) || mxGetNumberOfElements(x)!=1 || mxGetScalar(x)<=0 ) ) \
+                                    {if (p) delete p; mexErrMsgIdAndTxt("minosMex:notScalar","Expecting positive scalar for '%s'.", #x); }
+#define ASSERTSCALAR(x,p)       if ( (x) && ( !mxIsDouble(x) || mxIsComplex(x) || mxGetNumberOfElements(x)!=1 ) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notScalar","Expecting scalar for '%s'.", #x); }
+#define ASSERTDOUBLE(x,p)       if  ( (x) && (!mxIsDouble(x) || mxIsComplex(x)) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notDouble","Expecting double for '%s'.", #x); }
+#define ASSERTLOGICAL(x,p)      if ( (x) && (!mxIsLogicalScalar(x)) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notLogical","Expecting logical scalar for '%s'.", #x); }
+#define ASSERTSIZE(x,n,m,p)     if ( (x) && ((mxGetM(x) != n) || (mxGetN(x) != m)) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongSize","Expecting dimension %d-by-%d for '%s' (found %d-by-%d).",n,m,#x,mxGetM(x),mxGetN(x)); }
+#define ASSERTNUMEL(x,n,p)      if ( (x) && (mxGetNumberOfElements(x) != n) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongSize","Expecting %d elements for '%s' (found %d).",n,#x,mxGetNumberOfElements(x)); }
+#define ASSERTSTRING(x,n,p)     if ( (x) && (!mxIsChar(x) || mxGetM(x) != n) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notString","Expecting string for '%s'.", #x); }
+#define ASSERTOPTNUMEL(x,n,p)   if ( !(x) && (n > 0) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:missingField", "Expecting field '%s' with %d.", #x, n); } \
+                                else if ( (x) && (mxGetNumberOfElements(x) != n) ) \
+                                    { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongSize","Expecting %d elements for '%s' (found %d).",n,#x,mxGetNumberOfElements(x)); }
+#define ASSERT(x,p)             if ( !(x) ) { if (p) delete p; mexErrMsgIdAndTxt("minosMex:falseReturn", "Error: '%s' return false.", #x); }
 
-#define GETFIELD(p,name,opt) mxArray* name = (p) ? mxGetField(p,0,#name) : NULL; \
-                            ( (name == NULL) & !opt ) ? mexErrMsgIdAndTxt("MinOS:missingField", "Missing field %s in %s.", #name, #p) : (void(0))
-#define GETVAL(x) ((x) ? mxGetScalar(x) : 0)
-#define GETPTR(x) ((x) ? mxGetPr(x) : NULL)
-#define GETIR(x) ((x) ? mxGetIr(x) : NULL)
-#define GETJC(x) ((x) ? mxGetJc(x) : NULL)
+#define GETFIELD(par,name,opt,p)    mxArray* name = (par) ? mxGetField(par,0,#name) : NULL; \
+                                        if ( (name == NULL) & !opt ) {if (p) delete p; mexErrMsgIdAndTxt("minosMex:missingField", "Expecting field '%s' in '%s'.", #name, #par); }
+#define GETVAL(x)   ((x) ? mxGetScalar(x)   : 0)
+#define GETPTR(x)   ((x) ? mxGetPr(x)       : NULL)
+#define GETIR(x)    ((x) ? mxGetIr(x)       : NULL)
+#define GETJC(x)    ((x) ? mxGetJc(x)       : NULL)
 
 #define CREATEDOUBLE(x, n, m) mxArray* x; { \
-                              mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
-                              x = mxCreateNumericArray(2, x ## _dims, mxDOUBLE_CLASS, mxREAL); }
+                                mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
+                                x = mxCreateNumericArray(2, x ## _dims, mxDOUBLE_CLASS, mxREAL); }
 #define CREATEINT32(x, n, m)  mxArray* x; { \
-                              mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
-                              x = mxCreateNumericArray(2, x ## _dims, mxINT32_CLASS, mxREAL); }
+                                mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
+                                x = mxCreateNumericArray(2, x ## _dims, mxINT32_CLASS, mxREAL); }
 #define CREATESTRUCT(x,n,m,k,fields) mxArray* x; { \
-                              mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
-                              x = mxCreateStructArray(2, x ## _dims, k, fields); }
+                                        mwSize x ## _dims[2] = {static_cast<size_t>(n), static_cast<size_t>(m)}; \
+                                        x = mxCreateStructArray(2, x ## _dims, k, fields); }
 #define CREATESPARSE(x, n, m, nnz) mxArray* x = mxCreateSparse(static_cast<size_t>(n), static_cast<size_t>(m), static_cast<size_t>(nnz), mxREAL)
 
 #define SETFIELDS(p, fields, vars)  for (int i = 0; i < sizeof(fields)/sizeof(void*); ++i) \
                                         if (p) mxSetField(p, 0, fields[i], vars[i]);
-#define ASSERTSUM(x,s,e) if (x) { \
-                            double sum = 0; \
-                            double* xp = GETPTR(x); \
-                            for (int i = 0; i < mxGetNumberOfElements(x); ++i) sum += xp[i]; \
-                            if (((sum-s) > e) || ((sum-s) < -e)) mexErrMsgIdAndTxt("MinOS:invalidField", "Field %s must sum to %f (sum to %f).\n", #x, s, sum); \
-                        }
+#define ASSERTSUM(x,s,e,p)  if (x) { \
+                                double sum = 0; \
+                                double* xp = GETPTR(x); \
+                                for (int i = 0; i < mxGetNumberOfElements(x); ++i) sum += xp[i]; \
+                                if (((sum-s) > e) || ((sum-s) < -e)) \
+                                { if (p) delete p; mexErrMsgIdAndTxt("minosMex:invalidField", "Expecting sum to %f for '%s' (sum to %f).\n", s, #x, sum); } \
+                            }
 
 #define OUTPUT(x,c) plhs[c++] = x;
 
@@ -97,9 +83,7 @@
 #endif
 
 /* Function to print using mexPrintf with workaround to print immediately */
-int print(const char *fmt,
-         ...
-) {
+int print(const char *fmt, ...) {
     // handle variable args
     va_list ap, apcp;
     va_start(ap, fmt); va_copy(apcp, ap); 
@@ -141,29 +125,29 @@ void mexFunction( int nlhs, mxArray *plhs[],
     const mxArray* input = prhs[0];
     
     /* Assert input type */
-    ASSERTSTRUCT(input);
+    ASSERTSTRUCT(input, (OCPInterface*) NULL);
 
     /* Assert input dimensions */
-    ASSERTSIZE(input, 1, 1);
+    ASSERTSIZE(input, 1, 1, (OCPInterface*) NULL);
 
     /* Get required fields */
-    GETFIELD(input, name, false);
-    GETFIELD(input, N, false);
-    GETFIELD(input, ti, false);
-    GETFIELD(input, tf, false);
-    GETFIELD(input, bounds, false);
-    GETFIELD(input, guess, false);
+    GETFIELD(input, name, false, (OCPInterface*) NULL);
+    GETFIELD(input, N, false, (OCPInterface*) NULL);
+    GETFIELD(input, ti, false, (OCPInterface*) NULL);
+    GETFIELD(input, tf, false, (OCPInterface*) NULL);
+    GETFIELD(input, bounds, false, (OCPInterface*) NULL);
+    GETFIELD(input, guess, false, (OCPInterface*) NULL);
 
     /* Get optional fields */
-    GETFIELD(input, options, true);
-    GETFIELD(input, auxdata, true);
-    GETFIELD(input, mesh, true);
+    GETFIELD(input, options, true, (OCPInterface*) NULL);
+    GETFIELD(input, auxdata, true, (OCPInterface*) NULL);
+    GETFIELD(input, mesh, true, (OCPInterface*) NULL);
 
     /* Check name, N, ti, tf */
-    ASSERTSTRING(name,1);
-    ASSERTPOSINTSCALAR(N);
-    ASSERTSCALAR(ti);
-    ASSERTSCALAR(tf);
+    ASSERTSTRING(name,1, (OCPInterface*) NULL);
+    ASSERTPOSINTSCALAR(N, (OCPInterface*) NULL);
+    ASSERTSCALAR(ti, (OCPInterface*) NULL);
+    ASSERTSCALAR(tf, (OCPInterface*) NULL);
     std::string namestr(mxArrayToString(name));
 
     /* Create OCPInterface object */
@@ -173,7 +157,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
         ocp = new OCPInterface(namestr, (int) GETVAL(N), GETVAL(ti), GETVAL(tf));
     } catch (const std::exception& e) {
         // terminate if errors
-        mexErrMsgIdAndTxt("MinOS:loadLibFailed","%s", e.what());
+        mexErrMsgIdAndTxt("minosMex:loadLibFailed","%s", e.what());
     }
 
     /* Set the printing function to mexPrintf with workaround to print immediately instead of default one (printf) */
@@ -187,82 +171,86 @@ void mexFunction( int nlhs, mxArray *plhs[],
     ocp->get_dims(&nx, &nu, &np, &nc, &nb, &nq, &nz, &ng, &nnzj, &nnzh, &na);
 
     /* Check sub-struct */
-    ASSERTSTRUCT(bounds);
-    ASSERTSTRUCT(guess);
-    ASSERTSTRUCT(options);
-    ASSERTDOUBLE(auxdata);
-    ASSERTSIZE(bounds, 1, 1);
-    ASSERTSIZE(guess, 1, 1);
-    ASSERTSIZE(options, 1, 1);
-    ASSERTOPTIONALNUMEL(auxdata, na);
-    ASSERTDOUBLE(mesh); ASSERTNUMEL(mesh, (((int) GETVAL(N))-1)); ASSERTSUM(mesh, 1.0, 1.0e-9);
+    ASSERTSTRUCT(bounds, ocp);
+    ASSERTSTRUCT(guess, ocp);
+    ASSERTSTRUCT(options, ocp);
+    ASSERTDOUBLE(auxdata, ocp);
+    ASSERTSIZE(bounds, 1, 1, ocp);
+    ASSERTSIZE(guess, 1, 1, ocp);
+    ASSERTSIZE(options, 1, 1, ocp);
+    ASSERTOPTNUMEL(auxdata, na, ocp);
+    ASSERTDOUBLE(mesh, ocp); ASSERTNUMEL(mesh, (((int) GETVAL(N))-1), ocp); ASSERTSUM(mesh, 1.0, 1.0e-9, ocp);
     
     /* Get required fields */
-    GETFIELD(bounds, lbx, false);
-    GETFIELD(bounds, ubx, false);
-    GETFIELD(bounds, lbu, false);
-    GETFIELD(bounds, ubu, false);
-    GETFIELD(bounds, lbp, false);
-    GETFIELD(bounds, ubp, false);
-    GETFIELD(bounds, lbc, false);
-    GETFIELD(bounds, ubc, false);
-    GETFIELD(bounds, lbb, false);
-    GETFIELD(bounds, ubb, false);
-    GETFIELD(bounds, lbq, false);
-    GETFIELD(bounds, ubq, false);
-    GETFIELD(guess, x, false);
-    GETFIELD(guess, u, false);
-    GETFIELD(guess, p, false);
+    GETFIELD(bounds, lbx, false, ocp);
+    GETFIELD(bounds, ubx, false, ocp);
+    GETFIELD(bounds, lbu, false, ocp);
+    GETFIELD(bounds, ubu, false, ocp);
+    GETFIELD(bounds, lbp, false, ocp);
+    GETFIELD(bounds, ubp, false, ocp);
+    GETFIELD(bounds, lbc, false, ocp);
+    GETFIELD(bounds, ubc, false, ocp);
+    GETFIELD(bounds, lbb, false, ocp);
+    GETFIELD(bounds, ubb, false, ocp);
+    GETFIELD(bounds, lbq, false, ocp);
+    GETFIELD(bounds, ubq, false, ocp);
+    GETFIELD(guess, x, false, ocp);
+    GETFIELD(guess, u, false, ocp);
+    GETFIELD(guess, p, false, ocp);
 
     /* Get optional fields */
-    GETFIELD(guess, lam_x, true);
-    GETFIELD(guess, lam_u, true);
-    GETFIELD(guess, lam_p, true);
-    GETFIELD(guess, lam_f, true);
-    GETFIELD(guess, lam_c, true);
-    GETFIELD(guess, lam_b, true);
-    GETFIELD(guess, lam_q, true);
-    GETFIELD(options, max_iter, true);
-    GETFIELD(options, flag_hessian, true);
-    GETFIELD(options, mu_init, true);
-    GETFIELD(options, display, true);
-    GETFIELD(options, print_itersol, true);
-    GETFIELD(options, outfile, true);
-    GETFIELD(options, logfile, true);
-    GETFIELD(options, nlpsolver, true);
+    GETFIELD(guess, lam_x, true, ocp);
+    GETFIELD(guess, lam_u, true, ocp);
+    GETFIELD(guess, lam_p, true, ocp);
+    GETFIELD(guess, lam_f, true, ocp);
+    GETFIELD(guess, lam_c, true, ocp);
+    GETFIELD(guess, lam_b, true, ocp);
+    GETFIELD(guess, lam_q, true, ocp);
+    GETFIELD(options, max_iter, true, ocp);
+    GETFIELD(options, flag_hessian, true, ocp);
+    GETFIELD(options, mu_init, true, ocp);
+    GETFIELD(options, display, true, ocp);
+    GETFIELD(options, print_itersol, true, ocp);
+    GETFIELD(options, outfile, true, ocp);
+    GETFIELD(options, logfile, true, ocp);
+    GETFIELD(options, nlpsolver, true, ocp);
     
     /* Check sub-fields */
-    ASSERTDOUBLE(lbx); ASSERTNUMEL(lbx, nx);
-    ASSERTDOUBLE(ubx); ASSERTNUMEL(ubx, nx);
-    ASSERTDOUBLE(lbu); ASSERTNUMEL(lbu, nu);
-    ASSERTDOUBLE(ubu); ASSERTNUMEL(ubu, nu);
-    ASSERTDOUBLE(lbp); ASSERTNUMEL(lbp, np);
-    ASSERTDOUBLE(ubp); ASSERTNUMEL(ubp, np);
-    ASSERTDOUBLE(lbc); ASSERTNUMEL(lbc, nc);
-    ASSERTDOUBLE(ubc); ASSERTNUMEL(ubc, nc);
-    ASSERTDOUBLE(lbb); ASSERTNUMEL(lbb, nb);
-    ASSERTDOUBLE(ubb); ASSERTNUMEL(ubb, nb);
-    ASSERTDOUBLE(lbq); ASSERTNUMEL(lbq, nq);
-    ASSERTDOUBLE(ubq); ASSERTNUMEL(ubq, nq);
-    ASSERTDOUBLE(x); ASSERTSIZE(x, nx, ((int) GETVAL(N)));
-    ASSERTDOUBLE(u); ASSERTSIZE(u, nu, ((int) GETVAL(N)));
-    ASSERTDOUBLE(p); ASSERTNUMEL(p, np);
-    ASSERTDOUBLE(lam_x); ASSERTSIZE(lam_x, nx, ((int) GETVAL(N)));
-    ASSERTDOUBLE(lam_u); ASSERTSIZE(lam_u, nu, ((int) GETVAL(N)));
-    ASSERTDOUBLE(lam_p); ASSERTNUMEL(lam_p, np);
-    ASSERTDOUBLE(lam_f); ASSERTSIZE(lam_f, nx, (static_cast<size_t>((int) GETVAL(N)) - 1));
-    ASSERTDOUBLE(lam_c); ASSERTSIZE(lam_c, nc, ((int) GETVAL(N)));
-    ASSERTDOUBLE(lam_b); ASSERTNUMEL(lam_b, nb);
-    ASSERTDOUBLE(lam_q); ASSERTNUMEL(lam_q, nq);
-    ASSERTPOSINTSCALAR(max_iter);
-    if (GETVAL(mu_init)!= -1) ASSERTPOSSCALAR(mu_init);
-    else mu_init = NULL; // for default when -1    
-    ASSERTLOGICAL(flag_hessian);
-    ASSERTLOGICAL(display);
-    ASSERTNONEGINTSCALAR(print_itersol);
-    ASSERTSTRING(outfile,1);
-    ASSERTSTRING(logfile,0);
-    ASSERTSTRING(nlpsolver,1);
+    ASSERTDOUBLE(lbx, ocp); ASSERTNUMEL(lbx, nx, ocp);
+    ASSERTDOUBLE(ubx, ocp); ASSERTNUMEL(ubx, nx, ocp);
+    ASSERTDOUBLE(lbu, ocp); ASSERTNUMEL(lbu, nu, ocp);
+    ASSERTDOUBLE(ubu, ocp); ASSERTNUMEL(ubu, nu, ocp);
+    ASSERTDOUBLE(lbp, ocp); ASSERTNUMEL(lbp, np, ocp);
+    ASSERTDOUBLE(ubp, ocp); ASSERTNUMEL(ubp, np, ocp);
+    ASSERTDOUBLE(lbc, ocp); ASSERTNUMEL(lbc, nc, ocp);
+    ASSERTDOUBLE(ubc, ocp); ASSERTNUMEL(ubc, nc, ocp);
+    ASSERTDOUBLE(lbb, ocp); ASSERTNUMEL(lbb, nb, ocp);
+    ASSERTDOUBLE(ubb, ocp); ASSERTNUMEL(ubb, nb, ocp);
+    ASSERTDOUBLE(lbq, ocp); ASSERTNUMEL(lbq, nq, ocp);
+    ASSERTDOUBLE(ubq, ocp); ASSERTNUMEL(ubq, nq, ocp);
+    ASSERTDOUBLE(x, ocp); ASSERTSIZE(x, nx, ((int) GETVAL(N)), ocp);
+    ASSERTDOUBLE(u, ocp); ASSERTSIZE(u, nu, ((int) GETVAL(N)), ocp);
+    ASSERTDOUBLE(p, ocp); ASSERTNUMEL(p, np, ocp);
+    ASSERTDOUBLE(lam_x, ocp); ASSERTSIZE(lam_x, nx, ((int) GETVAL(N)), ocp);
+    ASSERTDOUBLE(lam_u, ocp); ASSERTSIZE(lam_u, nu, ((int) GETVAL(N)), ocp);
+    ASSERTDOUBLE(lam_p, ocp); ASSERTNUMEL(lam_p, np, ocp);
+    ASSERTDOUBLE(lam_f, ocp); ASSERTSIZE(lam_f, nx, (static_cast<size_t>((int) GETVAL(N)) - 1), ocp);
+    ASSERTDOUBLE(lam_c, ocp); ASSERTSIZE(lam_c, nc, ((int) GETVAL(N)), ocp);
+    ASSERTDOUBLE(lam_b, ocp); ASSERTNUMEL(lam_b, nb, ocp);
+    ASSERTDOUBLE(lam_q, ocp); ASSERTNUMEL(lam_q, nq, ocp);
+    ASSERTPOSINTSCALAR(max_iter, ocp);
+    if (GETVAL(mu_init)!= -1) { 
+        ASSERTPOSSCALAR(mu_init, ocp);
+    }
+    else {
+        mu_init = NULL; // for default when -1  
+    };   
+    ASSERTLOGICAL(flag_hessian, ocp);
+    ASSERTLOGICAL(display, ocp);
+    ASSERTNONEGINTSCALAR(print_itersol, ocp);
+    ASSERTSTRING(outfile,1, ocp);
+    ASSERTSTRING(logfile,0, ocp);
+    ASSERTSTRING(nlpsolver,1, ocp);
 
     /* Set defaults */
     if (!max_iter) max_iter = mxCreateDoubleScalar(3000); // set default
@@ -333,7 +321,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     } catch (const std::exception& e) {
         // terminate if errors
         delete ocp;
-        mexErrMsgIdAndTxt("MinOS:loadLibFailed","%s", e.what());
+        mexErrMsgIdAndTxt("minosMex:loadLibFailed","%s", e.what());
     }
 
     /* Get solution */
@@ -367,7 +355,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
             file << ocp;
             file.close();
         } else {
-            mexWarnMsgIdAndTxt("MinOS:failOpenFile", "Failed to create file %s.", buf);
+            mexWarnMsgIdAndTxt("minosMex:failOpenFile", "Failed to create file %s.", buf);
         }
     }
 
