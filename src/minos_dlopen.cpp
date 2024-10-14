@@ -78,13 +78,13 @@
 #endif
 
 // Macro to load OPC functions with a given suffix
-#define LOADOCPFUNCS(var, flag) var##.eval = LOADFUNCTION(libhandle, EvalFunc, #var, flag); \
-                                var##.alloc = LOADFUNCTION(libhandle, AllocFunc, #var "_alloc_mem", flag); \
-                                var##.free = LOADFUNCTION(libhandle, FreeFunc, #var "_free_mem", flag); \
-                                var##.nin = LOADFUNCTION(libhandle, NInFunc, #var "_n_in", flag); \
-                                var##.spin = LOADFUNCTION(libhandle, SpInFunc, #var "_sparsity_in", flag); \
-                                var##.spout = LOADFUNCTION(libhandle, SpOutFunc, #var "_sparsity_out", flag); \
-                                var##.work = LOADFUNCTION(libhandle, WorkFunc, #var "_work", flag);
+#define LOADOCPFUNCS(var, flag) (var).eval = LOADFUNCTION(libhandle, EvalFunc, #var, flag); \
+                                (var).alloc = LOADFUNCTION(libhandle, AllocFunc, #var "_alloc_mem", flag); \
+                                (var).free = LOADFUNCTION(libhandle, FreeFunc, #var "_free_mem", flag); \
+                                (var).nin = LOADFUNCTION(libhandle, NInFunc, #var "_n_in", flag); \
+                                (var).spin = LOADFUNCTION(libhandle, SpInFunc, #var "_sparsity_in", flag); \
+                                (var).spout = LOADFUNCTION(libhandle, SpOutFunc, #var "_sparsity_out", flag); \
+                                (var).work = LOADFUNCTION(libhandle, WorkFunc, #var "_work", flag);
 
 /** Load the OCP library and import the related functions */
 void* OCPInterface::load_ocplib(
