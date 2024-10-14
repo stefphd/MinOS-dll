@@ -69,6 +69,8 @@ private:
     typedef const int*  (*SpInFunc)     (int);
     typedef const int*  (*SpOutFunc)    (int);
     typedef int         (*WorkFunc)     (int*, int*, int*, int*);
+
+    /* Structure to hold the OCP function data */
     struct ocpfun_t
     {
         EvalFunc eval = NULL;
@@ -177,20 +179,9 @@ private:
     void* ocp_lib = NULL;
 
     /* Pointers to OCP functions */
-    ocpfun_t ocp_dyn;
-    ocpfun_t ocp_path;
-    ocpfun_t ocp_bcs;
-    ocpfun_t ocp_int;
-    ocpfun_t ocp_runcost;
-    ocpfun_t ocp_bcscost;
-    ocpfun_t ocp_dyn_jac;
-    ocpfun_t ocp_path_jac;
-    ocpfun_t ocp_bcs_jac;
-    ocpfun_t ocp_int_jac;
-    ocpfun_t ocp_runcost_grad;
-    ocpfun_t ocp_bcscost_grad;
-    ocpfun_t ocp_hessb;
-    ocpfun_t ocp_hessi;
+    ocpfun_t ocp_dyn, ocp_path, ocp_bcs, ocp_int, ocp_runcost, ocp_bcscost;
+    ocpfun_t ocp_dyn_jac, ocp_path_jac, ocp_bcs_jac, ocp_int_jac, ocp_runcost_grad, ocp_bcscost_grad;
+    ocpfun_t ocp_hessb, ocp_hessi;
 
 public:
 
