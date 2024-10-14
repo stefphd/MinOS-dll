@@ -23,6 +23,16 @@ install(DIRECTORY ./examples/
         PATTERN *.dll EXCLUDE
         PATTERN *.so EXCLUDE
         PATTERN *.c EXCLUDE)
+# Windows: install LUA lib if dynamic used
+if (WIN32)
+        # Find dynamic LUA
+        string(REPLACE ".lib" ".dll" LUA_SHARED_LIB "${LUA_LIBRARIES}")
+        if (EXISTS ${LUA_SHARED_LIB})
+        install(FILES ${LUA_SHARED_LIB}
+                COMPONENT cli
+                DESTINATION bin)
+        endif()
+endif()
 # CPack
 if (WITH_CPACK)
     cpack_add_install_type(cli 
