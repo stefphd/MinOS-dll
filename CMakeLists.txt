@@ -298,11 +298,6 @@ if (WITH_CPACK)
 	endif()
 endif()
 
-# C++ examples
-if (WITH_CPP_EXAMPLES)
-	add_subdirectory(examples)
-endif()
-
 # Command-line interface
 if(WITH_CLI)
 	add_subdirectory(interfaces/cli)
@@ -316,6 +311,11 @@ endif()
 # Python interface
 if (WITH_PYTHON_INTERFACE) 
 	add_subdirectory(interfaces/python)
+endif()
+
+# C++ examples
+if (WITH_CPP_EXAMPLES)
+	add_subdirectory(examples)
 endif()
 
 # Docs
