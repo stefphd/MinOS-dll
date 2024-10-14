@@ -1,5 +1,5 @@
 # Find LUA
-find_package(LUA REQUIRED)
+find_package(Lua REQUIRED)
 # Create interface library for LUA
 add_library(lua INTERFACE)
 target_include_directories(lua INTERFACE ${LUA_INCLUDE_DIR})
