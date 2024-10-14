@@ -106,16 +106,16 @@ OCPInterface::OCPInterface(
         this->mesh[i] = 1.0/( (double) N - 1.0);
 
     // Get dimensions of OCP
-    get_sizes(SPIN(ocp_path),  1, &nx, NULL, NULL); // num of states
-    get_sizes(SPIN(ocp_path),  2, &nu, NULL, NULL); // num of controls
-    get_sizes(SPIN(ocp_path),  3, &np, NULL, NULL); // num of parameters
-    get_sizes(SPOUT(ocp_path), 0, &nc, NULL, NULL); // num of path constr
-    get_sizes(SPOUT(ocp_bcs),  0, &nb, NULL, NULL); // num of bcs
-    get_sizes(SPOUT(ocp_int),  0, &nq, NULL, NULL); // num of int constr
+    get_sizes(ocp_path.spin,  1, &nx, NULL, NULL); // num of states
+    get_sizes(ocp_path.spin,  2, &nu, NULL, NULL); // num of controls
+    get_sizes(ocp_path.spin,  3, &np, NULL, NULL); // num of parameters
+    get_sizes(ocp_path.spout, 0, &nc, NULL, NULL); // num of path constr
+    get_sizes(ocp_bcs.spout,  0, &nb, NULL, NULL); // num of bcs
+    get_sizes(ocp_int.spout,  0, &nq, NULL, NULL); // num of int constr
 
     // Check for auxdata
     na = -1; // init to -1, i.e. no auxdata
-    if ((*NIN(ocp_path))() > 4) get_sizes(SPIN(ocp_path), 4, &na, NULL, NULL); // user ocp_path, but with could also use one of the other functions
+    if ((*ocp_path.nin)() > 4) get_sizes(ocp_path.spin, 4, &na, NULL, NULL); // user ocp_path, but with could also use one of the other functions
 
     // Calc NLP dims
     nz = N*(nx+nu) + np; // num of NLP vars
@@ -144,7 +144,7 @@ OCPInterface::OCPInterface(
     init_data_mem();
 
     // Set hessian flag
-    if (!(ocp_hessb && ocp_hessi))
+    if (!(ocp_hessb.eval && ocp_hessi.eval))
         this->flag_hessian = true;
     else flag_hessian = false;
 }
@@ -200,21 +200,21 @@ OCPInterface::~OCPInterface() {
     // free mesh
     delete[] mesh;
     // free CASADI mem
-    dealloc_casadi_mem(DEALLOC(ocp_runcost), memrc, argrc, resrc, iwrc, wrc);
-    dealloc_casadi_mem(DEALLOC(ocp_bcscost), membc, argbc, resbc, iwbc, wbc);
-    dealloc_casadi_mem(DEALLOC(ocp_dyn), memd, argd, resd, iwd, wd);
-    dealloc_casadi_mem(DEALLOC(ocp_path), memp, argp, resp, iwp, wp);
-    dealloc_casadi_mem(DEALLOC(ocp_bcs), memb, argb, resb, iwb, wb);
-    dealloc_casadi_mem(DEALLOC(ocp_int), memq, argq, resq, iwq, wq);
-    dealloc_casadi_mem(DEALLOC(ocp_runcost_grad), memrcg, argrcg, resrcg, iwrcg, wrcg);
-    dealloc_casadi_mem(DEALLOC(ocp_bcscost_grad), membcg, argbcg, resbcg, iwbcg, wbcg);
-    dealloc_casadi_mem(DEALLOC(ocp_dyn_jac), memdj, argdj, resdj, iwdj, wdj);
-    dealloc_casadi_mem(DEALLOC(ocp_path_jac), mempj, argpj, respj, iwpj, wpj);
-    dealloc_casadi_mem(DEALLOC(ocp_bcs_jac), membj, argbj, resbj, iwbj, wbj);
-    dealloc_casadi_mem(DEALLOC(ocp_int_jac), memqj, argqj, resqj, iwqj, wqj);
-    if (ocp_hessb && ocp_hessi) {
-        dealloc_casadi_mem(DEALLOC(ocp_hessb), memhb, arghb, reshb, iwhb, whb);
-        dealloc_casadi_mem(DEALLOC(ocp_hessi), memhi, arghi, reshi, iwhi, whi);
+    dealloc_casadi_mem(ocp_runcost.free, memrc, argrc, resrc, iwrc, wrc);
+    dealloc_casadi_mem(ocp_bcscost.free, membc, argbc, resbc, iwbc, wbc);
+    dealloc_casadi_mem(ocp_dyn.free, memd, argd, resd, iwd, wd);
+    dealloc_casadi_mem(ocp_path.free, memp, argp, resp, iwp, wp);
+    dealloc_casadi_mem(ocp_bcs.free, memb, argb, resb, iwb, wb);
+    dealloc_casadi_mem(ocp_int.free, memq, argq, resq, iwq, wq);
+    dealloc_casadi_mem(ocp_runcost_grad.free, memrcg, argrcg, resrcg, iwrcg, wrcg);
+    dealloc_casadi_mem(ocp_bcscost_grad.free, membcg, argbcg, resbcg, iwbcg, wbcg);
+    dealloc_casadi_mem(ocp_dyn_jac.free, memdj, argdj, resdj, iwdj, wdj);
+    dealloc_casadi_mem(ocp_path_jac.free, mempj, argpj, respj, iwpj, wpj);
+    dealloc_casadi_mem(ocp_bcs_jac.free, membj, argbj, resbj, iwbj, wbj);
+    dealloc_casadi_mem(ocp_int_jac.free, memqj, argqj, resqj, iwqj, wqj);
+    if (ocp_hessb.eval && ocp_hessi.eval) {
+        dealloc_casadi_mem(ocp_hessb.free, memhb, arghb, reshb, iwhb, whb);
+        dealloc_casadi_mem(ocp_hessi.free, memhi, arghi, reshi, iwhi, whi);
     }
     // free OCP library
     free_library(ocp_lib);
@@ -350,7 +350,7 @@ void OCPInterface::set_auxdata(
         argpj[4] = this->auxdata;
         argbj[5] = this->auxdata;
         argqj[6] = this->auxdata;
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
             arghi[10] = this->auxdata;
             arghb[9] = this->auxdata;
     }
@@ -520,7 +520,7 @@ void OCPInterface::get_sol(
             // update time step
             this->h = mesh[k] * (tf-ti);
             // call to ocp_runcost
-            ocp_runcost(argrc, resrc, iwrc, wrc, memrc);
+            ocp_runcost.eval(argrc, resrc, iwrc, wrc, memrc);
             // update pointers (move forward by nx+nu)
             argrc[1] += nx+nu;
             argrc[2] += nx+nu;
@@ -542,7 +542,7 @@ void OCPInterface::get_sol(
         // set result pointer
         resbc[0] = m_opt; // set res
         // call to ocp_bcscost
-        ocp_bcscost(argbc, resbc, iwbc, wbc, membc);
+        ocp_bcscost.eval(argbc, resbc, iwbc, wbc, membc);
     }
 
     // grad_x, grad_u, grad_p
@@ -613,7 +613,7 @@ bool OCPInterface::set_option(
             this->mu_init = (double) val;
             break;
         case OCPInterface::FLAG_HESSIAN:
-            if ((ocp_hessb && ocp_hessi)) this->flag_hessian = (bool) (val > 0);
+            if ((ocp_hessb.eval && ocp_hessi.eval)) this->flag_hessian = (bool) (val > 0);
             else this->flag_hessian = true;
             break;
         case OCPInterface::DISPLAY:

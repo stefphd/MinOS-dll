@@ -3,12 +3,6 @@
     Copyright (C) 2024 Stefano Lovato
 */
 
-#define SPOUT(x) x ## _sparsity_out // get name of CASADI sparsity out function
-#define SPIN(x) x ## _sparsity_in // get name of CASADI sparsity in function
-#define NIN(x) x ## _n_in // get number of input arguments of CASADI function
-#define ALLOC(x) x ## _alloc_mem // get name of CASADI alloc memory function
-#define DEALLOC(x) x ## _free_mem // get name of CASADI dealloc memory function
-#define WORK(x) x ## _work // get name of CASADI work function
 #define POSPART(x) ((x>0) ? (+x) : 0) // positive part of x
 #define NEGPART(x) ((x<0) ? (-x) : 0) // positive part of x
 

@@ -59,6 +59,8 @@ private:
     /* Friend class for SNOPT interface */
     friend class SNOPTSolver;
 
+    /* Friend */
+
     /* Typedefs for OCP functions */
     typedef int         (*EvalFunc)     (const double**, double**, int*, double*, int);
     typedef int         (*AllocFunc)    (void);
@@ -67,6 +69,16 @@ private:
     typedef const int*  (*SpInFunc)     (int);
     typedef const int*  (*SpOutFunc)    (int);
     typedef int         (*WorkFunc)     (int*, int*, int*, int*);
+    struct ocpfun_t
+    {
+        EvalFunc eval;
+        AllocFunc alloc;
+        FreeFunc free;
+        NInFunc nin;
+        SpInFunc spin;
+        SpOutFunc spout;
+        WorkFunc work;
+    };
 
     /* Typedef for NLP solve function */
     typedef int         (*SolveFunc)    (OCPInterface*);
@@ -173,27 +185,20 @@ private:
     void* ocp_lib = NULL;
 
     /* Pointers to OCP functions */
-    EvalFunc    ocp_dyn = NULL, ocp_path = NULL, ocp_bcs = NULL, ocp_int = NULL, ocp_runcost = NULL, ocp_bcscost = NULL;
-    EvalFunc    ocp_dyn_jac = NULL, ocp_path_jac = NULL, ocp_bcs_jac = NULL, ocp_int_jac = NULL, ocp_runcost_grad = NULL, ocp_bcscost_grad = NULL;
-    EvalFunc    ocp_hessb = NULL, ocp_hessi = NULL;
-    AllocFunc   ocp_dyn_alloc_mem = NULL, ocp_path_alloc_mem = NULL, ocp_bcs_alloc_mem = NULL, ocp_int_alloc_mem = NULL, ocp_runcost_alloc_mem = NULL, ocp_bcscost_alloc_mem = NULL;
-    AllocFunc   ocp_dyn_jac_alloc_mem = NULL, ocp_path_jac_alloc_mem = NULL, ocp_bcs_jac_alloc_mem = NULL, ocp_int_jac_alloc_mem = NULL, ocp_runcost_grad_alloc_mem = NULL, ocp_bcscost_grad_alloc_mem = NULL;
-    AllocFunc   ocp_hessb_alloc_mem = NULL, ocp_hessi_alloc_mem = NULL;
-    FreeFunc    ocp_dyn_free_mem = NULL, ocp_path_free_mem = NULL, ocp_bcs_free_mem = NULL, ocp_int_free_mem = NULL, ocp_runcost_free_mem = NULL, ocp_bcscost_free_mem = NULL;
-    FreeFunc    ocp_dyn_jac_free_mem = NULL, ocp_path_jac_free_mem = NULL, ocp_bcs_jac_free_mem = NULL, ocp_int_jac_free_mem = NULL, ocp_runcost_grad_free_mem = NULL, ocp_bcscost_grad_free_mem = NULL;
-    FreeFunc    ocp_hessb_free_mem = NULL, ocp_hessi_free_mem = NULL;
-    NInFunc     ocp_dyn_n_in = NULL, ocp_path_n_in = NULL, ocp_bcs_n_in = NULL, ocp_int_n_in = NULL, ocp_runcost_n_in = NULL, ocp_bcscost_n_in = NULL;
-    NInFunc     ocp_dyn_jac_n_in = NULL, ocp_path_jac_n_in = NULL, ocp_bcs_jac_n_in = NULL, ocp_int_jac_n_in = NULL, ocp_runcost_grad_n_in = NULL, ocp_bcscost_grad_n_in = NULL;
-    NInFunc     ocp_hessb_n_in = NULL, ocp_hessi_n_in = NULL;
-    SpInFunc    ocp_dyn_sparsity_in = NULL, ocp_path_sparsity_in = NULL, ocp_bcs_sparsity_in = NULL, ocp_int_sparsity_in = NULL, ocp_runcost_sparsity_in = NULL, ocp_bcscost_sparsity_in = NULL;
-    SpInFunc    ocp_dyn_jac_sparsity_in = NULL, ocp_path_jac_sparsity_in = NULL, ocp_bcs_jac_sparsity_in = NULL, ocp_int_jac_sparsity_in = NULL, ocp_runcost_grad_sparsity_in = NULL, ocp_bcscost_grad_sparsity_in = NULL;
-    SpInFunc    ocp_hessb_sparsity_in = NULL, ocp_hessi_sparsity_in = NULL;
-    SpOutFunc   ocp_dyn_sparsity_out = NULL, ocp_path_sparsity_out = NULL, ocp_bcs_sparsity_out = NULL, ocp_int_sparsity_out = NULL, ocp_runcost_sparsity_out = NULL, ocp_bcscost_sparsity_out = NULL;
-    SpOutFunc   ocp_dyn_jac_sparsity_out = NULL, ocp_path_jac_sparsity_out = NULL, ocp_bcs_jac_sparsity_out = NULL, ocp_int_jac_sparsity_out = NULL, ocp_runcost_grad_sparsity_out = NULL, ocp_bcscost_grad_sparsity_out = NULL;
-    SpOutFunc   ocp_hessb_sparsity_out = NULL, ocp_hessi_sparsity_out = NULL;
-    WorkFunc    ocp_dyn_work = NULL, ocp_path_work = NULL, ocp_bcs_work = NULL, ocp_int_work = NULL, ocp_runcost_work = NULL, ocp_bcscost_work = NULL;
-    WorkFunc    ocp_dyn_jac_work = NULL, ocp_path_jac_work = NULL, ocp_bcs_jac_work = NULL, ocp_int_jac_work = NULL, ocp_runcost_grad_work = NULL, ocp_bcscost_grad_work = NULL;
-    WorkFunc    ocp_hessb_work = NULL, ocp_hessi_work = NULL;
+    ocpfun_t ocp_dyn = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_path = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_bcs = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_int = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_runcost = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_bcscost = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_dyn_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_path_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_bcs_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_int_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_runcost_grad = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_bcscost_grad = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_hessb = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_hessi = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 public:
 

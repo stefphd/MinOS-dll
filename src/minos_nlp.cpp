@@ -52,7 +52,7 @@ void OCPInterface::init_args() {
     argdj[5] = &h;
     argq[5] = &h;
     argqj[5] = &h;
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
         arghi[0] = &t;
         arghi[5] = &h;
         arghb[0] = &tf;
@@ -63,13 +63,13 @@ void OCPInterface::init_args() {
 void OCPInterface::init_cost_gradient(
 ) {
     // get nnz of running cost
-    get_sizes(SPOUT(ocp_runcost_grad), 0, NULL, NULL, &nnzrcg);
+    get_sizes(ocp_runcost_grad.spout, 0, NULL, NULL, &nnzrcg);
     // get nnz of boundary cost
-    get_sizes(SPOUT(ocp_bcscost_grad), 0, NULL, NULL, &nnzbcg);
+    get_sizes(ocp_bcscost_grad.spout, 0, NULL, NULL, &nnzbcg);
     // get pattern of running cost
     irrcg = new int[1+nnzrcg] { 0 };
     resrcg[0] = new double[1+nnzrcg] { 0 }; // init resrcg
-    get_pattern(SPOUT(ocp_runcost_grad), 0, irrcg, NULL); // use only row indexes (gradient is column matrix)
+    get_pattern(ocp_runcost_grad.spout, 0, irrcg, NULL); // use only row indexes (gradient is column matrix)
     // create krcg
     krcg = new int[1+nnzrcg*(N-1)] { -1 };
     int ir; // store temporary index
@@ -84,7 +84,7 @@ void OCPInterface::init_cost_gradient(
     // get pattern of boundary cost
     irbcg = new int[1+nnzbcg] { 0 };
     resbcg[0] = new double[1+nnzbcg] { 0 }; // init resbcg
-    get_pattern(SPOUT(ocp_bcscost_grad), 0, irbcg, NULL); // use only row indexes (gradient is column matrix)
+    get_pattern(ocp_bcscost_grad.spout, 0, irbcg, NULL); // use only row indexes (gradient is column matrix)
     // create kbcg
     kbcg = new int[1+nnzbcg] { -1 };
     for (int i = 0; i < nnzbcg; ++i) {
@@ -97,10 +97,10 @@ void OCPInterface::init_cost_gradient(
 /** Init constraint jacobian */
 void OCPInterface::init_constr_jac() {
     // get nnz of dyn, path, bcs
-    get_sizes(SPOUT(ocp_dyn_jac), 0, NULL, NULL, &nnzdj); // dyn w.r.t. x1, u, x2, p
-    get_sizes(SPOUT(ocp_path_jac), 0, NULL, NULL, &nnzpj);  // path w.r.t. x, u, p
-    get_sizes(SPOUT(ocp_bcs_jac), 0, NULL, NULL, &nnzbj); // bcs w.r.t. x0, u0, xn, un, p
-    get_sizes(SPOUT(ocp_int_jac), 0, NULL, NULL, &nnzqj); // int w.r.t. x1, u, x2, p
+    get_sizes(ocp_dyn_jac.spout, 0, NULL, NULL, &nnzdj); // dyn w.r.t. x1, u, x2, p
+    get_sizes(ocp_path_jac.spout, 0, NULL, NULL, &nnzpj);  // path w.r.t. x, u, p
+    get_sizes(ocp_bcs_jac.spout, 0, NULL, NULL, &nnzbj); // bcs w.r.t. x0, u0, xn, un, p
+    get_sizes(ocp_int_jac.spout, 0, NULL, NULL, &nnzqj); // int w.r.t. x1, u, x2, p
 
     // calc total nnz of jacobian, not including integral constraints
     nnzj = (N-1)*(nnzdj+nnzpj) + nnzpj + nnzbj; // total nnz of the jacobian not including integral constraints
@@ -114,10 +114,10 @@ void OCPInterface::init_constr_jac() {
     jcbj = new int[1+nnzbj] { 0 };
     irqj = new int[1+nnzqj] { 0 };
     jcqj = new int[1+nnzqj] { 0 };
-    get_pattern(SPOUT(ocp_dyn_jac), 0, irdj, jcdj); // dyn w.r.t. x1, u, x2, p
-    get_pattern(SPOUT(ocp_path_jac), 0, irpj, jcpj); // path w.r.t. x, u, p
-    get_pattern(SPOUT(ocp_bcs_jac), 0, irbj, jcbj); // bcs w.r.t. x0, u0, xn, un, p
-    get_pattern(SPOUT(ocp_int_jac), 0, irqj, jcqj); // int w.r.t. x1, u, x2, p
+    get_pattern(ocp_dyn_jac.spout, 0, irdj, jcdj); // dyn w.r.t. x1, u, x2, p
+    get_pattern(ocp_path_jac.spout, 0, irpj, jcpj); // path w.r.t. x, u, p
+    get_pattern(ocp_bcs_jac.spout, 0, irbj, jcbj); // bcs w.r.t. x0, u0, xn, un, p
+    get_pattern(ocp_int_jac.spout, 0, irqj, jcqj); // int w.r.t. x1, u, x2, p
 
     // procedire to compute the nnz of the entire int jac and corresponding indexes
     resq[0] = new double[1+nq] { 0 }; // init also resq for ocp_int
@@ -150,10 +150,10 @@ void OCPInterface::init_constr_jac() {
 
 /** Init lagragian hessian */
 void OCPInterface::init_lag_hessian() {
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
         // get nnz of hessb and hessi
-        get_sizes(SPOUT(ocp_hessb), 0, NULL, NULL, &nnzhb); 
-        get_sizes(SPOUT(ocp_hessi), 0, NULL, NULL, &nnzhi); 
+        get_sizes(ocp_hessb.spout, 0, NULL, NULL, &nnzhb); 
+        get_sizes(ocp_hessi.spout, 0, NULL, NULL, &nnzhi); 
         // init patterns
         irhb = new int[1+nnzhb] { 0 };
         jchb = new int[1+nnzhb] { 0 };
@@ -163,8 +163,8 @@ void OCPInterface::init_lag_hessian() {
         reshb[0] = new double[1+nnzhb] { 0 };
         reshi[0] = new double[1+nnzhi] { 0 };
         // get patterns
-        get_pattern(SPOUT(ocp_hessb), 0, irhb, jchb);
-        get_pattern(SPOUT(ocp_hessi), 0, irhi, jchi);
+        get_pattern(ocp_hessb.spout, 0, irhb, jchb);
+        get_pattern(ocp_hessi.spout, 0, irhi, jchi);
         // init khb, khi
         khb = new int[1+nnzhb] { -1 };
         khi = new int[1+nnzhi*(N-1)] { -1 };
@@ -380,7 +380,7 @@ int OCPInterface::get_pattern_hess(
     int* irh,
     int* jch
 ) {
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
         for (int i = 0; i < nnzh; ++i) {
             jch[i] = kh[i]/nz;
             irh[i] = kh[i]%nz;
@@ -394,7 +394,7 @@ long int OCPInterface::get_pattern_hess(
     long int* irh,
     long int* jch
 ) {
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
         for (long int i = 0; i < nnzh; ++i) {
             jch[i] = kh[i]/nz;
             irh[i] = kh[i]%nz;
@@ -582,7 +582,7 @@ int OCPInterface::eval_obj(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_runcost
-        exit = (*ocp_runcost)(argrc, resrc, iwrc, wrc, memrc);
+        exit = ocp_runcost.eval(argrc, resrc, iwrc, wrc, memrc);
         // update obj
         *obj += res;
         // update pointers (move forward by nx+nu)
@@ -603,7 +603,7 @@ int OCPInterface::eval_obj(
     // set result pointer
     resbc[0] = &res; // set res
     // call to ocp_bcscost
-    exit = (*ocp_bcscost)(argbc, resbc, iwbc, wbc, membc);
+    exit = ocp_bcscost.eval(argbc, resbc, iwbc, wbc, membc);
     // update obj
     *obj += res;
     // return
@@ -632,7 +632,7 @@ int OCPInterface::eval_obj_grad(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_runcost_grad 
-        exit = (*ocp_runcost_grad)(argrcg, resrcg, iwrcg, wrcg, memrcg);
+        exit = ocp_runcost_grad.eval(argrcg, resrcg, iwrcg, wrcg, memrcg);
         // update gradient
         for (int i = 0; i < nnzrcg; ++i) {
             int idx = krcg[k*nnzrcg + i];
@@ -654,7 +654,7 @@ int OCPInterface::eval_obj_grad(
     argbcg[3] = z + (N-1)*(nx+nu) + nx; // un
     argbcg[4] = z + N*(nx+nu); // p
     // call to ocp_bcscost_grad 
-    exit = (*ocp_bcscost_grad)(argbcg, resbcg, iwbcg, wbcg, membcg);
+    exit = ocp_bcscost_grad.eval(argbcg, resbcg, iwbcg, wbcg, membcg);
     // update gradient
     for (int i = 0; i < nnzbcg; ++i) {
         int idx = kbcg[i];
@@ -699,11 +699,11 @@ int OCPInterface::eval_constr(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_dyn
-        exit = (*ocp_dyn)(argd, resd, iwd, wd, memd);
+        exit = ocp_dyn.eval(argd, resd, iwd, wd, memd);
         // call to ocp_path
-        exit = (*ocp_path)(argp, resp, iwp, wp, memp);
+        exit = ocp_path.eval(argp, resp, iwp, wp, memp);
         // call to ocp_int
-        exit = (*ocp_int)(argq, resq, iwq, wq, memq);
+        exit = ocp_int.eval(argq, resq, iwq, wq, memq);
         for (int i = 0; i < nq; ++i) resq0[i] += resq[0][i];
         // update pointers (move forward)
         argd[1] += nx+nu;
@@ -722,7 +722,7 @@ int OCPInterface::eval_constr(
     // call to ocp_path for last point
     t = tf;
     resp[0] = g + (N-1)*(nx+nc); // set result pointer correctly
-    exit = (*ocp_path)(argp, resp, iwp, wp, memp);
+    exit = ocp_path.eval(argp, resp, iwp, wp, memp);
     // init pointers to x0,u0,xn,un,p
     argb[0] = z; // x0
     argb[1] = z + nx; // u0
@@ -732,7 +732,7 @@ int OCPInterface::eval_constr(
     // init pointer to b
     resb[0] = g + (N-1)*(nx+nc) + nc; // b
     // call to ocp_bcs
-    exit = (*ocp_bcs)(argb, resb, iwb, wb, memb);
+    exit = ocp_bcs.eval(argb, resb, iwb, wb, memb);
  
     return exit;
 }
@@ -771,11 +771,11 @@ int OCPInterface::eval_constr_jac(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_dyn_jac
-        exit = (*ocp_dyn_jac)(argdj, resdj, iwdj, wdj, memdj);
+        exit = ocp_dyn_jac.eval(argdj, resdj, iwdj, wdj, memdj);
         // call to ocp_path_jac
-        exit = (*ocp_path_jac)(argpj, respj, iwpj, wpj, mempj);   
+        exit = ocp_path_jac.eval(argpj, respj, iwpj, wpj, mempj);   
         // call to ocp_int_jac
-        exit = (*ocp_int_jac)(argqj, resqj, iwqj, wqj, memqj);   
+        exit = ocp_int_jac.eval(argqj, resqj, iwqj, wqj, memqj);   
         for (int i = 0; i < nnzqj; ++i) {
             int idx = kjq[k*nnzqj+i]; // nz index
             if (idx>=0) jac[idx] += resqj[0][i];
@@ -797,7 +797,7 @@ int OCPInterface::eval_constr_jac(
     // call to ocp_path_jac for last point
     t = tf;
     respj[0] = jac + (N-1)*(nnzdj+nnzpj); // w.r.t x1,u,p
-    exit = (*ocp_path_jac)(argpj, respj, iwpj, wpj, mempj); 
+    exit = ocp_path_jac.eval(argpj, respj, iwpj, wpj, mempj); 
     // init pointers to x0,u0,xn,un,p
     argbj[0] = z; // x0
     argbj[1] = z + nx; // u0
@@ -807,7 +807,7 @@ int OCPInterface::eval_constr_jac(
     // init pointer to b
     resbj[0] = jac + (N-1)*(nnzdj+nnzpj) + nnzpj; // w.r.t x0,u0,xn,un,p
     // call to ocp_bcs_jac
-    exit = (*ocp_bcs_jac)(argbj, resbj, iwbj, wbj, membj);
+    exit = ocp_bcs_jac.eval(argbj, resbj, iwbj, wbj, membj);
 
     return exit;
 }
@@ -818,7 +818,7 @@ int OCPInterface::eval_hessian(
     const double* lamg, 
     double* hess
 ){
-    if (ocp_hessb && ocp_hessi) {
+    if (ocp_hessb.eval && ocp_hessi.eval) {
         // init hess to 0
         memset((void*) hess, 0, nnzh*sizeof(double));
 
@@ -843,7 +843,7 @@ int OCPInterface::eval_hessian(
             // reset reshi
             memset((void*) reshi[0], 0, nnzhi*sizeof(double));
             // call to ocp_hessi
-            exit = (*ocp_hessi)(arghi, reshi, iwhi, whi, memhi);
+            exit = ocp_hessi.eval(arghi, reshi, iwhi, whi, memhi);
             // assign values
             for (int i = 0; i < nnzhi; ++i) {
                 int idx = khi[k*nnzhi + i]; // nz index
@@ -869,7 +869,7 @@ int OCPInterface::eval_hessian(
         // reset reshb
         memset((void*) reshb[0], 0, nnzhb*sizeof(double));
         // call to ocp_hessb
-        exit = (*ocp_hessb)(arghb, reshb, iwhb, whb, memhb);
+        exit = ocp_hessb.eval(arghb, reshb, iwhb, whb, memhb);
         // assign values
         for (int i = 0; i < nnzhb; ++i) {
             int idx = khb[i];

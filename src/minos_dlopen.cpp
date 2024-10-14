@@ -78,20 +78,13 @@
 #endif
 
 // Macro to load OPC functions with a given suffix
-#define LOADOCPFUNCS(suffix, FuncType)  ocp_dyn  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_dyn" #suffix, true);  \
-                                        ocp_path ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_path" #suffix, true); \
-                                        ocp_bcs  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_bcs" #suffix, true); \
-                                        ocp_int  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_int" #suffix, true); \
-                                        ocp_runcost  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_runcost" #suffix, true); \
-                                        ocp_bcscost  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_bcscost" #suffix, true); \
-                                        ocp_dyn_jac  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_dyn_jac" #suffix, true); \
-                                        ocp_path_jac ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_path_jac" #suffix, true); \
-                                        ocp_bcs_jac  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_bcs_jac" #suffix, true); \
-                                        ocp_int_jac  ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_int_jac" #suffix, true); \
-                                        ocp_runcost_grad ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_runcost_grad" #suffix, true); \
-                                        ocp_bcscost_grad ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_bcscost_grad" #suffix, true); \
-                                        ocp_hessb ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_hessb" #suffix, false); \
-                                        ocp_hessi ## suffix = LOADFUNCTION(libhandle, FuncType, "ocp_hessi" #suffix, false);
+#define LOADOCPFUNCS(var, flag) var##.eval = LOADFUNCTION(libhandle, EvalFunc, #var, flag); \
+                                var##.alloc = LOADFUNCTION(libhandle, AllocFunc, #var "_alloc_mem", flag); \
+                                var##.free = LOADFUNCTION(libhandle, FreeFunc, #var "_free_mem", flag); \
+                                var##.nin = LOADFUNCTION(libhandle, NInFunc, #var "_n_in", flag); \
+                                var##.spin = LOADFUNCTION(libhandle, SpInFunc, #var "_sparsity_in", flag); \
+                                var##.spout = LOADFUNCTION(libhandle, SpOutFunc, #var "_sparsity_out", flag); \
+                                var##.work = LOADFUNCTION(libhandle, WorkFunc, #var "_work", flag);
 
 /** Load the OCP library and import the related functions */
 void* OCPInterface::load_ocplib(
@@ -100,17 +93,24 @@ void* OCPInterface::load_ocplib(
     // Load library
     LOADLIBRARY(name, libhandle);
     // Load functions
-    LOADOCPFUNCS(,EvalFunc);
-    LOADOCPFUNCS(_alloc_mem, AllocFunc);
-    LOADOCPFUNCS(_free_mem, FreeFunc);
-    LOADOCPFUNCS(_n_in, NInFunc);
-    LOADOCPFUNCS(_sparsity_in, SpInFunc);
-    LOADOCPFUNCS(_sparsity_out, SpOutFunc);
-    LOADOCPFUNCS(_work, WorkFunc);
+    LOADOCPFUNCS(ocp_dyn, true);
+    LOADOCPFUNCS(ocp_path, true);
+    LOADOCPFUNCS(ocp_bcs, true);
+    LOADOCPFUNCS(ocp_int, true);
+    LOADOCPFUNCS(ocp_runcost, true);
+    LOADOCPFUNCS(ocp_bcscost, true);
+    LOADOCPFUNCS(ocp_dyn_jac, true);
+    LOADOCPFUNCS(ocp_path_jac, true);
+    LOADOCPFUNCS(ocp_bcs_jac, true);
+    LOADOCPFUNCS(ocp_int_jac, true);
+    LOADOCPFUNCS(ocp_runcost_grad, true);
+    LOADOCPFUNCS(ocp_bcscost_grad, true);
+    LOADOCPFUNCS(ocp_hessb, false);
+    LOADOCPFUNCS(ocp_hessi, false);
     // Check hessian
-    if (!ocp_hessb || !ocp_hessi) {
-        ocp_hessb = NULL;
-        ocp_hessi = NULL;
+    if (!ocp_hessb.eval || !ocp_hessi.eval) {
+        ocp_hessb.eval = NULL;
+        ocp_hessi.eval = NULL;
     }
     // Ok, return true
     return (void*) libhandle;
