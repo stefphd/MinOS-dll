@@ -71,13 +71,18 @@ private:
     typedef int         (*WorkFunc)     (int*, int*, int*, int*);
     struct ocpfun_t
     {
-        EvalFunc eval;
-        AllocFunc alloc;
-        FreeFunc free;
-        NInFunc nin;
-        SpInFunc spin;
-        SpOutFunc spout;
-        WorkFunc work;
+        EvalFunc eval = NULL;
+        AllocFunc alloc = NULL;
+        FreeFunc free = NULL;
+        NInFunc nin = NULL;
+        SpInFunc spin = NULL;
+        SpOutFunc spout = NULL;
+        WorkFunc work = NULL;
+        int mem = 0;
+        const double **arg = NULL;
+        double **res = NULL;
+        int *iw = NULL;
+        double *w = NULL;
     };
 
     /* Typedef for NLP solve function */
@@ -97,19 +102,6 @@ private:
 
     /* Initial time, final time, time step, current time, time step, and mesh fractions */
     double ti, tf, t, h, *mesh;
-
-    /* Pointers to memory for CASADI functions */
-    int memrc, membc, memd, memp, memb, memq, memrcg, membcg, memdj, mempj, membj, memqj, memhb, memhi;
-
-    /* arg, res, iw, w data vector for CASADI functions */
-    const double **argrc = NULL, **argbc = NULL, **argd = NULL, **argp = NULL, **argb = NULL, **argq = NULL;
-    const double **argrcg = NULL, **argbcg = NULL, **argdj = NULL, **argpj = NULL, **argbj = NULL, **argqj = NULL, **arghb = NULL, **arghi = NULL;
-    double **resrc = NULL, **resbc = NULL, **resd = NULL, **resp = NULL, **resb = NULL, **resq = NULL;
-    double **resrcg = NULL, **resbcg = NULL, **resdj = NULL, **respj = NULL, **resbj = NULL, **resqj = NULL, **reshb = NULL, **reshi = NULL;
-    int *iwrc = NULL, *iwbc = NULL, *iwd = NULL, *iwp = NULL, *iwb = NULL, *iwq = NULL;
-    int *iwrcg = NULL, *iwbcg = NULL, *iwdj = NULL, *iwpj = NULL, *iwbj = NULL, *iwqj = NULL, *iwhb = NULL, *iwhi = NULL;
-    double *wrc = NULL, *wbc = NULL, *wd = NULL, *wp = NULL, *wb = NULL, *wq = NULL;
-    double *wrcg = NULL, *wbcg = NULL, *wdj = NULL, *wpj = NULL, *wbj = NULL, *wqj = NULL, *whb = NULL, *whi = NULL;
 
     /* Cost gradient pattern */
     int nnzrcg, *irrcg = NULL, *krcg = NULL;
@@ -185,20 +177,20 @@ private:
     void* ocp_lib = NULL;
 
     /* Pointers to OCP functions */
-    ocpfun_t ocp_dyn = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_path = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_bcs = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_int = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_runcost = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_bcscost = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_dyn_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_path_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_bcs_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_int_jac = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_runcost_grad = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_bcscost_grad = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_hessb = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    ocpfun_t ocp_hessi = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+    ocpfun_t ocp_dyn;
+    ocpfun_t ocp_path;
+    ocpfun_t ocp_bcs;
+    ocpfun_t ocp_int;
+    ocpfun_t ocp_runcost;
+    ocpfun_t ocp_bcscost;
+    ocpfun_t ocp_dyn_jac;
+    ocpfun_t ocp_path_jac;
+    ocpfun_t ocp_bcs_jac;
+    ocpfun_t ocp_int_jac;
+    ocpfun_t ocp_runcost_grad;
+    ocpfun_t ocp_bcscost_grad;
+    ocpfun_t ocp_hessb;
+    ocpfun_t ocp_hessi;
 
 public:
 
@@ -792,23 +784,12 @@ private:
 
     /** Allocate CASADI memory */
     static void alloc_casadi_mem(
-        int (*alloc_mem_casadi) (void), 
-        int (*work_casadi) (int*, int*, int*, int*),
-        int* mem,
-        const double ***arg,
-        double ***res,
-        int **iw,
-        double **w
+        ocpfun_t *ocpfun
     );
 
     /** Deallocate CASADI memory */
     static void dealloc_casadi_mem(
-        void (*dealloc_mem_casadi) (int), 
-        int mem,
-        const double **arg,
-        double **res,
-        int *iw,
-        double *w
+        ocpfun_t *ocpfun
     );
 
     /** Search value in array */

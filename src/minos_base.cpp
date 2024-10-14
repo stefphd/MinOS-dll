@@ -151,75 +151,7 @@ OCPInterface::OCPInterface(
 
 /** Destructor */
 OCPInterface::~OCPInterface() {
-    // free data
-    if (x0)  {
-        delete[] x0;     delete[] u0;     delete[] p0; 
-        delete[] lam_x0; delete[] lam_u0; delete[] lam_p0; 
-        delete[] lam_f0; delete[] lam_c0; delete[] lam_b0; delete[] lam_q0;
-    }
-    if (lbx)  {
-        delete[] lbx; delete[] ubx; 
-        delete[] lbu; delete[] ubu; 
-        delete[] lbp; delete[] ubp; 
-        delete[] lbc; delete[] ubc; 
-        delete[] lbb; delete[] ubb; 
-        delete[] lbq; delete[] ubq;
-    }
-    if (auxdata)  delete[] auxdata;
-    if (z_opt) {
-        delete[] z_opt;    delete[] g_opt;
-        delete[] lamz_opt; delete[] lamg_opt;
-        delete[] grad_opt; delete[] jac_opt;
-    }
-    if (hess_opt) delete[] hess_opt;
-    // free cost gradient mem
-    if (irrcg) {
-        delete[] irrcg;  delete[] irbcg; delete[] krcg; delete[] kbcg;
-        delete[] resrcg[0]; delete[] resbcg[0]; 
-    }
-    // free jacobian mem
-    if (irdj) {
-        delete[] irdj; delete[] jcdj; 
-        delete[] irpj; delete[] jcpj; 
-        delete[] irbj; delete[] jcbj; 
-        delete[] irqj; delete[] jcqj; 
-        delete[] resq[0]; delete[] resqj[0]; 
-        delete[] kjq;  delete[] kj;
-    }
-    // free hessian mem
-    if (irhb) {
-        delete[] irhb;  delete[] jchb; 
-        delete[] irhi;  delete[] jchi; 
-        delete[] reshb[0]; delete[] reshi[0]; 
-        delete[] khb;   delete[] khi; delete[] kh;
-    }
-    // free history if any
-    if (obj_history)   delete[] obj_history;
-    if (infpr_history) delete[] infpr_history;
-    if (infdu_history) delete[] infdu_history;
-    // free mesh
-    delete[] mesh;
-    // free CASADI mem
-    dealloc_casadi_mem(ocp_runcost.free, memrc, argrc, resrc, iwrc, wrc);
-    dealloc_casadi_mem(ocp_bcscost.free, membc, argbc, resbc, iwbc, wbc);
-    dealloc_casadi_mem(ocp_dyn.free, memd, argd, resd, iwd, wd);
-    dealloc_casadi_mem(ocp_path.free, memp, argp, resp, iwp, wp);
-    dealloc_casadi_mem(ocp_bcs.free, memb, argb, resb, iwb, wb);
-    dealloc_casadi_mem(ocp_int.free, memq, argq, resq, iwq, wq);
-    dealloc_casadi_mem(ocp_runcost_grad.free, memrcg, argrcg, resrcg, iwrcg, wrcg);
-    dealloc_casadi_mem(ocp_bcscost_grad.free, membcg, argbcg, resbcg, iwbcg, wbcg);
-    dealloc_casadi_mem(ocp_dyn_jac.free, memdj, argdj, resdj, iwdj, wdj);
-    dealloc_casadi_mem(ocp_path_jac.free, mempj, argpj, respj, iwpj, wpj);
-    dealloc_casadi_mem(ocp_bcs_jac.free, membj, argbj, resbj, iwbj, wbj);
-    dealloc_casadi_mem(ocp_int_jac.free, memqj, argqj, resqj, iwqj, wqj);
-    if (ocp_hessb.eval && ocp_hessi.eval) {
-        dealloc_casadi_mem(ocp_hessb.free, memhb, arghb, reshb, iwhb, whb);
-        dealloc_casadi_mem(ocp_hessi.free, memhi, arghi, reshi, iwhi, whi);
-    }
-    // free OCP library
-    free_library(ocp_lib);
 }
-
 
 void OCPInterface::get_dims(
     int *nx,
@@ -338,21 +270,21 @@ void OCPInterface::set_auxdata(
     if (auxdata) 
         memcpy(this->auxdata, auxdata, na*sizeof(double));
     if (na >= 0) {
-        argrc[6] = this->auxdata;
-        argbc[5] = this->auxdata;
-        argd[6] = this->auxdata;
-        argp[4] = this->auxdata;
-        argb[5] = this->auxdata;
-        argq[6] = this->auxdata;
-        argrcg[6] = this->auxdata;
-        argbcg[5] = this->auxdata;
-        argdj[6] = this->auxdata;
-        argpj[4] = this->auxdata;
-        argbj[5] = this->auxdata;
-        argqj[6] = this->auxdata;
+        ocp_runcost.arg[6] = this->auxdata;
+        ocp_bcscost.arg[5] = this->auxdata;
+        ocp_dyn.arg[6] = this->auxdata;
+        ocp_path.arg[4] = this->auxdata;
+        ocp_bcs.arg[5] = this->auxdata;
+        ocp_int.arg[6] = this->auxdata;
+        ocp_runcost_grad.arg[6] = this->auxdata;
+        ocp_bcscost_grad.arg[5] = this->auxdata;
+        ocp_dyn_jac.arg[6] = this->auxdata;
+        ocp_path_jac.arg[4] = this->auxdata;
+        ocp_bcs_jac.arg[5] = this->auxdata;
+        ocp_int_jac.arg[6] = this->auxdata;
     if (ocp_hessb.eval && ocp_hessi.eval) {
-            arghi[10] = this->auxdata;
-            arghb[9] = this->auxdata;
+            ocp_hessi.arg[10] = this->auxdata;
+            ocp_hessb.arg[9] = this->auxdata;
     }
     }
 }
@@ -509,23 +441,23 @@ void OCPInterface::get_sol(
     // l_opt
     if (z_opt && l_opt) {
         //set arg pointer
-        argrc[1] = z_opt + 0; // x1
-        argrc[2] = z_opt + nx; // u
-        argrc[3] = z_opt + (nx+nu); // x2
-        argrc[4] = z_opt + N*(nx+nu); // p
+        ocp_runcost.arg[1] = z_opt + 0; // x1
+        ocp_runcost.arg[2] = z_opt + nx; // u
+        ocp_runcost.arg[3] = z_opt + (nx+nu); // x2
+        ocp_runcost.arg[4] = z_opt + N*(nx+nu); // p
         this->t = ti; // t
         // set result pointer
-        resrc[0] = l_opt;
+        ocp_runcost.res[0] = l_opt;
         for (int k = 0; k < N-1; ++k) {
             // update time step
             this->h = mesh[k] * (tf-ti);
             // call to ocp_runcost
-            ocp_runcost.eval(argrc, resrc, iwrc, wrc, memrc);
+            ocp_runcost.eval(ocp_runcost.arg, ocp_runcost.res, ocp_runcost.iw, ocp_runcost.w, ocp_runcost.mem);
             // update pointers (move forward by nx+nu)
-            argrc[1] += nx+nu;
-            argrc[2] += nx+nu;
-            argrc[3] += nx+nu;
-            resrc[0]++;
+            ocp_runcost.arg[1] += nx+nu;
+            ocp_runcost.arg[2] += nx+nu;
+            ocp_runcost.arg[3] += nx+nu;
+            ocp_runcost.res[0]++;
             // update current time
             this->t += this->h; 
         }
@@ -534,15 +466,15 @@ void OCPInterface::get_sol(
     // m_opt
     if (z_opt && m_opt) {
         //set arg pointer
-        argbc[0] = z_opt; // x0
-        argbc[1] = z_opt + nx; // u0
-        argbc[2] = z_opt + (N-1)*(nx+nu); // xn
-        argbc[3] = z_opt + (N-1)*(nx+nu) + nx; // un
-        argbc[4] = z_opt + N*(nx+nu); // p
+        ocp_bcscost.arg[0] = z_opt; // x0
+        ocp_bcscost.arg[1] = z_opt + nx; // u0
+        ocp_bcscost.arg[2] = z_opt + (N-1)*(nx+nu); // xn
+        ocp_bcscost.arg[3] = z_opt + (N-1)*(nx+nu) + nx; // un
+        ocp_bcscost.arg[4] = z_opt + N*(nx+nu); // p
         // set result pointer
-        resbc[0] = m_opt; // set res
+        ocp_bcscost.res[0] = m_opt; // set res
         // call to ocp_bcscost
-        ocp_bcscost.eval(argbc, resbc, iwbc, wbc, membc);
+        ocp_bcscost.eval(ocp_bcscost.arg, ocp_bcscost.res, ocp_bcscost.iw, ocp_bcscost.w, ocp_bcscost.mem);
     }
 
     // grad_x, grad_u, grad_p

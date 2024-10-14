@@ -126,21 +126,21 @@ int OCPInterface::search_value(
 /** Init memory */
 void OCPInterface::alloc_mem() {
     // init CASADI memory
-    alloc_casadi_mem(ocp_runcost.alloc, ocp_runcost.work, &memrc, &argrc, &resrc, &iwrc, &wrc);
-    alloc_casadi_mem(ocp_bcscost.alloc, ocp_bcscost.work, &membc, &argbc, &resbc, &iwbc, &wbc);
-    alloc_casadi_mem(ocp_dyn.alloc, ocp_dyn.work, &memd, &argd, &resd, &iwd, &wd);
-    alloc_casadi_mem(ocp_path.alloc, ocp_path.work, &memp, &argp, &resp, &iwp, &wp);
-    alloc_casadi_mem(ocp_bcs.alloc, ocp_bcs.work, &memb, &argb, &resb, &iwb, &wb);
-    alloc_casadi_mem(ocp_int.alloc, ocp_int.work, &memq, &argq, &resq, &iwq, &wq);
-    alloc_casadi_mem(ocp_runcost_grad.alloc, ocp_runcost_grad.work, &memrcg, &argrcg, &resrcg, &iwrcg, &wrcg);
-    alloc_casadi_mem(ocp_bcscost_grad.alloc, ocp_bcscost_grad.work, &membcg, &argbcg, &resbcg, &iwbcg, &wbcg);
-    alloc_casadi_mem(ocp_dyn_jac.alloc, ocp_dyn_jac.work, &memdj, &argdj, &resdj, &iwdj, &wdj);
-    alloc_casadi_mem(ocp_path_jac.alloc, ocp_path_jac.work, &mempj, &argpj, &respj, &iwpj, &wpj);
-    alloc_casadi_mem(ocp_bcs_jac.alloc, ocp_bcs_jac.work, &membj, &argbj, &resbj, &iwbj, &wbj);
-    alloc_casadi_mem(ocp_int_jac.alloc, ocp_int_jac.work, &memqj, &argqj, &resqj, &iwqj, &wqj);
+    alloc_casadi_mem(&ocp_runcost);
+    alloc_casadi_mem(&ocp_bcscost);
+    alloc_casadi_mem(&ocp_dyn);
+    alloc_casadi_mem(&ocp_path);
+    alloc_casadi_mem(&ocp_bcs);
+    alloc_casadi_mem(&ocp_int);
+    alloc_casadi_mem(&ocp_runcost_grad);
+    alloc_casadi_mem(&ocp_bcscost_grad);
+    alloc_casadi_mem(&ocp_dyn_jac);
+    alloc_casadi_mem(&ocp_path_jac);
+    alloc_casadi_mem(&ocp_bcs_jac);
+    alloc_casadi_mem(&ocp_int_jac);
     if (ocp_hessb.eval && ocp_hessi.eval) {
-        alloc_casadi_mem(ocp_hessb.alloc, ocp_hessb.work, &memhb, &arghb, &reshb, &iwhb, &whb);
-        alloc_casadi_mem(ocp_hessi.alloc, ocp_hessi.work, &memhi, &arghi, &reshi, &iwhi, &whi);
+        alloc_casadi_mem(&ocp_hessb);
+        alloc_casadi_mem(&ocp_hessi);
     }
 }
 
@@ -197,39 +197,27 @@ void OCPInterface::init_data_mem() {
 
 /** Init CASADI memory */
 void OCPInterface::alloc_casadi_mem(
-    int (*alloc_mem_casadi) (void), 
-    int (*work_casadi) (int*, int*, int*, int*),
-    int *mem,
-    const double ***arg,
-    double ***res,
-    int **iw,
-    double **w
+    ocpfun_t *ocpfun
 ) {
     int sz_arg = 0, sz_res = 0, sz_iw = 0, sz_w = 0;
-    *mem = alloc_mem_casadi();
-    work_casadi(&sz_arg, &sz_res, &sz_iw, &sz_w);
-    *arg = new const double*[1+sz_arg] { 0 };
-    *res = new double*[1+sz_res] { 0 };
-    *iw = new int[1+sz_iw] { 0 };
-    *w = new double[1+sz_w] { 0 };
+    ocpfun->mem = ocpfun->alloc();
+    ocpfun->work(&sz_arg, &sz_res, &sz_iw, &sz_w);
+    ocpfun->arg = new const double*[1+sz_arg] { 0 };
+    ocpfun->res = new double*[1+sz_res] { 0 };
+    ocpfun->iw = new int[1+sz_iw] { 0 };
+    ocpfun->w = new double[1+sz_w] { 0 };
 }
 
 /** Delete CASADI memory */
 void OCPInterface::dealloc_casadi_mem(
-    void (*dealloc_mem_casadi) (int), 
-    int mem,
-    const double **arg,
-    double **res,
-    int *iw,
-    double *w
+    ocpfun_t *ocpfun
 ) {
-    int sz_arg = 0, sz_res = 0, sz_iw = 0, sz_w = 0;
-    dealloc_mem_casadi(mem);
-    if (arg) {
-        delete[] arg;
-        delete[] res;
-        delete[] iw;
-        delete[] w;
+    ocpfun->free(ocpfun->mem);
+    if (ocpfun->arg) {
+        delete[] ocpfun->arg;
+        delete[] ocpfun->res;
+        delete[] ocpfun->iw;
+        delete[] ocpfun->w;
     }
 }
 

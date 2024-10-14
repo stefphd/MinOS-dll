@@ -38,24 +38,24 @@ int OCPInterface::solve(
 
 /** Init constant arguments */
 void OCPInterface::init_args() {
-    argrc[0] = &t;
-    argrcg[0] = &t;
-    argd[0] = &t;
-    argp[0] = &t;
-    argq[0] = &t;
-    argdj[0] = &t;
-    argpj[0] = &t;  
-    argqj[0] = &t;
-    argrc[5] = &h;
-    argrcg[5] = &h;
-    argd[5] = &h;
-    argdj[5] = &h;
-    argq[5] = &h;
-    argqj[5] = &h;
+    ocp_runcost.arg[0] = &t;
+    ocp_runcost_grad.arg[0] = &t;
+    ocp_dyn.arg[0] = &t;
+    ocp_path.arg[0] = &t;
+    ocp_int.arg[0] = &t;
+    ocp_dyn_jac.arg[0] = &t;
+    ocp_path_jac.arg[0] = &t;  
+    ocp_int_jac.arg[0] = &t;
+    ocp_runcost.arg[5] = &h;
+    ocp_runcost_grad.arg[5] = &h;
+    ocp_dyn.arg[5] = &h;
+    ocp_dyn_jac.arg[5] = &h;
+    ocp_int.arg[5] = &h;
+    ocp_int_jac.arg[5] = &h;
     if (ocp_hessb.eval && ocp_hessi.eval) {
-        arghi[0] = &t;
-        arghi[5] = &h;
-        arghb[0] = &tf;
+        ocp_hessi.arg[0] = &t;
+        ocp_hessi.arg[5] = &h;
+        ocp_hessb.arg[0] = &tf;
     }
 }
 
@@ -68,7 +68,7 @@ void OCPInterface::init_cost_gradient(
     get_sizes(ocp_bcscost_grad.spout, 0, NULL, NULL, &nnzbcg);
     // get pattern of running cost
     irrcg = new int[1+nnzrcg] { 0 };
-    resrcg[0] = new double[1+nnzrcg] { 0 }; // init resrcg
+    ocp_runcost_grad.res[0] = new double[1+nnzrcg] { 0 }; // init ocp_runcost_grad.res
     get_pattern(ocp_runcost_grad.spout, 0, irrcg, NULL); // use only row indexes (gradient is column matrix)
     // create krcg
     krcg = new int[1+nnzrcg*(N-1)] { -1 };
@@ -83,7 +83,7 @@ void OCPInterface::init_cost_gradient(
     }
     // get pattern of boundary cost
     irbcg = new int[1+nnzbcg] { 0 };
-    resbcg[0] = new double[1+nnzbcg] { 0 }; // init resbcg
+    ocp_bcscost_grad.res[0] = new double[1+nnzbcg] { 0 }; // init ocp_bcscost_grad.res
     get_pattern(ocp_bcscost_grad.spout, 0, irbcg, NULL); // use only row indexes (gradient is column matrix)
     // create kbcg
     kbcg = new int[1+nnzbcg] { -1 };
@@ -120,8 +120,8 @@ void OCPInterface::init_constr_jac() {
     get_pattern(ocp_int_jac.spout, 0, irqj, jcqj); // int w.r.t. x1, u, x2, p
 
     // procedire to compute the nnz of the entire int jac and corresponding indexes
-    resq[0] = new double[1+nq] { 0 }; // init also resq for ocp_int
-    resqj[0] = new double[1+nnzqj] { 0 }; // init resqj
+    ocp_int.res[0] = new double[1+nq] { 0 }; // init also ocp_int.res for ocp_int
+    ocp_int_jac.res[0] = new double[1+nnzqj] { 0 }; // init ocp_int_jac.res
     kjq = new int[1+nnzqj*(N-1)] { -1 };
     kj = new int[1+nnzqj*(N-1)] { -1 }; // save 'rolled' indexes of nz, with size from upper estimation of nnz
     int c_nnz = 0; // counter for int jacobian nz
@@ -160,8 +160,8 @@ void OCPInterface::init_lag_hessian() {
         irhi = new int[1+nnzhi] { 0 };
         jchi = new int[1+nnzhi] { 0 };
         // init res
-        reshb[0] = new double[1+nnzhb] { 0 };
-        reshi[0] = new double[1+nnzhi] { 0 };
+        ocp_hessb.res[0] = new double[1+nnzhb] { 0 };
+        ocp_hessi.res[0] = new double[1+nnzhi] { 0 };
         // get patterns
         get_pattern(ocp_hessb.spout, 0, irhb, jchb);
         get_pattern(ocp_hessi.spout, 0, irhi, jchi);
@@ -568,13 +568,13 @@ int OCPInterface::eval_obj(
 
     // objective result
     double res;
-    resrc[0] = &res; // set res
+    ocp_runcost.res[0] = &res; // set res
 
     // init pointers to x1,u,x2,p
-    argrc[1] = z + 0; // x1
-    argrc[2] = z + nx; // u
-    argrc[3] = z + (nx+nu); // x2
-    argrc[4] = z + N*(nx+nu); // p
+    ocp_runcost.arg[1] = z + 0; // x1
+    ocp_runcost.arg[2] = z + nx; // u
+    ocp_runcost.arg[3] = z + (nx+nu); // x2
+    ocp_runcost.arg[4] = z + N*(nx+nu); // p
     t = ti; // t
 
     // iterate over mesh intervals (k from 0 to N-2)
@@ -582,28 +582,28 @@ int OCPInterface::eval_obj(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_runcost
-        exit = ocp_runcost.eval(argrc, resrc, iwrc, wrc, memrc);
+        exit = ocp_runcost.eval(ocp_runcost.arg, ocp_runcost.res, ocp_runcost.iw, ocp_runcost.w, ocp_runcost.mem);
         // update obj
         *obj += res;
         // update pointers (move forward by nx+nu)
-        argrc[1] += nx+nu;
-        argrc[2] += nx+nu;
-        argrc[3] += nx+nu;
+        ocp_runcost.arg[1] += nx+nu;
+        ocp_runcost.arg[2] += nx+nu;
+        ocp_runcost.arg[3] += nx+nu;
         // update current time
         t += h; 
     }
 
     // eval boundary cost
     // init pointers to x0,u0,xn,un,p
-    argbc[0] = z; // x0
-    argbc[1] = z + nx; // u0
-    argbc[2] = z + (N-1)*(nx+nu); // xn
-    argbc[3] = z + (N-1)*(nx+nu) + nx; // un
-    argbc[4] = z + N*(nx+nu); // p
+    ocp_bcscost.arg[0] = z; // x0
+    ocp_bcscost.arg[1] = z + nx; // u0
+    ocp_bcscost.arg[2] = z + (N-1)*(nx+nu); // xn
+    ocp_bcscost.arg[3] = z + (N-1)*(nx+nu) + nx; // un
+    ocp_bcscost.arg[4] = z + N*(nx+nu); // p
     // set result pointer
-    resbc[0] = &res; // set res
+    ocp_bcscost.res[0] = &res; // set res
     // call to ocp_bcscost
-    exit = ocp_bcscost.eval(argbc, resbc, iwbc, wbc, membc);
+    exit = ocp_bcscost.eval(ocp_bcscost.arg, ocp_bcscost.res, ocp_bcscost.iw, ocp_bcscost.w, ocp_bcscost.mem);
     // update obj
     *obj += res;
     // return
@@ -621,10 +621,10 @@ int OCPInterface::eval_obj_grad(
     memset((void*) grad, 0, nz*sizeof(double));
 
     // init pointers to x1,u,x2,p
-    argrcg[1] = z + 0; // x1
-    argrcg[2] = z + nx; // u
-    argrcg[3] = z + (nx+nu); // x2
-    argrcg[4] = z + N*(nx+nu); // p
+    ocp_runcost_grad.arg[1] = z + 0; // x1
+    ocp_runcost_grad.arg[2] = z + nx; // u
+    ocp_runcost_grad.arg[3] = z + (nx+nu); // x2
+    ocp_runcost_grad.arg[4] = z + N*(nx+nu); // p
     t = ti; // t
 
     // iterate over mesh intervals (k from 0 to N-2)
@@ -632,33 +632,33 @@ int OCPInterface::eval_obj_grad(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_runcost_grad 
-        exit = ocp_runcost_grad.eval(argrcg, resrcg, iwrcg, wrcg, memrcg);
+        exit = ocp_runcost_grad.eval(ocp_runcost_grad.arg, ocp_runcost_grad.res, ocp_runcost_grad.iw, ocp_runcost_grad.w, ocp_runcost_grad.mem);
         // update gradient
         for (int i = 0; i < nnzrcg; ++i) {
             int idx = krcg[k*nnzrcg + i];
-            grad[idx] += resrcg[0][i];
+            grad[idx] += ocp_runcost_grad.res[0][i];
         }
         // update pointers (move forward by nx+nu)
-        argrcg[1] += nx+nu;
-        argrcg[2] += nx+nu;
-        argrcg[3] += nx+nu;
+        ocp_runcost_grad.arg[1] += nx+nu;
+        ocp_runcost_grad.arg[2] += nx+nu;
+        ocp_runcost_grad.arg[3] += nx+nu;
         // update current time
         t += h; 
     }
 
     // eval boundary cost gradient
     // init pointers to x0,u0,xn,un,p
-    argbcg[0] = z; // x0
-    argbcg[1] = z + nx; // u0
-    argbcg[2] = z + (N-1)*(nx+nu); // xn
-    argbcg[3] = z + (N-1)*(nx+nu) + nx; // un
-    argbcg[4] = z + N*(nx+nu); // p
+    ocp_bcscost_grad.arg[0] = z; // x0
+    ocp_bcscost_grad.arg[1] = z + nx; // u0
+    ocp_bcscost_grad.arg[2] = z + (N-1)*(nx+nu); // xn
+    ocp_bcscost_grad.arg[3] = z + (N-1)*(nx+nu) + nx; // un
+    ocp_bcscost_grad.arg[4] = z + N*(nx+nu); // p
     // call to ocp_bcscost_grad 
-    exit = ocp_bcscost_grad.eval(argbcg, resbcg, iwbcg, wbcg, membcg);
+    exit = ocp_bcscost_grad.eval(ocp_bcscost_grad.arg, ocp_bcscost_grad.res, ocp_bcscost_grad.iw, ocp_bcscost_grad.w, ocp_bcscost_grad.mem);
     // update gradient
     for (int i = 0; i < nnzbcg; ++i) {
         int idx = kbcg[i];
-        grad[idx] += resbcg[0][i];
+        grad[idx] += ocp_bcscost_grad.res[0][i];
     }
     
     return exit;
@@ -676,22 +676,22 @@ int OCPInterface::eval_constr(
     memset((void*) g, 0, ng*sizeof(double));
 
     // init pointers to x1,u,x2,p
-    argd[1] = z + 0; // x1
-    argd[2] = z + nx; // u
-    argd[3] = z + (nx+nu); // x2
-    argd[4] = z + N*(nx+nu); // p
-    argp[1] = z + 0; // x1
-    argp[2] = z + nx; // u
-    argp[3] = z + N*(nx+nu); // p
-    argq[1] = z + 0; // x1
-    argq[2] = z + nx; // u
-    argq[3] = z + (nx+nu); // x2
-    argq[4] = z + N*(nx+nu); // p
+    ocp_dyn.arg[1] = z + 0; // x1
+    ocp_dyn.arg[2] = z + nx; // u
+    ocp_dyn.arg[3] = z + (nx+nu); // x2
+    ocp_dyn.arg[4] = z + N*(nx+nu); // p
+    ocp_path.arg[1] = z + 0; // x1
+    ocp_path.arg[2] = z + nx; // u
+    ocp_path.arg[3] = z + N*(nx+nu); // p
+    ocp_int.arg[1] = z + 0; // x1
+    ocp_int.arg[2] = z + nx; // u
+    ocp_int.arg[3] = z + (nx+nu); // x2
+    ocp_int.arg[4] = z + N*(nx+nu); // p
     t = ti; // t
 
     // init pointers to f,c,q
-    resd[0] = g; // f
-    resp[0] = g + nx; // c
+    ocp_dyn.res[0] = g; // f
+    ocp_path.res[0] = g + nx; // c
     double *resq0 = g +(N-1)*(nx+nc)+nc+nb; // q
 
     // iterate over mesh intervals (k from 0 to N-2)
@@ -699,40 +699,40 @@ int OCPInterface::eval_constr(
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_dyn
-        exit = ocp_dyn.eval(argd, resd, iwd, wd, memd);
+        exit = ocp_dyn.eval(ocp_dyn.arg, ocp_dyn.res, ocp_dyn.iw, ocp_dyn.w, ocp_dyn.mem);
         // call to ocp_path
-        exit = ocp_path.eval(argp, resp, iwp, wp, memp);
+        exit = ocp_path.eval(ocp_path.arg, ocp_path.res, ocp_path.iw, ocp_path.w, ocp_path.mem);
         // call to ocp_int
-        exit = ocp_int.eval(argq, resq, iwq, wq, memq);
-        for (int i = 0; i < nq; ++i) resq0[i] += resq[0][i];
+        exit = ocp_int.eval(ocp_int.arg, ocp_int.res, ocp_int.iw, ocp_int.w, ocp_int.mem);
+        for (int i = 0; i < nq; ++i) resq0[i] += ocp_int.res[0][i];
         // update pointers (move forward)
-        argd[1] += nx+nu;
-        argd[2] += nx+nu;
-        argd[3] += nx+nu;
-        argp[1] += nx+nu;
-        argp[2] += nx+nu;
-        argq[1] += nx+nu;
-        argq[2] += nx+nu;
-        argq[3] += nx+nu;
-        resd[0] += nx+nc;
-        resp[0] += nx+nc;
+        ocp_dyn.arg[1] += nx+nu;
+        ocp_dyn.arg[2] += nx+nu;
+        ocp_dyn.arg[3] += nx+nu;
+        ocp_path.arg[1] += nx+nu;
+        ocp_path.arg[2] += nx+nu;
+        ocp_int.arg[1] += nx+nu;
+        ocp_int.arg[2] += nx+nu;
+        ocp_int.arg[3] += nx+nu;
+        ocp_dyn.res[0] += nx+nc;
+        ocp_path.res[0] += nx+nc;
         // update current time
         t += h; 
     }
     // call to ocp_path for last point
     t = tf;
-    resp[0] = g + (N-1)*(nx+nc); // set result pointer correctly
-    exit = ocp_path.eval(argp, resp, iwp, wp, memp);
+    ocp_path.res[0] = g + (N-1)*(nx+nc); // set result pointer correctly
+    exit = ocp_path.eval(ocp_path.arg, ocp_path.res, ocp_path.iw, ocp_path.w, ocp_path.mem);
     // init pointers to x0,u0,xn,un,p
-    argb[0] = z; // x0
-    argb[1] = z + nx; // u0
-    argb[2] = z + (N-1)*(nx+nu); // xn
-    argb[3] = z + (N-1)*(nx+nu) + nx; // un
-    argb[4] = z + N*(nx+nu); // p
+    ocp_bcs.arg[0] = z; // x0
+    ocp_bcs.arg[1] = z + nx; // u0
+    ocp_bcs.arg[2] = z + (N-1)*(nx+nu); // xn
+    ocp_bcs.arg[3] = z + (N-1)*(nx+nu) + nx; // un
+    ocp_bcs.arg[4] = z + N*(nx+nu); // p
     // init pointer to b
-    resb[0] = g + (N-1)*(nx+nc) + nc; // b
+    ocp_bcs.res[0] = g + (N-1)*(nx+nc) + nc; // b
     // call to ocp_bcs
-    exit = ocp_bcs.eval(argb, resb, iwb, wb, memb);
+    exit = ocp_bcs.eval(ocp_bcs.arg, ocp_bcs.res, ocp_bcs.iw, ocp_bcs.w, ocp_bcs.mem);
  
     return exit;
 }
@@ -749,65 +749,65 @@ int OCPInterface::eval_constr_jac(
     memset((void*) jac, 0, nnzj*sizeof(double));
 
     // init pointers to x1,u,x2,p
-    argdj[1] = z + 0; // x1
-    argdj[2] = z + nx; // u
-    argdj[3] = z + (nx+nu); // x2
-    argdj[4] = z + N*(nx+nu); // p
-    argpj[1] = z + 0; // x1
-    argpj[2] = z + nx; // u
-    argpj[3] = z + N*(nx+nu); // p
-    argqj[1] = z + 0; // x1
-    argqj[2] = z + nx; // u
-    argqj[3] = z + (nx+nu); // x2
-    argqj[4] = z + N*(nx+nu); // p
+    ocp_dyn_jac.arg[1] = z + 0; // x1
+    ocp_dyn_jac.arg[2] = z + nx; // u
+    ocp_dyn_jac.arg[3] = z + (nx+nu); // x2
+    ocp_dyn_jac.arg[4] = z + N*(nx+nu); // p
+    ocp_path_jac.arg[1] = z + 0; // x1
+    ocp_path_jac.arg[2] = z + nx; // u
+    ocp_path_jac.arg[3] = z + N*(nx+nu); // p
+    ocp_int_jac.arg[1] = z + 0; // x1
+    ocp_int_jac.arg[2] = z + nx; // u
+    ocp_int_jac.arg[3] = z + (nx+nu); // x2
+    ocp_int_jac.arg[4] = z + N*(nx+nu); // p
     t = ti; // t
 
     // init pointers to f,c
-    resdj[0] = jac + 0; // w.r.t x1,u,x2,p
-    respj[0] = jac + nnzdj; // w.r.t. x1,u,p
+    ocp_dyn_jac.res[0] = jac + 0; // w.r.t x1,u,x2,p
+    ocp_path_jac.res[0] = jac + nnzdj; // w.r.t. x1,u,p
 
     // iterate over mesh intervals (k from 0 to N-2)
     for (int k = 0; k < N-1; ++k) {
         // update time step
         h = mesh[k] * (tf-ti);
         // call to ocp_dyn_jac
-        exit = ocp_dyn_jac.eval(argdj, resdj, iwdj, wdj, memdj);
+        exit = ocp_dyn_jac.eval(ocp_dyn_jac.arg, ocp_dyn_jac.res, ocp_dyn_jac.iw, ocp_dyn_jac.w, ocp_dyn_jac.mem);
         // call to ocp_path_jac
-        exit = ocp_path_jac.eval(argpj, respj, iwpj, wpj, mempj);   
+        exit = ocp_path_jac.eval(ocp_path_jac.arg, ocp_path_jac.res, ocp_path_jac.iw, ocp_path_jac.w, ocp_path_jac.mem);   
         // call to ocp_int_jac
-        exit = ocp_int_jac.eval(argqj, resqj, iwqj, wqj, memqj);   
+        exit = ocp_int_jac.eval(ocp_int_jac.arg, ocp_int_jac.res, ocp_int_jac.iw, ocp_int_jac.w, ocp_int_jac.mem);   
         for (int i = 0; i < nnzqj; ++i) {
             int idx = kjq[k*nnzqj+i]; // nz index
-            if (idx>=0) jac[idx] += resqj[0][i];
+            if (idx>=0) jac[idx] += ocp_int_jac.res[0][i];
         }
         // update pointers (move forward)
-        argdj[1] += nx+nu;
-        argdj[2] += nx+nu;
-        argdj[3] += nx+nu;
-        argpj[1] += nx+nu;
-        argpj[2] += nx+nu;
-        argqj[1] += nx+nu;
-        argqj[2] += nx+nu;
-        argqj[3] += nx+nu;
-        resdj[0] += nnzdj+nnzpj;
-        respj[0] += nnzdj+nnzpj;
+        ocp_dyn_jac.arg[1] += nx+nu;
+        ocp_dyn_jac.arg[2] += nx+nu;
+        ocp_dyn_jac.arg[3] += nx+nu;
+        ocp_path_jac.arg[1] += nx+nu;
+        ocp_path_jac.arg[2] += nx+nu;
+        ocp_int_jac.arg[1] += nx+nu;
+        ocp_int_jac.arg[2] += nx+nu;
+        ocp_int_jac.arg[3] += nx+nu;
+        ocp_dyn_jac.res[0] += nnzdj+nnzpj;
+        ocp_path_jac.res[0] += nnzdj+nnzpj;
         // update current time
         t += h; 
     }
     // call to ocp_path_jac for last point
     t = tf;
-    respj[0] = jac + (N-1)*(nnzdj+nnzpj); // w.r.t x1,u,p
-    exit = ocp_path_jac.eval(argpj, respj, iwpj, wpj, mempj); 
+    ocp_path_jac.res[0] = jac + (N-1)*(nnzdj+nnzpj); // w.r.t x1,u,p
+    exit = ocp_path_jac.eval(ocp_path_jac.arg, ocp_path_jac.res, ocp_path_jac.iw, ocp_path_jac.w, ocp_path_jac.mem); 
     // init pointers to x0,u0,xn,un,p
-    argbj[0] = z; // x0
-    argbj[1] = z + nx; // u0
-    argbj[2] = z + (N-1)*(nx+nu); // xn
-    argbj[3] = z + (N-1)*(nx+nu) + nx; // un
-    argbj[4] = z + N*(nx+nu); // p
+    ocp_bcs_jac.arg[0] = z; // x0
+    ocp_bcs_jac.arg[1] = z + nx; // u0
+    ocp_bcs_jac.arg[2] = z + (N-1)*(nx+nu); // xn
+    ocp_bcs_jac.arg[3] = z + (N-1)*(nx+nu) + nx; // un
+    ocp_bcs_jac.arg[4] = z + N*(nx+nu); // p
     // init pointer to b
-    resbj[0] = jac + (N-1)*(nnzdj+nnzpj) + nnzpj; // w.r.t x0,u0,xn,un,p
+    ocp_bcs_jac.res[0] = jac + (N-1)*(nnzdj+nnzpj) + nnzpj; // w.r.t x0,u0,xn,un,p
     // call to ocp_bcs_jac
-    exit = ocp_bcs_jac.eval(argbj, resbj, iwbj, wbj, membj);
+    exit = ocp_bcs_jac.eval(ocp_bcs_jac.arg, ocp_bcs_jac.res, ocp_bcs_jac.iw, ocp_bcs_jac.w, ocp_bcs_jac.mem);
 
     return exit;
 }
@@ -826,54 +826,50 @@ int OCPInterface::eval_hessian(
         int exit;
 
         // init pointers to x1,u,x2,p,sigma,lamc,lamf
-        arghi[1] = z + 0; // x1
-        arghi[2] = z + nx; // u
-        arghi[3] = z + (nx+nu); // x2
-        arghi[4] = z + N*(nx+nu); // p
-        arghi[6] = &sigma; // sigma
-        arghi[7] = lamg + nx; // lamc
-        arghi[8] = lamg; // lamf
-        arghi[9] = lamg + (N-1)*(nx+nc) + nc + nb; // lamq
+        ocp_hessi.arg[1] = z + 0; // x1
+        ocp_hessi.arg[2] = z + nx; // u
+        ocp_hessi.arg[3] = z + (nx+nu); // x2
+        ocp_hessi.arg[4] = z + N*(nx+nu); // p
+        ocp_hessi.arg[6] = &sigma; // sigma
+        ocp_hessi.arg[7] = lamg + nx; // lamc
+        ocp_hessi.arg[8] = lamg; // lamf
+        ocp_hessi.arg[9] = lamg + (N-1)*(nx+nc) + nc + nb; // lamq
         t = ti; // t
 
         // iterate over mesh intervals (k from 0 to N-2)
         for (int k = 0; k < N-1; ++k) {
             // update time step
             h = mesh[k] * (tf-ti);
-            // reset reshi
-            memset((void*) reshi[0], 0, nnzhi*sizeof(double));
+            // reset ocp_hessi.res
+            memset((void*) ocp_hessi.res[0], 0, nnzhi*sizeof(double));
             // call to ocp_hessi
-            exit = ocp_hessi.eval(arghi, reshi, iwhi, whi, memhi);
+            exit = ocp_hessi.eval(ocp_hessi.arg, ocp_hessi.res, ocp_hessi.iw, ocp_hessi.w, ocp_hessi.mem);
             // assign values
             for (int i = 0; i < nnzhi; ++i) {
                 int idx = khi[k*nnzhi + i]; // nz index
-                if (idx>=0) hess[idx] += reshi[0][i];
+                if (idx>=0) hess[idx] += ocp_hessi.res[0][i];
             }
             // update pointers (move forward)
-            arghi[1] += nx+nu;
-            arghi[2] += nx+nu;
-            arghi[3] += nx+nu;
-            arghi[7] += nx+nc;
-            arghi[8] += nx+nc;
+            ocp_hessi.arg[1] += nx+nu;
+            ocp_hessi.arg[2] += nx+nu;
+            ocp_hessi.arg[3] += nx+nu;
+            ocp_hessi.arg[7] += nx+nc;
+            ocp_hessi.arg[8] += nx+nc;
             // update current time
             t += h; 
         }
-
-        /** Eval OCP functions */
-        void eval_ocpfuncs(
-        );
-        arghb[5] = z + N*(nx+nu); // p
-        arghb[6] = &sigma; // sigma
-        arghb[7] = lamg + (N-1)*(nx+nc); // lamc
-        arghb[8] = lamg + (N-1)*(nx+nc) + nc; // lamb
-        // reset reshb
-        memset((void*) reshb[0], 0, nnzhb*sizeof(double));
+        ocp_hessb.arg[5] = z + N*(nx+nu); // p
+        ocp_hessb.arg[6] = &sigma; // sigma
+        ocp_hessb.arg[7] = lamg + (N-1)*(nx+nc); // lamc
+        ocp_hessb.arg[8] = lamg + (N-1)*(nx+nc) + nc; // lamb
+        // reset ocp_hessb.res
+        memset((void*) ocp_hessb.res[0], 0, nnzhb*sizeof(double));
         // call to ocp_hessb
-        exit = ocp_hessb.eval(arghb, reshb, iwhb, whb, memhb);
+        exit = ocp_hessb.eval(ocp_hessb.arg, ocp_hessb.res, ocp_hessb.iw, ocp_hessb.w, ocp_hessb.mem);
         // assign values
         for (int i = 0; i < nnzhb; ++i) {
             int idx = khb[i];
-            if (idx>=0) hess[idx] += reshb[0][i];
+            if (idx>=0) hess[idx] += ocp_hessb.res[0][i];
         }
         return exit;
     } else {
