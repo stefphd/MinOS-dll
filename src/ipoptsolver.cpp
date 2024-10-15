@@ -245,8 +245,10 @@ int IPOPTSolver::callSolve(
     SET_IPOPT_STR_OPTION(app, sb, "yes"); // suppress ipopt banner
     SET_IPOPT_INT_OPTION(app, file_print_level, 5);
     //if (ocpInterface->logfile.empty()) ocpInterface->logfile = "ipopt.log";
-    if (ocpInterface->logfile == "none") ocpInterface->logfile = ""; // no log file
-    SET_IPOPT_STR_OPTION(app, output_file, ocpInterface->logfile);
+    if (ocpInterface->logfile != "none")
+        SET_IPOPT_STR_OPTION(app, output_file, ocpInterface->logfile);
+    else 
+        SET_IPOPT_STR_OPTION(app, output_file, "");
 
     if (ocpInterface->check_lambda_guess())
         SET_IPOPT_STR_OPTION(app, warm_start_init_point, "yes");

@@ -22,9 +22,6 @@ int OCPInterface::solve(
     nlp_lib = load_nlplib("minos-" + nlpsolver);
     nlp_solve = reinterpret_cast<SolveFunc>(import_nlpsolve(nlp_lib));
     if (!nlp_solve) { return -1; }
-    
-    /* Lof filename */
-    if (logfile.empty()) this->logfile = name + ".log"; // default logfile name is <name>.log
 
     /* Call to solve */
     int status = (*nlp_solve)(this);

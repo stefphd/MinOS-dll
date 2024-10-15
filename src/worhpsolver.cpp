@@ -22,9 +22,7 @@ WORHPSolver::WORHPSolver(
 
     /* Redirect WORHP print to a log file */
     WORHPSolver::logfile = std::unique_ptr<std::ofstream>(new std::ofstream());
-    //if (ocpInterface->logfile.empty()) ocpInterface->logfile = "worhp.log";
-    if (ocpInterface->logfile == "none") ocpInterface->logfile = ""; // no log file
-    if (ocpInterface->logfile != "" )
+    if (ocpInterface->logfile != "none" )
         WORHPSolver::logfile->open(ocpInterface->logfile);
     SetWorhpPrint(WORHPSolver::print_logfile);
 

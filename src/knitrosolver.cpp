@@ -141,10 +141,11 @@ int KNITROSolver::callSolve(
     /* Set KNITRO option for log */
     KN_set_int_param(kc, KN_PARAM_OUTLEV, KN_OUTLEV_ITER);
     KN_set_int_param(kc, KN_PARAM_OUTMODE, KN_OUTMODE_FILE);
-    //if (ocpInterface->logfile.empty()) ocpInterface->logfile = "knitro.log";
-    if (ocpInterface->logfile == "none") ocpInterface->logfile = ""; // no log file
-    KN_set_char_param(kc, KN_PARAM_OUTNAME, ocpInterface->logfile.c_str());
-    
+    if (ocpInterface->logfile != "none")
+        KN_set_char_param(kc, KN_PARAM_OUTNAME, ocpInterface->logfile.c_str());
+    else
+        KN_set_char_param(kc, KN_PARAM_OUTNAME, "");
+
     /* Get dims */
     int nz = ocpInterface->nz;
     int ng = ocpInterface->ng;

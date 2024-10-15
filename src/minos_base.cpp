@@ -114,7 +114,8 @@ OCPInterface::OCPInterface(
         this->mesh[i] = 1.0/( (double) N - 1.0);
 
     // Set default options
-    this->max_iter = MAX_DEFAULT_ITER;
+    set_option(OCPInterface::MAX_ITER, MAX_DEFAULT_ITER);
+    set_option(OCPInterface::LOGFILE,  name + ".log");
 
     // Get dimensions of OCP
     get_sizes(ocp_path.spin,  1, &nx, NULL, NULL); // num of states
@@ -693,7 +694,8 @@ bool OCPInterface::set_option(
 ) {
     switch (optkey) {
         case OCPInterface::LOGFILE:
-            logfile = str;
+            if (str.empty() || (str == "")) logfile = name + ".log"; // set to default
+            else logfile = str;
             break;
         case OCPInterface::NLPSOLVER:
             if (str.empty()) nlpsolver = "ipopt"; // set to default
