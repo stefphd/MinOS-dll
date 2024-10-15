@@ -240,7 +240,7 @@ class OCP:
                 - flag_hessian: set to True to employ approximated Hessian (skip exact Hessian evaluation).
                 - display: set to False to turn off printing in standard output.
                 - print_itersol: print solution file every "print_itersol". 0 to disable.
-                - logfile: name of NLP log file. Use "" for default (<name>.log) and "none" for no log file.
+                - logfile: name of NLP log file (default <name>.log). Use "none" for no log file.
 
         Returns:
             None

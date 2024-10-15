@@ -34,8 +34,8 @@
 %                   options.mu_init: initial barrier parameter for interior-point NLP solvers (default 
 %                   depends on NLP solver selected) - OPTIONAL
 %                   options.outfile: name of output file, if any - OPTIONAL
-%                   options.logfile: name of NLP solver log file, '' for default name (`<problem.name>.log`) 
-%                   and `none` for no log file - OPTIONAL
+%                   options.logfile: name of NLP solver log file (default `<problem.name>.log`). 
+%                   Use `none` for no log file - OPTIONAL
 %                   options.print_itersol: iteration interval to print intermediate output file (default 
 %                   0, i.e. deactivated) - OPTIONAL 
 %                   options.dispay: display to monitor (default true, i.e. activated) - OPTIONAL

@@ -326,7 +326,7 @@ A number of optional settings are available:
 * `options.flag_hessian` (default `false`): set to `true` to use approximated Hessian; note that this option has no effect if `skip_hessian = false`, i.e. approximated Hessian is always used in such case;
 * `options.max_iter` (default 3000): maximum number of iterations;
 * `options.mu_init` (default depends on NLP solver selected): initial barrier parameter for the NLP solver (interior-point only, e.g. IPOPT);
-* `options.logfile` (default ''): name of NLP solver log file. Use '' for default name (which is `<problem.name>.log`) and `none` for no log file;
+* `options.logfile` (default `<problem.name>.log`): name of NLP solver log file. Use `none` for no log file;
 * `options.print_itersol` (default 0): integer number for the iteration interval to print an intermediate output file. Output file for final iteration is also printed. Use 0 to deactivate;
 * `options.outfile`: name of final output file, if any.
 * `options.display` (default `true`): set to `false` to turn off display to monitor.
