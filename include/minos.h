@@ -436,6 +436,75 @@ public:
     );
 
     /**
+     * \brief Gets the name.
+     * 
+     * Gets the name of the optimal-control problem.
+     * 
+     */
+    std::string get_name();
+
+    /**
+     * \brief Gets the initial and final times.
+     * 
+     * Gets the initial and final times of the optimal-control problem. Use NULL to not retrieve a result.
+     * 
+     * \param ti Initial time.
+     * \param tf Final time.
+     * 
+     */
+    void get_t(
+        double* ti = NULL,
+        double* tf = NULL
+    );
+
+    /**
+     * \brief Gets the auxdata.
+     * 
+     * Gets the auxdata of the optimal-control problem. 
+     * Allocation of the required memory should be performed by the user according to the length of the array.
+     * 
+     * \param auxdata Auxdata.
+     * 
+     */
+    void get_auxdata(
+        double* auxdata = NULL
+    );
+
+    /**
+     * \brief Gets the bounds.
+     * 
+     * Gets the bounds of the optimal-control problem. Use NULL to not retrieve a result.
+     * Allocation of the required memory should be performed by the user according to the length of the array.
+     * 
+     * \param lbx State lower bounds.
+     * \param ubx State upper bounds
+     * \param lbu Control lower bounds.
+     * \param ubu Control upper bounds.
+     * \param lbp Static parameter lower bounds.
+     * \param ubp Static parameter upper bounds.
+     * \param lbc Path constraint lower bounds.
+     * \param ubc Path constraint upper bounds.
+     * \param lbb Boundary condition lower bounds.
+     * \param ubb Boundary condition upper bounds.
+     * \param lbq Integral constraint lower bounds.
+     * \param ubq Integral constraint upper bounds.
+     */
+    void get_bounds(
+        double *lbx = NULL,
+        double *ubx = NULL,
+        double *lbu = NULL,
+        double *ubu = NULL,
+        double *lbp = NULL,
+        double *ubp = NULL,
+        double *lbc = NULL,
+        double *ubc = NULL,
+        double *lbb = NULL,
+        double *ubb = NULL,
+        double *lbq = NULL,
+        double *ubq = NULL
+    );
+
+    /**
      * \brief Gets the mesh.
      * 
      * Gets the mesh fractions of the optimal-control problem.
@@ -561,6 +630,31 @@ public:
     bool set_option(
         int optkey,
         std::string str
+    );
+
+    /**
+     * \brief Gets a value option.
+     * 
+     * Gets a valued option for the solver. See OCPInterface::Opt for a list of the available options.
+     * 
+     * \param optkey Keyword for the option to set, see also OCPInterface::Opt.
+     * \param val Value of the option.
+     */
+    void get_option(
+        int optkey,
+        double* val
+    );
+
+    /** \brief Gets a string option.
+     * 
+     * Gets a string option for the solver. See OCPInterface::Opt for a list of the available options.
+     * 
+     * \param optkey Keyword for the option to set.
+     * \param str String of the option.
+     */
+    void get_option(
+        int optkey,
+        std::string& str
     );
 
     /**

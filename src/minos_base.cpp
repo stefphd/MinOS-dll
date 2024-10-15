@@ -96,6 +96,14 @@ OCPInterface::OCPInterface(
     this->ti = ti; // initial time
     this->tf = tf; // final time
 
+    // Check N
+    if (N < 2) {
+        std::ostringstream strerr;
+        strerr << "Expecting number of mesh 'N' greater than 1 (given " << N << ")";
+        throw std::runtime_error(strerr.str());
+        return;
+    }
+
     // Load dynamic library <name> with OCP functions
     ocp_lib = load_ocplib(name);
     if (!ocp_lib) { return; }
@@ -104,6 +112,9 @@ OCPInterface::OCPInterface(
     this->mesh = new double[N-1];
     for (int i = 0; i < N-1; ++i)
         this->mesh[i] = 1.0/( (double) N - 1.0);
+
+    // Set default options
+    this->max_iter = MAX_DEFAULT_ITER;
 
     // Get dimensions of OCP
     get_sizes(ocp_path.spin,  1, &nx, NULL, NULL); // num of states
@@ -151,6 +162,73 @@ OCPInterface::OCPInterface(
 
 /** Destructor */
 OCPInterface::~OCPInterface() {
+    // free data
+    if (x0)  {
+        delete[] x0;     delete[] u0;     delete[] p0; 
+        delete[] lam_x0; delete[] lam_u0; delete[] lam_p0; 
+        delete[] lam_f0; delete[] lam_c0; delete[] lam_b0; delete[] lam_q0;
+    }
+    if (lbx)  {
+        delete[] lbx; delete[] ubx; 
+        delete[] lbu; delete[] ubu; 
+        delete[] lbp; delete[] ubp; 
+        delete[] lbc; delete[] ubc; 
+        delete[] lbb; delete[] ubb; 
+        delete[] lbq; delete[] ubq;
+    }
+    if (auxdata)  delete[] auxdata;
+    if (z_opt) {
+        delete[] z_opt;    delete[] g_opt;
+        delete[] lamz_opt; delete[] lamg_opt;
+        delete[] grad_opt; delete[] jac_opt;
+    }
+    if (hess_opt) delete[] hess_opt;
+    // free cost gradient mem
+    if (irrcg) {
+        delete[] irrcg;  delete[] irbcg; delete[] krcg; delete[] kbcg;
+        delete[] ocp_runcost_grad.res[0]; delete[] ocp_bcscost_grad.res[0]; 
+    }
+    // free jacobian mem
+    if (irdj) {
+        delete[] irdj; delete[] jcdj; 
+        delete[] irpj; delete[] jcpj; 
+        delete[] irbj; delete[] jcbj; 
+        delete[] irqj; delete[] jcqj; 
+        delete[] ocp_int.res[0]; delete[] ocp_int_jac.res[0]; 
+        delete[] kjq;  delete[] kj;
+    }
+    // free hessian mem
+    if (irhb) {
+        delete[] irhb;  delete[] jchb; 
+        delete[] irhi;  delete[] jchi; 
+        delete[] ocp_hessb.res[0]; delete[] ocp_hessi.res[0]; 
+        delete[] khb;   delete[] khi; delete[] kh;
+    }
+    // free history if any
+    if (obj_history)   delete[] obj_history;
+    if (infpr_history) delete[] infpr_history;
+    if (infdu_history) delete[] infdu_history;
+    // free mesh
+    delete[] mesh;
+    // free CASADI mem
+    dealloc_casadi_mem(&ocp_runcost);
+    dealloc_casadi_mem(&ocp_bcscost);
+    dealloc_casadi_mem(&ocp_dyn);
+    dealloc_casadi_mem(&ocp_path);
+    dealloc_casadi_mem(&ocp_bcs);
+    dealloc_casadi_mem(&ocp_int);
+    dealloc_casadi_mem(&ocp_runcost_grad);
+    dealloc_casadi_mem(&ocp_bcscost_grad);
+    dealloc_casadi_mem(&ocp_dyn_jac);
+    dealloc_casadi_mem(&ocp_path_jac);
+    dealloc_casadi_mem(&ocp_bcs_jac);
+    dealloc_casadi_mem(&ocp_int_jac);
+    if (ocp_hessb.eval && ocp_hessi.eval) {
+        dealloc_casadi_mem(&ocp_hessb);
+        dealloc_casadi_mem(&ocp_hessi);
+    }
+    // free OCP library
+    free_library(ocp_lib);
 }
 
 void OCPInterface::get_dims(
@@ -177,6 +255,10 @@ void OCPInterface::get_dims(
     if (nnzj) *nnzj = this->nnzj;
     if (nnzh) *nnzh = this->nnzh;
     if (na) *na = (this->na>=0) ? this->na : 0;
+}
+
+std::string OCPInterface::get_name() {
+    return name;
 }
 
 int OCPInterface::get_N() {
@@ -267,7 +349,7 @@ void OCPInterface::set_bounds(
 void OCPInterface::set_auxdata(
     double* auxdata
 ) {
-    if (auxdata) 
+    if (auxdata && (na>=0)) 
         memcpy(this->auxdata, auxdata, na*sizeof(double));
     if (na >= 0) {
         ocp_runcost.arg[6] = this->auxdata;
@@ -289,6 +371,13 @@ void OCPInterface::set_auxdata(
     }
 }
 
+void OCPInterface::get_auxdata(
+    double* auxdata
+) {
+    if (auxdata && (na>=0))
+        memcpy(auxdata, this->auxdata, na*sizeof(double));
+}
+
 void OCPInterface::set_mesh(
     double *mesh
 ) {
@@ -303,6 +392,43 @@ void OCPInterface::get_mesh(
     double *mesh
 ) {
     if (mesh) memcpy(mesh, this->mesh, (N-1)*sizeof(double));
+}
+
+
+void OCPInterface::get_t(
+    double* ti,
+    double* tf
+) {
+    if (ti) *ti = this->ti;
+    if (tf) *tf = this->tf;
+}
+
+void OCPInterface::get_bounds(
+    double *lbx,
+    double *ubx,
+    double *lbu,
+    double *ubu,
+    double *lbp,
+    double *ubp,
+    double *lbc,
+    double *ubc,
+    double *lbb,
+    double *ubb,
+    double *lbq,
+    double *ubq
+) {
+    if (lbx && this->lbx) memcpy(lbx,  this->lbx, nx*sizeof(double));
+    if (ubx && this->ubx) memcpy(ubx,  this->ubx, nx*sizeof(double));
+    if (lbu && this->lbu) memcpy(lbu,  this->lbu, nu*sizeof(double));
+    if (ubu && this->ubu) memcpy(ubu,  this->ubu, nu*sizeof(double));
+    if (lbp && this->lbp) memcpy(lbp,  this->lbp, np*sizeof(double));
+    if (ubp && this->ubp) memcpy(ubp,  this->ubp, np*sizeof(double));
+    if (lbc && this->lbc) memcpy(lbc,  this->lbc, nc*sizeof(double));
+    if (ubc && this->ubc) memcpy(ubc,  this->ubc, nc*sizeof(double));
+    if (lbb && this->lbb) memcpy(lbb,  this->lbb, nb*sizeof(double));
+    if (ubb && this->ubb) memcpy(ubb,  this->ubb, nb*sizeof(double));
+    if (lbb && this->lbq) memcpy(lbq,  this->lbq, nq*sizeof(double));
+    if (ubb && this->ubq) memcpy(ubq,  this->ubq, nq*sizeof(double));
 }
 
 void OCPInterface::get_sol(
@@ -579,6 +705,43 @@ bool OCPInterface::set_option(
     return true;
 }
 
+void OCPInterface::get_option(
+    int optkey,
+    double* val
+) {
+    switch (optkey) {
+        case OCPInterface::MAX_ITER:
+            *val = max_iter;
+            break;
+        case OCPInterface::MU_INIT:
+            *val = mu_init;
+            break;
+        case OCPInterface::FLAG_HESSIAN:
+            *val = (double) flag_hessian;
+            break;
+        case OCPInterface::DISPLAY:
+            *val = (double) display;
+            break;
+        case OCPInterface::PRINT_ITERSOL:
+            *val = (double) print_itersol;
+            break;
+    }
+}
+
+void OCPInterface::get_option(
+    int optkey,
+    std::string& str
+) {
+    switch (optkey) {
+        case OCPInterface::LOGFILE:
+            str = logfile;
+            break;
+        case OCPInterface::NLPSOLVER:
+            str = nlpsolver;
+            break;
+    }
+}
+
 void OCPInterface::get_cpu_time(
     double& tcpu_tot,
     double& tcpu_alg,
@@ -588,6 +751,7 @@ void OCPInterface::get_cpu_time(
     tcpu_alg = (this->tcpu_eval != NAN) ? (this->tcpu_tot - this->tcpu_eval) : this->tcpu_tot;
     tcpu_eval = (this->tcpu_eval != NAN) ? this->tcpu_eval : 0;
 }
+
 void OCPInterface::get_cpu_time(
     double* tcpu_tot,
     double* tcpu_alg,
