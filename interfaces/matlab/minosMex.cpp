@@ -25,7 +25,7 @@
                                     { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongSize","Expecting dimension %d-by-%d for '%s' (found %d-by-%d).",n,m,#x,mxGetM(x),mxGetN(x)); }
 #define ASSERTNUMEL(x,n,p)      if ( (x) && (mxGetNumberOfElements(x) != n) ) \
                                     { if (p) delete p; mexErrMsgIdAndTxt("minosMex:wrongSize","Expecting %d elements for '%s' (found %d).",n,#x,mxGetNumberOfElements(x)); }
-#define ASSERTSTRING(x,n,p)     if ( (x) && (!mxIsChar(x) || mxGetM(x) != n) ) \
+#define ASSERTSTRING(x,n,p)     if ( (x) && (!mxIsChar(x) || mxGetM(x) < n) ) \
                                     { if (p) delete p; mexErrMsgIdAndTxt("minosMex:notString","Expecting string for '%s'.", #x); }
 #define ASSERTOPTNUMEL(x,n,p)   if ( !(x) && (n > 0) ) \
                                     { if (p) delete p; mexErrMsgIdAndTxt("minosMex:missingField", "Expecting field '%s' with %d.", #x, n); } \
@@ -144,8 +144,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
     GETFIELD(input, mesh, true, (OCPInterface*) NULL);
 
     /* Check name, N, ti, tf */
-    ASSERTSTRING(name,1, (OCPInterface*) NULL);
-    ASSERTPOSINTSCALAR(N, (OCPInterface*) NULL);
+    ASSERTSTRING(name, 1, (OCPInterface*) NULL);
+    //ASSERTPOSINTSCALAR(N, (OCPInterface*) NULL); // checked in constructor
     ASSERTSCALAR(ti, (OCPInterface*) NULL);
     ASSERTSCALAR(tf, (OCPInterface*) NULL);
     std::string namestr(mxArrayToString(name));
@@ -248,18 +248,9 @@ void mexFunction( int nlhs, mxArray *plhs[],
     ASSERTLOGICAL(flag_hessian, ocp);
     ASSERTLOGICAL(display, ocp);
     ASSERTNONEGINTSCALAR(print_itersol, ocp);
-    ASSERTSTRING(outfile,1, ocp);
-    ASSERTSTRING(logfile,0, ocp);
-    ASSERTSTRING(nlpsolver,1, ocp);
-
-    /* Set defaults */
-    if (!max_iter) max_iter = mxCreateDoubleScalar(3000); // set default
-    if (!mu_init) mu_init = mxCreateDoubleScalar(-1); // set default
-    if (!flag_hessian) flag_hessian = mxCreateLogicalScalar(false); // set default
-    if (!display) display = mxCreateLogicalScalar(true); // set default
-    if (!print_itersol) print_itersol = mxCreateDoubleScalar(0); // set default
-    if (!logfile) logfile = mxCreateString(""); // set default
-    if (!nlpsolver) nlpsolver = mxCreateString("ipopt"); // set default
+    ASSERTSTRING(outfile, 1, ocp);
+    ASSERTSTRING(logfile, 0, ocp);
+    ASSERTSTRING(nlpsolver, 1, ocp);
 
     /* Set bounds */
     ocp->set_bounds(GETPTR(lbx), GETPTR(ubx),
@@ -284,13 +275,13 @@ void mexFunction( int nlhs, mxArray *plhs[],
     ocp->set_mesh(GETPTR(mesh));
 
     /* Set options */
-    ocp->set_option(OCPInterface::MAX_ITER, GETVAL(max_iter));
-    ocp->set_option(OCPInterface::MU_INIT, GETVAL(mu_init));
-    ocp->set_option(OCPInterface::FLAG_HESSIAN, GETVAL(flag_hessian));
-    ocp->set_option(OCPInterface::DISPLAY, GETVAL(display));
-    ocp->set_option(OCPInterface::PRINT_ITERSOL, GETVAL(print_itersol));
-    ocp->set_option(OCPInterface::LOGFILE, mxArrayToString(logfile));
-    ocp->set_option(OCPInterface::NLPSOLVER, mxArrayToString(nlpsolver));
+    if (max_iter)       ocp->set_option(OCPInterface::MAX_ITER, GETVAL(max_iter));
+    if (mu_init)        ocp->set_option(OCPInterface::MU_INIT, GETVAL(mu_init));
+    if (flag_hessian)   ocp->set_option(OCPInterface::FLAG_HESSIAN, GETVAL(flag_hessian));
+    if (display)        ocp->set_option(OCPInterface::DISPLAY, GETVAL(display));
+    if (print_itersol)  ocp->set_option(OCPInterface::PRINT_ITERSOL, GETVAL(print_itersol));
+    if (logfile)        ocp->set_option(OCPInterface::LOGFILE, mxArrayToString(logfile));
+    if (nlpsolver)      ocp->set_option(OCPInterface::NLPSOLVER, mxArrayToString(nlpsolver));
 
     /* Create result output matrices */
     CREATEDOUBLE(objval, 1, 1);
@@ -364,6 +355,36 @@ void mexFunction( int nlhs, mxArray *plhs[],
     CREATEDOUBLE(infpr_history, static_cast<size_t>(num_iter)+1, 1);
     CREATEDOUBLE(infdu_history, static_cast<size_t>(num_iter)+1, 1);
     ocp->get_history(GETPTR(obj_history), GETPTR(infpr_history), GETPTR(infdu_history));
+
+    /* Get employed options */
+    if (!max_iter) {
+        max_iter = mxCreateDoubleScalar(0);
+        ocp->get_option(OCPInterface::MAX_ITER, GETPTR(max_iter));
+    }
+    if (!flag_hessian) {
+        double val;
+        ocp->get_option(OCPInterface::FLAG_HESSIAN, &val);
+        flag_hessian = mxCreateLogicalScalar(val>0);
+    }
+    if (!display) {
+        double val;
+        ocp->get_option(OCPInterface::DISPLAY, &val);
+        display = mxCreateLogicalScalar(val>0);
+    }
+    if (!print_itersol) {
+        print_itersol = mxCreateDoubleScalar(0);
+        ocp->get_option(OCPInterface::PRINT_ITERSOL, GETPTR(print_itersol));
+    }
+    if (!logfile) {
+        std::string str;
+        ocp->get_option(OCPInterface::LOGFILE, str);
+        logfile = mxCreateString(str.c_str());
+    }
+    if (!nlpsolver) {
+        std::string str;
+        ocp->get_option(OCPInterface::NLPSOLVER, str);
+        nlpsolver = mxCreateString(str.c_str());
+    }
 
     /* Create stats struct */
     const char* stats_fields[] = {"num_iter", "obj_history", "infpr_history", "infdu_history", "mu_curr", 
