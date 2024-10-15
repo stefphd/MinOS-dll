@@ -420,7 +420,7 @@ std::string read_luastring(lua_State* L, int index, const char* key) {
 }
 
 double read_luanumber(lua_State* L, int index, const char* key) {
-    int val;
+    double val;
     lua_getfield(L, index, key); // Get the number associated with the key
     if (!lua_isnumber(L, -1)) {
         std::ostringstream strerr;
@@ -430,6 +430,21 @@ double read_luanumber(lua_State* L, int index, const char* key) {
         return val;
     }
     val = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return val;
+}
+
+int read_luainteger(lua_State* L, int index, const char* key) {
+    int val;
+    lua_getfield(L, index, key); // Get the number associated with the key
+    if (!lua_isinteger(L, -1)) {
+        std::ostringstream strerr;
+        strerr << "Expecting integer for '" << key << "'";
+        lua_pop(L, 1); // Pop the invalid value
+        throw std::runtime_error(strerr.str());
+        return val;
+    }
+    val = lua_tointeger(L, -1);
     lua_pop(L, 1);
     return val;
 }
@@ -499,7 +514,7 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
     double mu_init = -1;
     // Get problem definitions
     name = read_luastring(L, index, "name");
-    N = (int) read_luanumber(L, index, "N");
+    N = read_luainteger(L, index, "N");
     ti = read_luanumber(L, index, "ti");
     tf = read_luanumber(L, index, "tf");
     // Create OCP object
@@ -597,15 +612,15 @@ int read_luaproblem(lua_State *L, int index, OCPInterface **ocp, std::string &ou
         if (exist_luakey(L, "flag_hessian"))
             flag_hessian = (int) read_luabool(L, -1, "flag_hessian");
         if (exist_luakey(L, "max_iter"))
-            max_iter = (int) read_luanumber(L, -1, "max_iter");
+            max_iter = read_luainteger(L, -1, "max_iter");
         if (exist_luakey(L, "mu_init"))
-            mu_init = (double) read_luanumber(L, -1, "mu_init");
+            mu_init = read_luanumber(L, -1, "mu_init");
         if (exist_luakey(L, "logfile"))
             logfile = read_luastring(L, -1, "logfile");
         if (exist_luakey(L, "outfile"))
             outfile = read_luastring(L, -1, "outfile");
         if (exist_luakey(L, "print_itersol"))
-            print_itersol = (int) read_luanumber(L, -1, "print_itersol");
+            print_itersol = read_luainteger(L, -1, "print_itersol");
         if (exist_luakey(L, "display"))
             display = (int) read_luabool(L, -1, "display");
         lua_pop(L, 1); // pop options   
@@ -686,19 +701,44 @@ void write_luanumber(lua_State *L, const char *key, double val) {
     lua_settable(L, -3); // set main[key] = val
 }
 
-void write_luasolution(lua_State *L, OCPInterface* ocp) {
-    // Get dims
-    int nx, nu, np, nc, nb, nq, nz, ng, nnzj, nnzh;
-    int N = ocp->get_N();
-    ocp->get_dims(&nx, &nu, &np, &nc, &nb, &nq, &nz, &ng, &nnzj, &nnzh);
+void write_luastring(lua_State *L, const char *key, std::string str) {
+    lua_pushstring(L, key);
+    lua_pushstring(L, str.c_str());
+    lua_settable(L, -3); // set main[key] = str
+}
+
+void write_luabool(lua_State *L, const char *key, bool val) {
+    lua_pushstring(L, key);
+    lua_pushboolean(L, val);
+    lua_settable(L, -3); // set main[key] = val
+}
+
+void write_luainteger(lua_State *L, const char *key, int val) {
+    lua_pushstring(L, key);
+    lua_pushinteger(L, val);
+    lua_settable(L, -3); // set main[key] = val
+}
+
+void write_luasolution(lua_State *L, OCPInterface* ocp, std::string outfile) {
     // Init variables
-    double objval, m, ttot, talg, teval, mu_curr;
-    int num_iter = ocp->get_num_iter();
+    int nx, nu, np, nc, nb, nq, nz, ng, nnzj, nnzh, na, N, num_iter;
+    std::string name, nlpsolver, logfile;
+    double ti, tf, objval, m, ttot, talg, teval, mu_curr, flag_hessian, print_itersol, max_iter, display;
+    // Get
+    name = ocp->get_name();
+    N = ocp->get_N();
+    ocp->get_t(&ti, &tf);
+    ocp->get_dims(&nx, &nu, &np, &nc, &nb, &nq, &nz, &ng, &nnzj, &nnzh, &na);
+    num_iter = ocp->get_num_iter();
+    // Init variables
     std::vector<double> t(N), x(nx*N), u(nu*N), p(np),
                         lamx(nx*N), lamu(nu*N), lamp(np),
                         lamf(nx*(N-1)), lamc(nc*N), lamb(nb), lamq(nq), 
-                        f(nx*(N-1)), c(nc*N), b(nb), q(nq), l(N-1),
-                        obj_history(num_iter+1), infpr_history(num_iter+1), infdu_history(num_iter+1);
+                        f(nx*(N-1)), c(nc*N), b(nb), q(nq), l(N-1);
+    std::vector<double> obj_history(num_iter+1), infpr_history(num_iter+1), infdu_history(num_iter+1);
+    std::vector<double> lbx(nx), ubx(nx), lbu(nu), ubu(nu), lbp(np), ubp(np),
+                        lbc(nc), ubc(nc), lbb(nb), ubb(nb), lbq(nq), ubq(nq);
+    std::vector<double> auxdata(na), mesh(N-1);
     // Get solution
     ocp->get_sol(&objval, t.data(),
             x.data(), u.data(), p.data(),
@@ -709,6 +749,16 @@ void write_luasolution(lua_State *L, OCPInterface* ocp) {
     ocp->get_cpu_time(ttot, talg, teval);
     ocp->get_history(obj_history.data(), infpr_history.data(), infdu_history.data());
     mu_curr = ocp->get_mu_curr();
+    ocp->get_bounds(lbx.data(), ubx.data(), lbu.data(), ubu.data(), lbp.data(), ubp.data(), 
+                    lbc.data(), ubc.data(), lbb.data(), ubb.data(), lbq.data(), ubq.data());
+    ocp->get_auxdata(auxdata.data());
+    ocp->get_mesh(mesh.data());
+    ocp->get_option(OCPInterface::NLPSOLVER, nlpsolver);
+    ocp->get_option(OCPInterface::LOGFILE, logfile);
+    ocp->get_option(OCPInterface::FLAG_HESSIAN, &flag_hessian);
+    ocp->get_option(OCPInterface::PRINT_ITERSOL, &print_itersol);
+    ocp->get_option(OCPInterface::MAX_ITER, &max_iter);
+    ocp->get_option(OCPInterface::DISPLAY, &display);
     // Instantiate new empty table
     lua_newtable(L);
     // Write solution
@@ -747,7 +797,61 @@ void write_luasolution(lua_State *L, OCPInterface* ocp) {
     write_luanumber(L, "teval", teval);
     lua_settable(L, -3); // set main["stats"] = stats
     // Write next_problem
-    // TODO
+    lua_pushstring(L, "next_problem");
+    lua_newtable(L);
+    write_luastring(L, "name", name);
+    write_luainteger(L, "N", N);
+    write_luanumber(L, "ti", ti);
+    write_luanumber(L, "tf", tf);
+    // guess table
+    lua_pushstring(L, "guess");
+    lua_newtable(L);
+    write_luamatrix(L, "x", vec_to_mat(x, nx, N));
+    write_luamatrix(L, "u", vec_to_mat(u, nu, N));
+    write_luavector(L, "p", p);
+    write_luamatrix(L, "lam_x", vec_to_mat(lamx, nx, N));
+    write_luamatrix(L, "lam_u", vec_to_mat(lamu, nu, N));
+    write_luavector(L, "lam_p", lamp);
+    write_luamatrix(L, "lam_f", vec_to_mat(lamf, nx, N-1));
+    write_luamatrix(L, "lam_c", vec_to_mat(lamc, nc, N));
+    write_luavector(L, "lam_b", lamb);
+    write_luavector(L, "lam_q", lamq);
+    lua_settable(L, -3); // set next_problem["guess"] = guess
+    // bound table
+    lua_pushstring(L, "bounds");
+    lua_newtable(L);
+    write_luavector(L, "lbx", lbx);
+    write_luavector(L, "ubx", ubx);
+    write_luavector(L, "lbu", lbu);
+    write_luavector(L, "ubu", ubu);
+    write_luavector(L, "lbp", lbp);
+    write_luavector(L, "ubp", ubp);
+    write_luavector(L, "lbc", lbc);
+    write_luavector(L, "ubc", ubc);
+    write_luavector(L, "lbb", lbb);
+    write_luavector(L, "ubb", ubb);
+    write_luavector(L, "lbq", lbq);
+    write_luavector(L, "ubq", ubq);
+    lua_settable(L, -3); // set next_problem["bounds"] = bounds
+    // auxdata table
+    write_luavector(L, "auxdata", auxdata);
+    // mesh table
+    write_luavector(L, "mesh", mesh);
+    // options table
+    lua_pushstring(L, "options");
+    lua_newtable(L);
+    write_luastring(L, "nlpsolver", nlpsolver);
+    write_luastring(L, "logfile", logfile);
+    write_luanumber(L, "mu_init", mu_curr);
+    write_luainteger(L, "max_iter", max_iter);
+    write_luainteger(L, "print_itersol", print_itersol);
+    write_luabool(L, "flag_hessian", (bool) flag_hessian);
+    write_luabool(L, "display", (bool) display);
+    if (outfile.size()) {
+        write_luastring(L, "outfile", outfile);
+    }
+    lua_settable(L, -3); // set next_problem["options"] = options
+    lua_settable(L, -3); // set main["next_problem"] = next_problem
 }
 
 int build(std::string cc, std::string csource, std::string outfile, 
@@ -914,7 +1018,7 @@ int run_solve(lua_State *L) {
         return luaL_error(L, "%s", e.what()); // pass error to LUA
     }
     // Write solution
-    write_luasolution(L, ocp);
+    write_luasolution(L, ocp, outfile);
     // Write outfile if required
     if (outfile.size()) {
         std::ofstream outstream;
