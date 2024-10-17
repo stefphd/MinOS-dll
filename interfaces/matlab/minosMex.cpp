@@ -303,6 +303,9 @@ void mexFunction( int nlhs, mxArray *plhs[],
     CREATEDOUBLE(lopt, 1, ( static_cast<size_t>((int) GETVAL(N)) - 1));
     CREATEDOUBLE(mopt, 1, 1);
     CREATEDOUBLE(meshopt, 1, ( static_cast<size_t>((int) GETVAL(N)) - 1));
+    CREATEDOUBLE(vj, nnzj, 1); CREATEINT32(irj, nnzj, 1); CREATEINT32(jcj, nnzj, 1);
+    CREATEDOUBLE(vh, nnzh, 1); CREATEINT32(irh, nnzj, 1); CREATEINT32(jch, nnzj, 1);
+    
 
     /* Call NLP solver */
     int status;
@@ -314,15 +317,29 @@ void mexFunction( int nlhs, mxArray *plhs[],
         delete ocp;
         mexErrMsgIdAndTxt("minosMex:loadLibFailed","%s", e.what());
     }
-
+    
     /* Get solution */
     ocp->get_sol(GETPTR(objval), GETPTR(t), 
                  GETPTR(xopt), GETPTR(uopt), GETPTR(popt),
                  GETPTR(lam_xopt), GETPTR(lam_uopt), GETPTR(lam_popt),
                  GETPTR(lam_fopt), GETPTR(lam_copt), GETPTR(lam_bopt), GETPTR(lam_qopt),
                  GETPTR(fopt), GETPTR(copt), GETPTR(bopt), GETPTR(qopt), 
-                 GETPTR(lopt), GETPTR(mopt)
+                 GETPTR(lopt), GETPTR(mopt),
+                 NULL, NULL, NULL,
+                 (int*) GETPTR(irj), (int*) GETPTR(jcj), GETPTR(vj),
+                 (int*) GETPTR(irh), (int*) GETPTR(jch), GETPTR(vh)
                  );
+    
+    /* Create sparse matrices */
+    CREATESPARSE(jac, ng, nz, nnzj); 
+    CREATESPARSE(hess, nz, nz, nnzh); 
+    // convert COO to CSC format
+    OCPInterface::coo2csc(ng, nz, nnzj, 
+                         (int*) GETPTR(irj), (int*) GETPTR(jcj), GETPTR(vj),
+                         GETIR(jac), GETJC(jac), GETPTR(jac));
+    OCPInterface::coo2csc(nz, nz, nnzh, 
+                         (int*) GETPTR(irh), (int*) GETPTR(jch), GETPTR(vh),
+                         GETIR(hess), GETJC(hess), GETPTR(hess));
 
     /* Get mesh */
     ocp->get_mesh(GETPTR(meshopt));
@@ -388,10 +405,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
 
     /* Create stats struct */
     const char* stats_fields[] = {"num_iter", "obj_history", "infpr_history", "infdu_history", "mu_curr", 
-                                  "nz", "ng", "nnzj", "nnzh", 
+                                  "nz", "ng", "nnzj", "nnzh", "jac", "hess",
                                   "ttot", "talg", "teval"};
     mxArray* stats_vars[] = {mxCreateDoubleScalar(num_iter), obj_history, infpr_history, infdu_history, mxCreateDoubleScalar(mu_curr), 
-                             mxCreateDoubleScalar(nz), mxCreateDoubleScalar(ng), mxCreateDoubleScalar(nnzj), mxCreateDoubleScalar(nnzh), 
+                             mxCreateDoubleScalar(nz), mxCreateDoubleScalar(ng), mxCreateDoubleScalar(nnzj), mxCreateDoubleScalar(nnzh),
+                             jac, hess, 
                              mxCreateDoubleScalar(ttot), mxCreateDoubleScalar(talg), mxCreateDoubleScalar(teval)};
     CREATESTRUCT(stats, 1, 1, sizeof(stats_fields)/sizeof(void*), stats_fields);
     SETFIELDS(stats, stats_fields, stats_vars);

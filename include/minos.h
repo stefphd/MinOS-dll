@@ -368,11 +368,11 @@ public:
      * \param gradx_opt NLP cost gradient w.r.t. the state, specified as an array of length `N*nx`, with `gradx_opt[nx*k+i]` the gradient w.r.t. the i-th state at the k-th mesh point.
      * \param gradu_opt NLP cost gradient w.r.t. the control, specified as an array of length `N*nu`, with `gradu_opt[nu*k+i]` the gradient w.r.t. the i-th control at the k-th mesh point.
      * \param gradp_opt NLP cost gradient w.r.t. the static parameter, specified as an array of length `np`.
-     * \param irj Row indexes of non-zero elements of NLP Jacobian, specified as an array of length `nnzj`. CSC format is used.
-     * \param jcj Column indexes of non-zero elements of NLP Jacobian, specified as an array of length `nnzj`. CSC format is used.
+     * \param irj Row indexes of non-zero elements of NLP Jacobian, specified as an array of length `nnzj`. COO format is used.
+     * \param jcj Column indexes of non-zero elements of NLP Jacobian, specified as an array of length `nnzj`. COO format is used.
      * \param jac Values of non-zero elements of NLP Jacobian, specified as an array of length `nnzj`.
-     * \param irh Row indexes of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`. CSC format is used.
-     * \param jch Row indexes of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`. CSC format is used.
+     * \param irh Row indexes of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`. COO format is used.
+     * \param jch Row indexes of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`. COO format is used.
      * \param hess Values of non-zero elements of NLP Lagragian Hessian, specified as an array of length `nnzh`.
      */
     void get_sol(
@@ -383,8 +383,8 @@ public:
         double *f_opt = NULL, double *c_opt = NULL, double *b_opt = NULL, double *q_opt = NULL,
         double *l_opt = NULL, double *m_opt = NULL,
         double *gradx_opt = NULL, double *gradu_opt = NULL, double *gradp_opt = NULL,
-        size_t *irj = NULL, size_t *jcj = NULL, double *jac = NULL,
-        size_t *irh = NULL, size_t *jch = NULL, double *hess = NULL
+        int *irj = NULL, int *jcj = NULL, double *jac = NULL,
+        int *irh = NULL, int *jch = NULL, double *hess = NULL
     );
 
     /**
@@ -683,6 +683,27 @@ public:
         bool (*ext_int_funptr)(void)
     );
 
+    /**
+     * \brief Converts matrix from COO to CSC formats
+     * 
+     * Converts a sparse matrix from coordinate format (COO) to compressed sparse column (CSC) format.
+     * 
+     * \param n Numver of rows.
+     * \param m Number of columns.
+     * \param nnz Number of non-zero values.
+     * \param ir1 Row indexes (COO).
+     * \param jc1 Column indexes (COO).
+     * \param v1 Non-zero values (COO).
+     * \param ir2 Row indexes (CSC).
+     * \param jc2 Column indexes (CSC).
+     * \param v2 Non-zero values (CSC).
+     */
+    static void coo2csc(
+        int n, int m, int nnz, 
+        int *ir1, int *jc1, double *v1, // COO format
+        size_t *ir2, size_t *jc2, double *v2  // CSC format
+    );
+
 private:
 
     /** Set optimal solution as guess */
@@ -858,13 +879,6 @@ private:
         int id,
         int *ir,
         int *jc
-    );
-
-    /** Convert sparse matric from COO (i.e. tripled) format to CSC (i.e. column compressed) format */
-    static void coo2csc(
-        int n, int m, int nnz, 
-        int *ir1, int *jc1, double *v1, // COO format
-        size_t *ir2, size_t *jc2, double *v2  // CSC format
     );
 
     /** Allocate CASADI memory */

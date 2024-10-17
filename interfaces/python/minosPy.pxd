@@ -15,7 +15,7 @@ cdef extern from "minos.h":
         void set_auxdata(double* auxdata)
         void set_mesh(double* mesh)
         int solve() except +
-        void get_sol(double *J_opt, double *t, double *x_opt, double *u_opt, double *p_opt, double *lamx_opt, double *lamu_opt, double *lamp_opt, double *lamf_opt, double *lamc_opt, double *lamb_opt, double* lam_qopt, double *f_opt, double *c_opt, double *b_opt, double* q_opt, double *l_opt, double *m_opt, double *gradx_opt, double *gradu_opt, double *gradp_opt, size_t *irj, size_t *jcj, double *jac, size_t *irh, size_t *jch, double *hess)
+        void get_sol(double *J_opt, double *t, double *x_opt, double *u_opt, double *p_opt, double *lamx_opt, double *lamu_opt, double *lamp_opt, double *lamf_opt, double *lamc_opt, double *lamb_opt, double* lam_qopt, double *f_opt, double *c_opt, double *b_opt, double* q_opt, double *l_opt, double *m_opt, double *gradx_opt, double *gradu_opt, double *gradp_opt, int *irj, int *jcj, double *jac, int *irh, int *jch, double *hess)
         void get_mesh(double* mesh)
         string toString()
         void get_cpu_time(double* tcpu_tot, double* tcpu_alg, double* tcpu_eval)

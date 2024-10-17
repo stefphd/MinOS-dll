@@ -684,6 +684,39 @@ void write_luamatrix(lua_State *L, const char *key, std::vector<std::vector<doub
     lua_settable(L, -3); // set main[key] = table
 }
 
+void write_luasparsematrix(lua_State *L, const char *key, std::vector<int> ir,  std::vector<int> jc, std::vector<double> v) {
+    lua_pushstring(L, key);
+    lua_newtable(L);
+    // set ir
+    lua_pushnumber(L, 1);
+    lua_newtable(L);
+    for (size_t j = 0; j < ir.size(); ++j) {
+        lua_pushnumber(L, j + 1); // one-based
+        lua_pushinteger(L, ir[j]);
+        lua_settable(L, -3); // set row[j+1]=ir[j]
+    }
+    lua_settable(L, -3); // set table[1] = row
+    // set jc
+    lua_pushnumber(L, 2);
+    lua_newtable(L);
+    for (size_t j = 0; j < jc.size(); ++j) {
+        lua_pushnumber(L, j + 1); // one-based
+        lua_pushinteger(L, jc[j]);
+        lua_settable(L, -3); // set row[j+1]=jc[j]
+    }
+    lua_settable(L, -3); // set table[2] = row
+    // set v
+    lua_pushnumber(L, 3);
+    lua_newtable(L);
+    for (size_t j = 0; j < v.size(); ++j) {
+        lua_pushnumber(L, j + 1); // one-based
+        lua_pushnumber(L, v[j]);
+        lua_settable(L, -3); // set row[j+1]=v[j]
+    }
+    lua_settable(L, -3); // set table[3] = row
+    lua_settable(L, -3); // set main[key] = table
+}
+
 void write_luavector(lua_State *L, const char *key, std::vector<double> vec) {
     lua_pushstring(L, key);
     lua_newtable(L);
@@ -739,13 +772,18 @@ void write_luasolution(lua_State *L, OCPInterface* ocp, std::string outfile) {
     std::vector<double> lbx(nx), ubx(nx), lbu(nu), ubu(nu), lbp(np), ubp(np),
                         lbc(nc), ubc(nc), lbb(nb), ubb(nb), lbq(nq), ubq(nq);
     std::vector<double> auxdata(na), mesh(N-1);
+    std::vector<int> irj(nnzj), irh(nnzh);
+    std::vector<int> jcj(nnzj), jch(nnzh);
+    std::vector<double> vj(nnzj), vh(nnzh);
     // Get solution
     ocp->get_sol(&objval, t.data(),
             x.data(), u.data(), p.data(),
             lamx.data(), lamu.data(), lamp.data(),
             lamf.data(), lamc.data(), lamb.data(), lamq.data(),
             f.data(), c.data(), b.data(), q.data(), 
-            l.data(), &m);
+            l.data(), &m, NULL, NULL, NULL, 
+            irj.data(), jcj.data(), vj.data(), 
+            irh.data(), jch.data(), vh.data());
     ocp->get_cpu_time(ttot, talg, teval);
     ocp->get_history(obj_history.data(), infpr_history.data(), infdu_history.data());
     mu_curr = ocp->get_mu_curr();
@@ -792,6 +830,8 @@ void write_luasolution(lua_State *L, OCPInterface* ocp, std::string outfile) {
     write_luanumber(L, "ng", ng);
     write_luanumber(L, "nnzj", nnzj);
     write_luanumber(L, "nnzh", nnzh);
+    write_luasparsematrix(L, "jac", irj, jcj, vj);
+    write_luasparsematrix(L, "hess", irh, jch, vh);
     write_luanumber(L, "ttot", ttot);
     write_luanumber(L, "talg", talg);
     write_luanumber(L, "teval", teval);

@@ -175,6 +175,28 @@ class OCP:
             dict: dictionary containing the OCP solution.
         """
     
+    def get_jac(self) -> Tuple[numpy.ndarray,  numpy.ndarray,  numpy.ndarray]
+        """
+        Get the NLP sparse Jacobian matrix (ng-by-nz).
+
+        Args:
+            None
+
+        Returns:
+            Tuple[numpy.ndarray,  numpy.ndarray,  numpy.ndarray]: sparse Jacobian using COO format (row indexes, column indexes, and values).
+        """
+
+    def get_hess(self):
+        """
+        Get the NLP sparse Hessian matrix (nz-by-nz).
+
+        Args:
+            None
+
+        Returns:
+            Tuple[numpy.ndarray,  numpy.ndarray,  numpy.ndarray]: sparse Hessian using COO format (row indexes, column indexes, and values).
+        """
+
     def get_mesh(self) -> numpy.ndarray:
         """
         Get the mesh fractions.

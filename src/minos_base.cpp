@@ -440,8 +440,8 @@ void OCPInterface::get_sol(
     double *f_opt, double *c_opt, double *b_opt, double *q_opt,
     double *l_opt, double *m_opt,
     double *gradx_opt, double *gradu_opt, double *gradp_opt,
-    size_t *irj, size_t *jcj, double *jac,
-    size_t *irh, size_t *jch, double *hess
+    int *irj, int *jcj, double *jac,
+    int *irh, int *jch, double *hess
 ) {
     
     // objective value
@@ -628,33 +628,15 @@ void OCPInterface::get_sol(
         if (gradp_opt) memcpy(gradpdest, gradpsrc, np*sizeof(double)); 
     }
 
-    // return jac 'as is', but using CSC format (instead of COO used here)
+    // return jac 'as is'
     if (irj && jcj && jac) {
-        // allocate memory for ir_coo and jc_coo
-        int* ir_coo = new int[1+nnzj] { 0 };
-        int* jc_coo = new int[1+nnzj] { 0 };
-        // get ir_coo and jc_coo
-        get_pattern_jac(ir_coo, jc_coo);
-        // convert COO to CSC format
-        if (jac_opt && ir_coo && jc_coo) coo2csc(ng, nz, nnzj,
-                                                 ir_coo, jc_coo, jac_opt,
-                                                 irj, jcj, jac);
-        // delete
-        delete[] ir_coo; delete[] jc_coo;
+        get_pattern_jac(irj, jcj);
+        memcpy(jac, jac_opt, nnzj*sizeof(double));
     }
-    // return hess 'as is', but using CSC format (instead of COO used here)
+    // return hess 'as is'
     if (irh && jch && hess) {
-        // allocate memory for ir_coo and jc_coo
-        int* ir_coo = new int[1+nnzh] { 0 };
-        int* jc_coo = new int[1+nnzh] { 0 };
-        // get ir_coo and jc_coo
-        get_pattern_hess(ir_coo, jc_coo);
-        // convert COO to CSC format
-        if (hess_opt && ir_coo && jc_coo) coo2csc(nz, nz, nnzh,
-                                                 ir_coo, jc_coo, hess_opt,
-                                                 irh, jch, hess);
-        // delete
-        delete[] ir_coo; delete[] jc_coo;
+        get_pattern_hess(irh, jch);
+        memcpy(hess, hess_opt, nnzh*sizeof(double));
     }
 }
 

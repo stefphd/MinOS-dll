@@ -151,8 +151,8 @@ void MINOSC_PREFIX(get_sol)(
     double *f_opt, double *c_opt, double *b_opt, double *q_opt,
     double *l_opt, double *m_opt,
     double *gradx_opt, double *gradu_opt, double *gradp_opt,
-    size_t *irj, size_t *jcj, double *jac,
-    size_t *irh, size_t *jch, double *hess
+    int *irj, int *jcj, double *jac,
+    int *irh, int *jch, double *hess
 ) {
     CASTOCPINTERFACE(ocp->ptr)->get_sol(J_opt, t, 
                                     x_opt, u_opt, p_opt,

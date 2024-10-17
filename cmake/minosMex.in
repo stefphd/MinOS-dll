@@ -69,6 +69,8 @@
 %                   stats.ng: number of NLP constraints (1-by-1 matrix)
 %                   stats.nnzj: number of non-zero values in NLP constraint Jacobian (1-by-1 matrix)
 %                   stats.nnzh: number of non-zero values in NLP Lagragian Hessian (1-by-1 matrix)
+%                   stats.jac: sparse NLP Jacobian matrix (ng-by-nz matrix)
+%                   stats.hess: sparse NLP Hessian matrix (nz-by-nz matrix)
 %                   stats.ttot: total CPU time (1-by-1 matrix)
 %                   stats.talg: CPU time for NLP algorithm (1-by-1 matrix)
 %                   stats.teval: CPU time for OCP function evaluation (1-by-1 matrix)

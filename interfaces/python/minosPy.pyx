@@ -399,7 +399,6 @@ cdef class OCP:
         cdef double[:] l = sol["l"]
         cdef double m = 0.0
         # Call to get_sol
-
         self.cobj.get_sol(&J, &t[0], 
                         &x[0] if nx>0 else NULL, &u[0] if nu>0 else NULL, &p[0] if np>0 else NULL,
                         &lamx[0] if nx>0 else NULL, &lamu[0] if nu>0 else NULL, &lamp[0] if np>0 else NULL,
@@ -421,6 +420,44 @@ cdef class OCP:
         sol["lamc"] = npy.reshape(sol["lamc"], (nc, N-1), order='F')
         # Return
         return sol
+
+    def get_jac(self):
+        # get nnzj
+        cdef int nnzj
+        self.cobj.get_dims(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &nnzj, NULL, NULL)
+        # init vectors
+        ir = npy.zeros(nnzj, dtype=npy.int32)
+        jc = npy.zeros(nnzj, dtype=npy.int32)
+        v = npy.zeros(nnzj, dtype=npy.float64)
+        # get ptr
+        cdef int[:] irp = ir
+        cdef int[:] jcp = jc
+        cdef double[:] vp = v
+        # get jac
+        self.cobj.get_sol(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                          NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                          &irp[0], &jcp[0], &vp[0], NULL, NULL, NULL)
+        #return
+        return ir, jc, v
+
+    def get_hess(self):
+        # get nnzj
+        cdef int nnzh
+        self.cobj.get_dims(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &nnzh, NULL)
+        # init vectors
+        ir = npy.zeros(nnzh, dtype=npy.int32)
+        jc = npy.zeros(nnzh, dtype=npy.int32)
+        v = npy.zeros(nnzh, dtype=npy.float64)
+        # get ptr
+        cdef int[:] irp = ir
+        cdef int[:] jcp = jc
+        cdef double[:] vp = v
+        # get jac
+        self.cobj.get_sol(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                          NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+                          NULL, NULL, NULL, &irp[0], &jcp[0], &vp[0])
+        #return
+        return ir, jc, v
 
     def get_mesh(self):
         # Declare vars
