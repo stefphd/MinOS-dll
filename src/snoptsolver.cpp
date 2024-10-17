@@ -25,7 +25,7 @@ void SNOPTSolver::nlpfun(
         // eval constr
         ocpInterface->eval_constr(x, g);
     }
-    if (*needF > 0) { // calc obj grad and constr jac
+    if (*needG > 0) { // calc obj grad and constr jac
         double* grad = &G[0]; // obj grad
         double* jac = &G[*n]; // constr jacs
         // eval obj grad
