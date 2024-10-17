@@ -876,6 +876,7 @@ int OCPInterface::eval_hessian(
 
 /** Eval OCP functions */
 void OCPInterface::eval_ocpfuncs() {
+    eval_obj(z_opt,  &J_opt);
     eval_obj_grad(z_opt,  grad_opt);
     eval_constr(z_opt, g_opt);
     eval_constr_jac(z_opt, jac_opt);

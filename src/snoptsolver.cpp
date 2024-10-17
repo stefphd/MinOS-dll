@@ -77,7 +77,6 @@ void SNOPTSolver::finalize_solution(
     double* lamF,
     OCPInterface* ocpInterface
 ) {
-    ocpInterface->J_opt = F[0]; // obj is first val
     memcpy(ocpInterface->z_opt,     z,      ocpInterface->nz*sizeof(double)); // nlp vars
     memcpy(ocpInterface->lamz_opt,  lamz,   ocpInterface->nz*sizeof(double)); // nlp mult
     memcpy(ocpInterface->lamg_opt,  lamF+1, ocpInterface->ng*sizeof(double)); // nlp constr mult

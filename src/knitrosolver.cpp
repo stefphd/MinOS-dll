@@ -100,7 +100,6 @@ void KNITROSolver::finalize_solution(
     OCPInterface*         ocpInterface
 ) {
     // get solution
-    KN_get_obj_value(kc, &(ocpInterface->J_opt));
     KN_get_var_primal_values_all(kc, ocpInterface->z_opt);
     KN_get_var_dual_values_all(kc, ocpInterface->lamz_opt);
     KN_get_con_dual_values_all(kc, ocpInterface->lamg_opt);

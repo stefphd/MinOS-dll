@@ -185,7 +185,6 @@ void IPOPTSolver::finalize_solution(
    IpoptCalculatedQuantities* ip_cq
 ) {
     // copy solution
-    ocpInterface->J_opt = obj_value;
     memcpy(ocpInterface->z_opt, z, ocpInterface->nz*sizeof(double));
     for (int i = 0; i < ocpInterface->nz; ++i) ocpInterface->lamz_opt[i] = lamzu[i] - lamzl[i];
     memcpy(ocpInterface->lamg_opt, lamg, ocpInterface->ng*sizeof(double));
@@ -197,7 +196,6 @@ void IPOPTSolver::finalize_solution(
     // set guess solution to optimal if success
     if ((status == SUCCESS) || (status == STOP_AT_ACCEPTABLE_POINT))
         ocpInterface->set_optsol_as_guess();
-
     // save cpu time
     ocpInterface->tcpu_tot = ip_data->TimingStats().OverallAlgorithm().TotalCpuTime();
     ocpInterface->tcpu_eval = ip_data->TimingStats().TotalFunctionEvaluationCpuTime();

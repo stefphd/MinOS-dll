@@ -260,7 +260,6 @@ int WORHPSolver::solve() {
 /* Finalize the solution */
 void WORHPSolver::finalize_solution() {
     // copy solution
-    ocpInterface->J_opt = opt.F/wsp.ScaleObj; // unscaled
     memcpy(ocpInterface->z_opt, opt.X, ocpInterface->nz*sizeof(double));
     memcpy(ocpInterface->lamz_opt, opt.Lambda, ocpInterface->nz*sizeof(double));
     memcpy(ocpInterface->lamg_opt, opt.Mu, ocpInterface->ng*sizeof(double));
