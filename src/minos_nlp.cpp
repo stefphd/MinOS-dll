@@ -64,11 +64,12 @@ void OCPInterface::init_cost_gradient(
     // get nnz of boundary cost
     get_sizes(ocp_bcscost_grad.spout, 0, NULL, NULL, &nnzbcg);
     // get pattern of running cost
-    irrcg = new int[1+nnzrcg] { 0 };
-    ocp_runcost_grad.res[0] = new double[1+nnzrcg] { 0 }; // init ocp_runcost_grad.res
+    irrcg = new int[1+nnzrcg];
+    ocp_runcost_grad.res[0] = new double[1+nnzrcg]; // init ocp_runcost_grad.res
     get_pattern(ocp_runcost_grad.spout, 0, irrcg, NULL); // use only row indexes (gradient is column matrix)
     // create krcg
-    krcg = new int[1+nnzrcg*(N-1)] { -1 };
+    krcg = new int[1+nnzrcg*(N-1)];
+    for (int i = 0; i < nnzrcg*(N-1); ++i) krcg[i] = -1;
     int ir; // store temporary index
     for (int k = 0; k < N-1; ++k) {
         for (int i = 0; i < nnzrcg; ++i) {
@@ -79,11 +80,12 @@ void OCPInterface::init_cost_gradient(
         }
     }
     // get pattern of boundary cost
-    irbcg = new int[1+nnzbcg] { 0 };
-    ocp_bcscost_grad.res[0] = new double[1+nnzbcg] { 0 }; // init ocp_bcscost_grad.res
+    irbcg = new int[1+nnzbcg];
+    ocp_bcscost_grad.res[0] = new double[1+nnzbcg]; // init ocp_bcscost_grad.res
     get_pattern(ocp_bcscost_grad.spout, 0, irbcg, NULL); // use only row indexes (gradient is column matrix)
     // create kbcg
-    kbcg = new int[1+nnzbcg] { -1 };
+    kbcg = new int[1+nnzbcg];
+    for (int i = 0; i < nnzbcg; ++i) kbcg[i] = -1;
     for (int i = 0; i < nnzbcg; ++i) {
         ir = irbcg[i];
         if (ir >= (nx+nu)) ir += -(nx+nu) + (N-1)*(nx+nu); // xf, uf, p
@@ -103,24 +105,26 @@ void OCPInterface::init_constr_jac() {
     nnzj = (N-1)*(nnzdj+nnzpj) + nnzpj + nnzbj; // total nnz of the jacobian not including integral constraints
 
     // get ir,jc of dyn, path, bcs
-    irdj = new int[1+nnzdj] { 0 };
-    jcdj = new int[1+nnzdj] { 0 };
-    irpj = new int[1+nnzpj] { 0 };
-    jcpj = new int[1+nnzpj] { 0 };
-    irbj = new int[1+nnzbj] { 0 };
-    jcbj = new int[1+nnzbj] { 0 };
-    irqj = new int[1+nnzqj] { 0 };
-    jcqj = new int[1+nnzqj] { 0 };
+    irdj = new int[1+nnzdj];
+    jcdj = new int[1+nnzdj];
+    irpj = new int[1+nnzpj];
+    jcpj = new int[1+nnzpj];
+    irbj = new int[1+nnzbj];
+    jcbj = new int[1+nnzbj];
+    irqj = new int[1+nnzqj];
+    jcqj = new int[1+nnzqj];
     get_pattern(ocp_dyn_jac.spout, 0, irdj, jcdj); // dyn w.r.t. x1, u, x2, p
     get_pattern(ocp_path_jac.spout, 0, irpj, jcpj); // path w.r.t. x, u, p
     get_pattern(ocp_bcs_jac.spout, 0, irbj, jcbj); // bcs w.r.t. x0, u0, xn, un, p
     get_pattern(ocp_int_jac.spout, 0, irqj, jcqj); // int w.r.t. x1, u, x2, p
 
     // procedire to compute the nnz of the entire int jac and corresponding indexes
-    ocp_int.res[0] = new double[1+nq] { 0 }; // init also ocp_int.res for ocp_int
-    ocp_int_jac.res[0] = new double[1+nnzqj] { 0 }; // init ocp_int_jac.res
-    kjq = new int[1+nnzqj*(N-1)] { -1 };
-    kj = new int[1+nnzqj*(N-1)] { -1 }; // save 'rolled' indexes of nz, with size from upper estimation of nnz
+    ocp_int.res[0] = new double[1+nq]; // init also ocp_int.res for ocp_int
+    ocp_int_jac.res[0] = new double[1+nnzqj]; // init ocp_int_jac.res
+    kjq = new int[1+nnzqj*(N-1)];
+    for (int i = 0; i < nnzqj*(N-1); ++i) kjq[i] = -1;
+    kj = new int[1+nnzqj*(N-1)]; // save 'rolled' indexes of nz, with size from upper estimation of nnz
+    for (int i = 0; i < nnzqj*(N-1); ++i) kj[i] = -1;
     int c_nnz = 0; // counter for int jacobian nz
     int ir, jc, kk; // temporary row, column, and rolled indexes
     for (int k = 0; k < N-1; ++k) { // iterate over mesh intervals (k from 0 to N-2)
@@ -152,19 +156,21 @@ void OCPInterface::init_lag_hessian() {
         get_sizes(ocp_hessb.spout, 0, NULL, NULL, &nnzhb); 
         get_sizes(ocp_hessi.spout, 0, NULL, NULL, &nnzhi); 
         // init patterns
-        irhb = new int[1+nnzhb] { 0 };
-        jchb = new int[1+nnzhb] { 0 };
-        irhi = new int[1+nnzhi] { 0 };
-        jchi = new int[1+nnzhi] { 0 };
+        irhb = new int[1+nnzhb];
+        jchb = new int[1+nnzhb];
+        irhi = new int[1+nnzhi];
+        jchi = new int[1+nnzhi];
         // init res
-        ocp_hessb.res[0] = new double[1+nnzhb] { 0 };
-        ocp_hessi.res[0] = new double[1+nnzhi] { 0 };
+        ocp_hessb.res[0] = new double[1+nnzhb];
+        ocp_hessi.res[0] = new double[1+nnzhi];
         // get patterns
         get_pattern(ocp_hessb.spout, 0, irhb, jchb);
         get_pattern(ocp_hessi.spout, 0, irhi, jchi);
         // init khb, khi
-        khb = new int[1+nnzhb] { -1 };
-        khi = new int[1+nnzhi*(N-1)] { -1 };
+        khb = new int[1+nnzhb]; 
+        for (int i = 0; i < nnzhb; ++i) khb[i] = -1;
+        khi = new int[1+nnzhi*(N-1)];
+        for (int i = 0; i < nnzhi*(N-1); ++i) khi[i] = -1;
         // prcedure to calculate nnzh
         nnzh = nnzhb + (N-1)*nnzhi; // upper estimation of nnz for init
         kh = new int[1+nnzh]; // save 'rolled' indexes of nz

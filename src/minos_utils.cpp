@@ -185,13 +185,13 @@ void OCPInterface::init_data_mem() {
     //alloc auxdata
     if(na>=0) auxdata = new double[1+na];
     //alloc opt sol
-    z_opt = new double[1+nz] { 0 };
-    lamz_opt = new double[1+nz] { 0 };
-    lamg_opt = new double[1+ng] { 0 };
-    g_opt = new double[1+ng] { 0 };
-    grad_opt = new double[1+nz] { 0 };
-    jac_opt = new double[1+nnzj] { 0 };
-    if (nnzh > 0) hess_opt = new double[1+nnzh] { 0 };
+    z_opt = new double[1+nz];
+    lamz_opt = new double[1+nz];
+    lamg_opt = new double[1+ng];
+    g_opt = new double[1+ng];
+    grad_opt = new double[1+nz];
+    jac_opt = new double[1+nnzj];
+    if (nnzh > 0) hess_opt = new double[1+nnzh];
     else hess_opt = NULL;
 }
 
@@ -202,10 +202,10 @@ void OCPInterface::alloc_casadi_mem(
     int sz_arg = 0, sz_res = 0, sz_iw = 0, sz_w = 0;
     ocpfun->mem = ocpfun->alloc();
     ocpfun->work(&sz_arg, &sz_res, &sz_iw, &sz_w);
-    ocpfun->arg = new const double*[1+sz_arg] { 0 };
-    ocpfun->res = new double*[1+sz_res] { 0 };
-    ocpfun->iw = new int[1+sz_iw] { 0 };
-    ocpfun->w = new double[1+sz_w] { 0 };
+    ocpfun->arg = new const double*[1+sz_arg];
+    ocpfun->res = new double*[1+sz_res];
+    ocpfun->iw = new int[1+sz_iw];
+    ocpfun->w = new double[1+sz_w];
 }
 
 /** Delete CASADI memory */

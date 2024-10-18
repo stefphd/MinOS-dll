@@ -126,12 +126,12 @@ int SNOPTSolver::callSolve(
     double *z = NULL, *lamz = NULL, *lamF = NULL;
     double *lbz = NULL, *ubz = NULL, *lbF = NULL, *ubF = NULL;
     double *F = NULL; // F[0] is obj, F[1..end] is constr
-    double *lamzF = new double[1+nz+ng] { 0 }; // collect lam for z , obj, and constr in same array
+    double *lamzF = new double[1+nz+ng]; // collect lam for z , obj, and constr in same array
     z = new double[1+nz];
     lbz = new double[1+nz];
     ubz = new double[1+nz];
     lamz = lamzF + 0; // lamz starts at lamzF[0]
-    F = new double[1+ng] { 0 }; // for both obj and constr
+    F = new double[1+ng]; // for both obj and constr
     lbF = new double[1+ng]; // for both obj and constr
     ubF = new double[1+ng]; // for both obj and constr
     lamF = lamzF + nz; // lamF starts at lamzF[nz], for both obj and constr
@@ -145,8 +145,8 @@ int SNOPTSolver::callSolve(
     }
 
     /* Create zstate and Fstate */
-    int *zstate =  new int[1+nz] { 0 }; // always 0 (?)
-    int *Fstate = new int[1+ng] { 0 };  // always 0 (?)
+    int *zstate =  new int[1+nz]; // always 0 (?)
+    int *Fstate = new int[1+ng];  // always 0 (?)
 
     /* Get sparse patterns 
     The NLP objective gradient and constraint jacobian are collected in a unique function G,
